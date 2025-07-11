@@ -31,10 +31,6 @@ const MaintenanceFormPage = () => import('../views/Maintenances/MaintenanceFormP
 const ExpensesPage = () => import('../views/Expenses/ExpensesPage.vue')
 const ExpenseFormPage = () => import('../views/Expenses/ExpenseFormPage.vue')
 
-// Users view
-import UsersPage from '@/views/Users/UsersPage.vue'
-
-
 
 const routes = [
   {
@@ -170,11 +166,17 @@ const routes = [
 // User route
 
 {
-    path: '/users',
-    name: 'UsersPage',
-    component: UsersPage,
-    meta: { requiresAuth: true }
-  },
+  path: '/users',
+  component: () => import('@/views/Users/UsersPage.vue')
+},
+{
+  path: '/users/new',
+  component: () => import('@/views/Users/UserFormPage.vue')
+},
+{
+  path: '/users/:id/edit',
+  component: () => import('@/views/Users/UserFormPage.vue')
+},
 
   // Fallback 404
   {

@@ -20,8 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password',
-        'role'
+        'password'
         // Remove 'role' from here if you're using spatie roles via assignRole() method
     ];
 

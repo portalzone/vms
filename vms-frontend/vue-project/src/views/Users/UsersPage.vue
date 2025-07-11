@@ -1,47 +1,38 @@
+<!-- src/views/Users/UsersPage.vue -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from '@/axios'
-import UserForm from './UserForm.vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const users = ref([])
-const roles = ref([])
-const showForm = ref(false)
-const selectedUser = ref(null)
 
 const loadUsers = async () => {
-  const res = await axios.get('/users')
-  users.value = res.data
-}
-
-const loadRoles = async () => {
   try {
-    const res = await axios.get('/roles')
-    roles.value = res.data
-  } catch (e) {
-    console.error('❌ Failed to load roles:', e)
+    const res = await axios.get('/users')
+    users.value = res.data
+  } catch (err) {
+    console.error('❌ Failed to load users:', err)
   }
 }
 
-const editUser = (user) => {
-  selectedUser.value = { ...user }
-  showForm.value = true
+const goToCreate = () => {
+  router.push('/users/new')
+}
+
+const goToEdit = (user) => {
+  router.push(`/users/${user.id}/edit`)
 }
 
 const deleteUser = async (id) => {
-  if (confirm('Are you sure?')) {
+  if (confirm('Are you sure you want to delete this user?')) {
     await axios.delete(`/users/${id}`)
     loadUsers()
   }
 }
 
-const closeForm = () => {
-  showForm.value = false
-  selectedUser.value = null
-}
-
 onMounted(() => {
   loadUsers()
-  loadRoles()
 })
 </script>
 
@@ -49,18 +40,11 @@ onMounted(() => {
   <div>
     <h2 class="text-2xl font-bold mb-4">User Management</h2>
 
-    <button class="mb-4 bg-blue-600 text-white px-4 py-2 rounded" @click="showForm = true">➕ Add User</button>
+    <button class="mb-4 bg-blue-600 text-white px-4 py-2 rounded" @click="goToCreate">
+      ➕ Add User
+    </button>
 
-    <UserForm
-      v-if="showForm"
-      :key="selectedUser?.id || 'new'"
-      :user="selectedUser"
-      :roles="roles"
-      @close="closeForm"
-      @saved="loadUsers"
-    />
-
-    <table class="w-full border text-sm mt-4">
+    <table class="w-full border text-sm">
       <thead class="bg-gray-100">
         <tr>
           <th class="px-2 py-1">#</th>
@@ -77,7 +61,7 @@ onMounted(() => {
           <td class="px-2 py-1">{{ user.email }}</td>
           <td class="px-2 py-1 capitalize">{{ user.roles?.[0]?.name || 'N/A' }}</td>
           <td class="px-2 py-1 space-x-2">
-            <button class="text-blue-600" @click="editUser(user)">✏️ Edit</button>
+            <button class="text-blue-600" @click="goToEdit(user)">✏️ Edit</button>
             <button class="text-red-600" @click="deleteUser(user.id)">🗑️ Delete</button>
           </td>
         </tr>

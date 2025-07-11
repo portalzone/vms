@@ -18,7 +18,7 @@ Route::post('/register', [AuthController::class, 'register']);
 
 // 🔒 Authenticated Routes (Token Required via Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     // ✅ Auth/User Info
     Route::get('/me', [AuthController::class, 'me']);
     Route::get('/user', fn(Request $request) => $request->user());
@@ -32,8 +32,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/trends', [DashboardController::class, 'monthlyTrends']);
     Route::get('/dashboard/activity', [DashboardController::class, 'recentActivity']);
 
-    // ✅ Protected Resources
+    // ✅ Users (override GET /users/{id} to fix 405 error)
+    Route::get('/users/{id}', [UserController::class, 'show']); // 🛠️ Custom show route
     Route::apiResource('users', UserController::class)->except(['show']);
+
+    // ✅ Other Resources
     Route::apiResource('vehicles', VehicleController::class);
     Route::apiResource('drivers', DriverController::class);
     Route::apiResource('maintenances', MaintenanceController::class);

@@ -14,11 +14,10 @@ class UserController extends Controller
     public function index()
     {
         $this->authorizeAccess('view');
-
         return User::with('roles:id,name')->select('id', 'name', 'email')->get();
     }
 
-    // ✅ Create new user with role assignment
+    // ✅ Create new user with role assignment (API guard)
     public function store(Request $request)
     {
         $this->authorizeAccess('create');
@@ -36,15 +35,30 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        $user->assignRole($validated['role']);
+        $role = Role::where('name', $validated['role'])->where('guard_name', 'api')->first();
+        if (!$role) {
+            return response()->json([
+                'message' => 'Invalid role for API guard.'
+            ], 422);
+        }
+
+        $user->assignRole($role);
 
         return response()->json([
             'message' => 'User created successfully',
-            'data'    => $user->load('roles:id,name')
+            'data'    => $user->load('roles:id,name'),
         ], 201);
     }
 
-    // ✅ Update user details and role
+    // ✅ Show user with roles
+    public function show($id)
+    {
+        $this->authorizeAccess('view');
+        $user = User::with('roles:id,name')->findOrFail($id);
+        return response()->json($user);
+    }
+
+    // ✅ Update user and role (API guard)
     public function update(Request $request, $id)
     {
         $this->authorizeAccess('update');
@@ -68,13 +82,19 @@ class UserController extends Controller
             $user->update($validated);
 
             if (!empty($validated['role'])) {
-                $user->syncRoles([$validated['role']]);
+                $role = Role::where('name', $validated['role'])->where('guard_name', 'api')->first();
+                if (!$role) {
+                    return response()->json([
+                        'message' => 'Invalid role for API guard.'
+                    ], 422);
+                }
+                $user->syncRoles([$role]);
             }
 
             return response()->json([
                 'message' => 'User updated successfully',
-                'data'    => $user->load('roles:id,name')
-            ], 200);
+                'data'    => $user->load('roles:id,name'),
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to update user',
@@ -87,10 +107,8 @@ class UserController extends Controller
     public function destroy($id)
     {
         $this->authorizeAccess('delete');
-
         $user = User::findOrFail($id);
         $user->delete();
-
         return response()->json(['message' => 'User deleted successfully']);
     }
 
@@ -99,16 +117,20 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
+        if (!$user) {
+            abort(403, 'User not authenticated.');
+        }
+
         $map = [
-            'view'   => ['admin'],
-            'create' => ['admin'],
+            'view'   => ['admin', 'manager'],
+            'create' => ['admin', 'manager'],
             'update' => ['admin'],
             'delete' => ['admin'],
         ];
 
         $allowedRoles = $map[$action] ?? [];
 
-        if (!$user || !$user->hasAnyRole($allowedRoles)) {
+        if (!$user->hasAnyRole($allowedRoles)) {
             abort(403, 'Unauthorized for this action.');
         }
     }
