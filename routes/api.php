@@ -24,6 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
     Route::get('/available-users', [UserController::class, 'availableForDrivers'])->middleware('auth:sanctum');
     Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus'])->middleware('auth:sanctum');
+    Route::get('/users-available-for-drivers', [UserController::class, 'usersAvailableForDriverForm']);
+
 
 
     Route::post('/logout', [AuthController::class, 'logout']);

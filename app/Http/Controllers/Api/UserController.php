@@ -114,34 +114,7 @@ class UserController extends Controller
     }
 
 // available for driver
-// public function availableForDrivers()
-// {
-//     $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
-
-//     $users = User::whereNotIn('id', $assignedUserIds)
-//                 ->select('id', 'name', 'email')
-//                 ->get();
-
-//     return response()->json($users);
-// }
-
-//user with driver status
-
-// public function usersWithDriverStatus()
-// {
-//     $assignedUserIds = Driver::pluck('user_id')->toArray();
-
-//     $users = User::select('id', 'name', 'email')
-//         ->get()
-//         ->map(function ($user) use ($assignedUserIds) {
-//             $user->already_assigned = in_array($user->id, $assignedUserIds);
-//             return $user;
-//         });
-
-//     return response()->json($users);
-// }
-
-public function usersWithDriverStatus()
+public function availableForDrivers()
 {
     $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
 
@@ -151,6 +124,46 @@ public function usersWithDriverStatus()
 
     return response()->json($users);
 }
+
+// user available for driver form
+
+public function usersAvailableForDriverForm(Request $request)
+{
+    $driverId = $request->query('driver_id'); // e.g. ?driver_id=5
+    $assignedUserIds = Driver::pluck('user_id')->toArray();
+
+    if ($driverId) {
+        $currentDriver = Driver::find($driverId);
+        if ($currentDriver) {
+            // Remove currently assigned user from the exclusion list
+            $assignedUserIds = array_diff($assignedUserIds, [$currentDriver->user_id]);
+        }
+    }
+
+    $users = User::whereNotIn('id', $assignedUserIds)
+        ->select('id', 'name', 'email')
+        ->get();
+
+    return response()->json($users);
+}
+
+
+//user with driver status
+
+public function usersWithDriverStatus()
+{
+    $assignedUserIds = Driver::pluck('user_id')->toArray();
+
+    $users = User::select('id', 'name', 'email')
+        ->get()
+        ->map(function ($user) use ($assignedUserIds) {
+            $user->already_assigned = in_array($user->id, $assignedUserIds);
+            return $user;
+        });
+
+    return response()->json($users);
+}
+
 
 
     // 🔐 Role-based access checker

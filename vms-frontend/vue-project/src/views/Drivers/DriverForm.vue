@@ -89,8 +89,17 @@ const errors = ref({})
 const users = ref([])
 const vehicles = ref([])
 
+// const loadUsers = async () => {
+//   const res = await axios.get('/available-users')
+//   users.value = res.data
+// }
+
 const loadUsers = async () => {
-  const res = await axios.get('/users-with-driver-status')
+  const url = props.isEdit
+    ? `/users-available-for-drivers?driver_id=${props.driverId}`
+    : '/users-available-for-drivers'
+
+  const res = await axios.get(url)
   users.value = res.data
 }
 
