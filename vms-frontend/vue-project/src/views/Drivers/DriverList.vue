@@ -5,7 +5,7 @@
       <input
         v-model="search"
         type="text"
-        placeholder="Search by name, email, license or vehicle..."
+        placeholder="Search by name, email, license, or vehicle..."
         class="border rounded px-4 py-2 w-full md:w-1/2"
       />
 
@@ -19,8 +19,8 @@
 
     <!-- Table -->
     <div class="overflow-x-auto rounded shadow bg-white">
-      <table>
-        <thead>
+      <table class="min-w-full table-auto text-sm">
+        <thead class="bg-gray-100 text-left">
           <tr>
             <th>#</th>
             <th>User</th>
@@ -39,7 +39,6 @@
             <td>{{ start + index + 1 }}</td>
             <td>{{ driver.user?.name || '—' }}</td>
             <td>{{ driver.user?.email || '—' }}</td>
-            
             <td>{{ driver.license_number }}</td>
             <td>{{ driver.phone_number }}</td>
             <td>{{ driver.home_address }}</td>
@@ -104,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/axios'
 import { useAuthStore } from '@/stores/auth'
@@ -118,13 +117,12 @@ const page = ref(1)
 const perPage = 10
 
 const fetchDrivers = async () => {
-  if (!auth.token) return
   try {
     const res = await axios.get('/drivers')
     allDrivers.value = Array.isArray(res.data) ? res.data : res.data.data || []
   } catch (err) {
     console.error('❌ Error fetching drivers:', err)
-    alert('Failed to load drivers. Please log in again.')
+    alert('Failed to load drivers.')
   }
 }
 
@@ -162,9 +160,7 @@ const visiblePages = computed(() => {
     if (current > 4) pages.push('...')
     const start = Math.max(2, current - 1)
     const end = Math.min(total - 1, current + 1)
-    for (let i = start; i <= end; i++) {
-      if (i !== 1 && i !== total) pages.push(i)
-    }
+    for (let i = start; i <= end; i++) pages.push(i)
     if (current < total - 3) pages.push('...')
     pages.push(total)
   }
@@ -190,5 +186,4 @@ watch(search, () => {
 })
 
 onMounted(fetchDrivers)
-watch(page, fetchDrivers)
 </script>

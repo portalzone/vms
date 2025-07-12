@@ -16,6 +16,7 @@ class DriverController extends Controller
 }
 
 
+
     // ✅ Store a new driver with validation
 public function store(Request $request)
 {
@@ -45,7 +46,21 @@ public function store(Request $request)
     return response()->json($driver->load(['user', 'vehicle']), 201);
 }
 
+// 
+public function me()
+{
+    $user = auth()->user();
 
+    if (!$user->hasRole('driver')) {
+        abort(403, 'Not a driver.');
+    }
+
+    $driver = \App\Models\Driver::with('vehicle')
+        ->where('user_id', $user->id)
+        ->firstOrFail();
+
+    return response()->json($driver);
+}
 
     // ✅ Show single driver
     public function show($id)

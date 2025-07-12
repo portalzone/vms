@@ -13,6 +13,7 @@
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/vehicles" exact-active-class="active">Vehicles</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/drivers" exact-active-class="active">Drivers</RouterLink>
         <RouterLink to="/checkins" exact-active-class="active">Check-Ins</RouterLink>
+        <RouterLink v-if="hasRole(['admin', 'manager', 'driver'])" to="/trips" exact-active-class="active">Trips</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner'])" to="/maintenance" exact-active-class="active">Maintenance</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/expenses" exact-active-class="active">Expenses</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/users" exact-active-class="active">Users</RouterLink>

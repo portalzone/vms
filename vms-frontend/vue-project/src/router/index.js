@@ -178,6 +178,28 @@ const routes = [
   component: () => import('@/views/Users/UserFormPage.vue')
 },
 
+// Trips
+{
+  path: '/trips',
+  name: 'Trips',
+  component: () => import('@/views/Trips/TripsPage.vue'),
+  meta: { requiresAuth: true },
+},
+{
+  path: '/trips/new',
+  name: 'TripCreate',
+  component: () => import('@/views/Trips/TripFormPage.vue'),
+  meta: { requiresAuth: true },
+},
+{
+  path: '/trips/:id/edit',
+  name: 'TripEdit',
+  component: () => import('@/views/Trips/TripFormPage.vue'),
+  props: true,
+  meta: { requiresAuth: true },
+},
+
+
   // Fallback 404
   {
     path: '/:pathMatch(.*)*',

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\TripController;
 
 // 🔓 Public Routes (No Auth Required)
 Route::post('/login', [AuthController::class, 'login']);
@@ -19,6 +20,9 @@ Route::post('/register', [AuthController::class, 'register']);
 // 🔒 Authenticated Routes (Token Required via Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
 
+    Route::get('/driver/me', [DriverController::class, 'me'])->middleware('auth:sanctum');
+Route::apiResource('trips', TripController::class)->middleware('auth:sanctum');
+
     // ✅ Auth/User Info
     Route::get('/me', [AuthController::class, 'me']);
     Route::get('/user', fn(Request $request) => $request->user());
@@ -26,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus'])->middleware('auth:sanctum');
     Route::get('/users-available-for-drivers', [UserController::class, 'usersAvailableForDriverForm']);
 
+    // trip route
 
 
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -48,4 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('maintenances', MaintenanceController::class);
     Route::apiResource('expenses', ExpenseController::class);
     Route::apiResource('checkins', CheckInOutController::class);
+    Route::apiResource('trips', TripController::class);
+
+    // Route::apiResource('trips', \App\Http\Controllers\Api\TripController::class);
+
 });
