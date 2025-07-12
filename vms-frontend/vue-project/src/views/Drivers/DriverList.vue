@@ -1,11 +1,11 @@
 <template>
   <div>
-    <!-- Search + Add -->
+    <!-- Search & Add -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
       <input
         v-model="search"
         type="text"
-        placeholder="Search by name, license, or vehicle..."
+        placeholder="Search by name, email, license or vehicle..."
         class="border rounded px-4 py-2 w-full md:w-1/2"
       />
 
@@ -23,7 +23,8 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Name</th>
+            <th>User</th>
+            <th>Email</th>
             <th>License No.</th>
             <th>Phone</th>
             <th>Address</th>
@@ -36,7 +37,9 @@
         <tbody>
           <tr v-for="(driver, index) in paginatedDrivers" :key="driver.id">
             <td>{{ start + index + 1 }}</td>
-            <td>{{ driver.name }}</td>
+            <td>{{ driver.user?.name || '—' }}</td>
+            <td>{{ driver.user?.email || '—' }}</td>
+            
             <td>{{ driver.license_number }}</td>
             <td>{{ driver.phone_number }}</td>
             <td>{{ driver.home_address }}</td>
@@ -56,8 +59,9 @@
               <button class="text-red-600 hover:underline" @click="remove(driver.id)">Delete</button>
             </td>
           </tr>
+
           <tr v-if="paginatedDrivers.length === 0">
-            <td colspan="9" class="text-center text-gray-500 py-4">No drivers found.</td>
+            <td colspan="10" class="text-center text-gray-500 py-4">No drivers found.</td>
           </tr>
         </tbody>
       </table>
@@ -127,11 +131,10 @@ const fetchDrivers = async () => {
 const filteredDrivers = computed(() => {
   const keyword = search.value.toLowerCase()
   return allDrivers.value.filter(d =>
-    d.name?.toLowerCase().includes(keyword) ||
+    d.user?.name?.toLowerCase().includes(keyword) ||
+    d.user?.email?.toLowerCase().includes(keyword) ||
     d.license_number?.toLowerCase().includes(keyword) ||
     d.phone_number?.toLowerCase().includes(keyword) ||
-    d.home_address?.toLowerCase().includes(keyword) ||
-    d.sex?.toLowerCase().includes(keyword) ||
     d.vehicle?.plate_number?.toLowerCase().includes(keyword) ||
     d.vehicle?.manufacturer?.toLowerCase().includes(keyword) ||
     d.vehicle?.model?.toLowerCase().includes(keyword)
@@ -146,19 +149,6 @@ const paginatedDrivers = computed(() =>
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(filteredDrivers.value.length / perPage))
 )
-
-const edit = (id) => router.push(`/drivers/${id}/edit`)
-const remove = async (id) => {
-  if (confirm('Are you sure you want to delete this driver?')) {
-    try {
-      await axios.delete(`/drivers/${id}`)
-      await fetchDrivers()
-    } catch (err) {
-      console.error('❌ Failed to delete driver:', err)
-      alert('Unable to delete driver.')
-    }
-  }
-}
 
 const visiblePages = computed(() => {
   const total = totalPages.value
@@ -181,6 +171,19 @@ const visiblePages = computed(() => {
 
   return pages
 })
+
+const edit = (id) => router.push(`/drivers/${id}/edit`)
+const remove = async (id) => {
+  if (confirm('Are you sure you want to delete this driver?')) {
+    try {
+      await axios.delete(`/drivers/${id}`)
+      await fetchDrivers()
+    } catch (err) {
+      console.error('❌ Failed to delete driver:', err)
+      alert('Unable to delete driver.')
+    }
+  }
+}
 
 watch(search, () => {
   page.value = 1

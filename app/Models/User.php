@@ -6,11 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles; // ✅ Import Spatie Role trait
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles; // ✅ Add HasRoles trait
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+
+    /**
+     * The guard name for Spatie permission.
+     */
+    protected $guard_name = 'api'; // ✅ Important for Spatie to use the correct guard
 
     /**
      * The attributes that are mass assignable.
@@ -21,7 +26,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password'
-        // Remove 'role' from here if you're using spatie roles via assignRole() method
     ];
 
     /**
@@ -43,4 +47,12 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Relationship: A user can have one driver profile
+     */
+    public function driver()
+    {
+        return $this->hasOne(Driver::class);
+    }
 }

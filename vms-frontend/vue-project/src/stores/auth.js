@@ -33,8 +33,10 @@ export const useAuthStore = defineStore('auth', {
       try {
         const res = await axios.post('/login', credentials)
         const { token, user } = res.data
+
         this.token = token
         this.user = user
+
         localStorage.setItem('token', token)
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       } catch (err) {
@@ -55,16 +57,17 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
 
       if (router) {
-        router.push('/') // ✅ Redirect to Home page
+        router.push('/')
       }
     },
 
+    // ✅ Supports multiple roles via Spatie
     hasRole(role) {
-      return this.user?.role === role
+      return this.user?.roles?.some(r => r.name === role)
     },
 
     hasAnyRole(roles) {
-      return roles.includes(this.user?.role)
+      return this.user?.roles?.some(r => roles.includes(r.name))
     }
   }
 })

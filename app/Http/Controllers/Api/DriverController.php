@@ -9,30 +9,43 @@ use Illuminate\Http\Request;
 class DriverController extends Controller
 {
     // ✅ Get all drivers with vehicle relationship
-    public function index()
-    {
-        $this->authorizeAccess('view');
-        return Driver::with('vehicle')->get();
-    }
+ public function index()
+{
+    $this->authorizeAccess('view');
+    return Driver::with(['user', 'vehicle'])->get(); // 👈 make sure 'user' is included
+}
+
 
     // ✅ Store a new driver with validation
-    public function store(Request $request)
-    {
-        $this->authorizeAccess('create');
+public function store(Request $request)
+{
+    $this->authorizeAccess('create');
 
-        $validated = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'phone_number'          => 'required|string|max:20',
-            'home_address'          => 'required|string|max:255',
-            'sex'                   => 'required|in:male,female,other',
-            'driver_licence_number' => 'required|string|max:50|unique:drivers',
-            'vehicle_id'            => 'nullable|exists:vehicles,id',
-        ]);
+    $validated = $request->validate([
+        'user_id'              => 'required|exists:users,id|unique:drivers,user_id',
+        'license_number'       => 'required|string|max:50|unique:drivers',
+        'phone_number'         => 'required|string|max:20',
+        'home_address'         => 'required|string|max:255',
+        'sex'                  => 'required|in:male,female,other',
+        'vehicle_id'           => 'nullable|exists:vehicles,id',
+    ]);
 
-        $driver = Driver::create($validated);
+    // Assign 'driver' role to user if not already
+    $user = \App\Models\User::findOrFail($validated['user_id']);
+    if (!$user->hasRole('driver')) {
+        // $user->assignRole('driver', 'api'); // 👈 specify the 'api' guard
+        $user->assignRole('driver');
 
-        return response()->json($driver->load('vehicle'), 201);
+
     }
+
+    
+    $driver = Driver::create($validated);
+
+    return response()->json($driver->load(['user', 'vehicle']), 201);
+}
+
+
 
     // ✅ Show single driver
     public function show($id)
@@ -42,25 +55,58 @@ class DriverController extends Controller
     }
 
     // ✅ Update driver
-    public function update(Request $request, $id)
-    {
-        $this->authorizeAccess('update');
+public function update(Request $request, $id)
+{
+    $this->authorizeAccess('update');
 
-        $driver = Driver::findOrFail($id);
+    $driver = Driver::with('user')->findOrFail($id);
 
-        $validated = $request->validate([
-            'name'                  => 'sometimes|required|string|max:255',
-            'phone_number'          => 'sometimes|required|string|max:20',
-            'home_address'          => 'sometimes|required|string|max:255',
-            'sex'                   => 'sometimes|required|in:male,female,other',
-            'driver_licence_number' => 'sometimes|required|string|max:50|unique:drivers,driver_licence_number,' . $id,
-            'vehicle_id'            => 'nullable|exists:vehicles,id',
-        ]);
+    $validated = $request->validate([
+        'user_id'         => 'sometimes|required|exists:users,id|unique:drivers,user_id,' . $id,
+        'license_number'  => 'sometimes|required|string|max:50|unique:drivers,license_number,' . $id,
+        'phone_number'    => 'sometimes|required|string|max:20',
+        'home_address'    => 'sometimes|required|string|max:255',
+        'sex'             => 'sometimes|required|in:male,female,other',
+        'vehicle_id'      => 'nullable|exists:vehicles,id',
+        'name'            => 'sometimes|required|string|max:100',
+        'email'           => 'sometimes|required|email|max:100|unique:users,email,' . $driver->user_id,
+    ]);
 
-        $driver->update($validated);
+    // ✅ Update user_id if changed
+    if (isset($validated['user_id']) && $validated['user_id'] != $driver->user_id) {
+        $newUser = \App\Models\User::findOrFail($validated['user_id']);
 
-        return response()->json($driver->load('vehicle'));
+        // Optionally reassign role if needed
+        if (!$newUser->hasRole('driver')) {
+            $newUser->assignRole('driver');
+
+            
+        }
+
+        $driver->user_id = $validated['user_id'];
     }
+
+    // ✅ Update other driver fields
+    $driver->license_number = $validated['license_number'] ?? $driver->license_number;
+    $driver->phone_number   = $validated['phone_number'] ?? $driver->phone_number;
+    $driver->home_address   = $validated['home_address'] ?? $driver->home_address;
+    $driver->sex            = $validated['sex'] ?? $driver->sex;
+    $driver->vehicle_id     = $validated['vehicle_id'] ?? $driver->vehicle_id;
+    $driver->save();
+
+    // ✅ Update linked user info if provided
+    if (isset($validated['name']) || isset($validated['email'])) {
+        $driver->user->update([
+            'name'  => $validated['name'] ?? $driver->user->name,
+            'email' => $validated['email'] ?? $driver->user->email,
+        ]);
+    }
+
+    return response()->json($driver->load(['user', 'vehicle']));
+}
+
+
+
 
     // ✅ Delete driver
     public function destroy($id)

@@ -14,12 +14,12 @@ public function up()
 {
     Schema::create('drivers', function (Blueprint $table) {
         $table->id();
-        $table->string('name');
+        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Link to users
+        $table->foreignId('vehicle_id')->nullable()->constrained()->onDelete('set null');
         $table->string('license_number')->unique();
         $table->string('phone_number');
         $table->string('home_address');
-        $table->enum('sex', ['male', 'female']);
-        $table->foreignId('vehicle_id')->constrained()->onDelete('cascade'); // 👈 vehicle assigned
+        $table->enum('sex', ['male', 'female', 'other']);
         $table->timestamps();
     });
 }

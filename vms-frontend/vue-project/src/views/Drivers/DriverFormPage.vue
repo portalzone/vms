@@ -10,7 +10,6 @@ import { useRoute } from 'vue-router'
 import DriverForm from './DriverForm.vue'
 
 const route = useRoute()
-
 const isEdit = route.name === 'DriverEdit'
 const driverId = route.params.id
 </script>

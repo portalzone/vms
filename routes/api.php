@@ -22,6 +22,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Auth/User Info
     Route::get('/me', [AuthController::class, 'me']);
     Route::get('/user', fn(Request $request) => $request->user());
+    Route::get('/available-users', [UserController::class, 'availableForDrivers'])->middleware('auth:sanctum');
+    Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus'])->middleware('auth:sanctum');
+
+
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // ✅ Roles (used for dropdowns etc)

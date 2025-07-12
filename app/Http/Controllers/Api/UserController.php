@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -111,6 +112,46 @@ class UserController extends Controller
         $user->delete();
         return response()->json(['message' => 'User deleted successfully']);
     }
+
+// available for driver
+// public function availableForDrivers()
+// {
+//     $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
+
+//     $users = User::whereNotIn('id', $assignedUserIds)
+//                 ->select('id', 'name', 'email')
+//                 ->get();
+
+//     return response()->json($users);
+// }
+
+//user with driver status
+
+// public function usersWithDriverStatus()
+// {
+//     $assignedUserIds = Driver::pluck('user_id')->toArray();
+
+//     $users = User::select('id', 'name', 'email')
+//         ->get()
+//         ->map(function ($user) use ($assignedUserIds) {
+//             $user->already_assigned = in_array($user->id, $assignedUserIds);
+//             return $user;
+//         });
+
+//     return response()->json($users);
+// }
+
+public function usersWithDriverStatus()
+{
+    $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
+
+    $users = User::whereNotIn('id', $assignedUserIds)
+                ->select('id', 'name', 'email')
+                ->get();
+
+    return response()->json($users);
+}
+
 
     // 🔐 Role-based access checker
     private function authorizeAccess(string $action)

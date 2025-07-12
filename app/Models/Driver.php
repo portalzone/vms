@@ -9,14 +9,22 @@ class Driver extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'phone_number',
-        'home_address',
-        'sex',
-        'driver_licence_number',
-        'vehicle_id', // foreign key
-    ];
+   protected $fillable = [
+    'user_id',
+    'vehicle_id',
+    'license_number', // ✅ correct key
+    'phone_number',
+    'home_address',
+    'sex',
+];
+
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    
 
     public function vehicle()
     {
