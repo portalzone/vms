@@ -24,7 +24,7 @@ class MaintenanceController extends Controller
         $validated = $request->validate([
             'vehicle_id'  => 'required|exists:vehicles,id',
             'description' => 'required|string',
-            'status'      => 'required|in:Pending,In Progress,Completed',
+            'status'      => 'required|in:Pending,in_progress,Completed',
         ]);
 
         $record = Maintenance::create($validated);
@@ -55,7 +55,7 @@ class MaintenanceController extends Controller
         $validated = $request->validate([
             'vehicle_id'  => 'sometimes|exists:vehicles,id',
             'description' => 'sometimes|string',
-            'status'      => 'sometimes|in:Pending,In Progress,Completed',
+            'status'      => 'sometimes|in:Pending,in_progress,Completed',
         ]);
 
         $record->update($validated);

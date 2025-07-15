@@ -1,46 +1,33 @@
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4 py-8">
-    <div class="bg-white shadow-xl rounded-2xl px-6 py-10 md:px-12 w-full max-w-7xl text-center">
-      <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-        Welcome to the Vehicle Management System
-      </h1>
-
-      <div v-if="auth.user" class="mb-6">
-        <p class="text-green-700 font-medium text-base md:text-lg mb-3">
-          You're logged in as <span class="font-semibold">{{ auth.user.name }}</span>.
-        </p>
-        <RouterLink
-          to="/dashboard"
-          class="inline-block bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm md:text-base transition"
-        >
-          Go to Dashboard
-        </RouterLink>
+  <div class="page-wrapper">
+    <div class="container">
+      <div class="header">
+        <h1>Welcome to the Vehicle Management System</h1>
+        <div v-if="auth.user" class="user-info">
+          You're logged in as <span>{{ auth.user.name }}</span>.
+        </div>
+        <div v-if="auth.user" class="dashboard-link">
+          <RouterLink to="/dashboard">Go to Dashboard</RouterLink>
+        </div>
       </div>
 
-      <h2 class="text-3xl font-bold text-gray-800 mt-10 mb-6">About the Vehicle Management System</h2>
+      <h2 class="section-title">About the Vehicle Management System</h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
-        <div
-          v-for="(item, index) in features"
-          :key="index"
-          class="flex items-start p-5 bg-white rounded-xl shadow hover:shadow-md transition h-full"
-        >
-          <div class="w-12 h-12 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center mr-4 text-xl">
-            <component :is="item.icon" />
+      <div class="features-grid">
+        <div v-for="(item, index) in features" :key="index" class="feature-card">
+          <div class="feature-top">
+            <div class="feature-icon">
+              <component :is="item.icon" />
+            </div>
+            <h3>{{ item.title }}</h3>
           </div>
-          <div class="flex-1">
-            <h3 class="text-lg font-semibold text-gray-900">
-              {{ item.title }}
-            </h3>
-            <p class="text-sm text-gray-600 mt-1">
-              {{ item.description }}
-            </p>
-          </div>
+          <p class="feature-description">{{ item.description }}</p>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { useAuthStore } from '@/stores/auth'
@@ -99,3 +86,145 @@ const features = [
   },
 ]
 </script>
+
+<style scoped>
+.page-wrapper {
+  min-height: 100vh;
+  background-color: #f3f4f6; /* gray-100 */
+  padding: 2.5rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .page-wrapper {
+    padding: 4rem 2rem;
+  }
+}
+
+.container {
+  max-width: 112rem; /* max-w-7xl */
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937; /* gray-800 */
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .header h1 {
+    font-size: 1.875rem;
+  }
+}
+
+.user-info {
+  font-size: 1rem;
+  color: #047857; /* green-700 */
+  font-weight: 500;
+}
+
+.user-info span {
+  font-weight: 600;
+}
+
+.dashboard-link {
+  margin-top: 1rem;
+}
+
+.dashboard-link a {
+  display: inline-block;
+  background-color: #16a34a; /* green-600 */
+  color: #fff;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.dashboard-link a:hover {
+  background-color: #15803d; /* green-700 */
+}
+
+.section-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .section-title {
+    font-size: 1.875rem;
+  }
+}
+
+.features-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 768px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.feature-card {
+  background-color: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 4px 6px rgba(0,0,0,0.03);
+  transition: 0.2s ease all;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.feature-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feature-top h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.feature-description {
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+</style>

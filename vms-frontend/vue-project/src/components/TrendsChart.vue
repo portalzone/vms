@@ -37,7 +37,7 @@ const chartOptions = {
 
 onMounted(async () => {
   try {
-    const res = await axios.get('/dashboard/trends')
+    const res = await axios.get('/dashboard/monthly-trends')
     const data = res.data
 
     chartData.value.labels = data.map(entry => entry.month)

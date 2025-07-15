@@ -11,7 +11,7 @@ class MaintenanceFactory extends Factory
     {
        return [
     'description' => $this->faker->sentence,
-    'status' => $this->faker->randomElement(['Pending', 'In Progress', 'Completed']),
+    'status' => $this->faker->randomElement(['Pending', 'in_progress', 'Completed']),
     'cost' => $this->faker->randomFloat(2, 100, 2000),
     'date' => $this->faker->date(),
 ];

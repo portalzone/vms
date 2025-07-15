@@ -53,6 +53,9 @@ const logout = async () => {
 <style scoped></style>
 
 <style>
+/* ===========================
+   🌐 Global Layout Styles
+   =========================== */
 html, body, #app {
   margin: 0;
   padding: 0;
@@ -64,12 +67,15 @@ html, body, #app {
   line-height: 1.6;
 }
 
-/* Typography */
+/* ===========================
+   ✍️ Typography
+   =========================== */
 h1, h2, h3, h4, h5, h6 {
   color: #1f2937;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
+
 h1 { font-size: 1.875rem; font-weight: 800; }
 h2 { font-size: 1.5rem; }
 h3 { font-size: 1.25rem; }
@@ -83,11 +89,14 @@ p {
   margin-bottom: 1rem;
 }
 
-/* Tables */
+/* ===========================
+   🧾 Table Styles
+   =========================== */
 table {
   width: 100%;
   border-collapse: collapse;
 }
+
 th {
   text-align: left;
   font-size: 0.875rem;
@@ -96,6 +105,7 @@ th {
   padding: 0.5rem 1rem;
   background-color: #f3f4f6;
 }
+
 td {
   font-size: 0.875rem;
   color: #1f2937;
@@ -103,7 +113,9 @@ td {
   border-top: 1px solid #e5e7eb;
 }
 
-/* Labels */
+/* ===========================
+   🏷️ Labels
+   =========================== */
 label {
   font-size: 0.875rem;
   font-weight: 500;
@@ -112,12 +124,15 @@ label {
   margin-bottom: 0.25rem;
 }
 
-/* Inputs and Textareas */
+/* ===========================
+   ✏️ Inputs & Textareas
+   =========================== */
 input,
-textarea {
-  width: 100%; /* Default: full width on mobile */
+textarea,
+select {
+  width: 100%;
   padding: 0.625rem 0.75rem;
-  border: 1px solid #d1d5db; /* gray-300 */
+  border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   background-color: white;
   color: #111827;
@@ -127,19 +142,11 @@ textarea {
   outline: none;
 }
 
-/* Responsive override: 50% width on tablets and up */
-@media (min-width: 768px) {
-  input,
-  textarea {
-    width: 50%;
-  }
-}
-
 input:focus,
-textarea:focus {
-  border-color: #4f46e5; /* indigo-600 */
+textarea:focus,
+select:focus {
+  border-color: #4f46e5;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-  background-color: #ffffff;
 }
 
 textarea {
@@ -147,21 +154,32 @@ textarea {
   min-height: 100px;
 }
 
-/* Submit Button Styles */
+/* Tablet and Desktop Inputs/Textareas: reduce width */
+@media (min-width: 768px) {
+  input,
+  textarea,
+  select {
+    width: 50%;
+  }
+}
+
+/* ===========================
+   📤 Submit Button
+   =========================== */
 button[type="submit"] {
-  background-color: #2563eb;         /* Tailwind blue-600 */
+  background-color: #2563eb;
   color: #ffffff;
-  padding: 0.625rem 1.25rem;         /* py-2.5 px-5 */
-  font-size: 0.875rem;               /* text-sm */
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  border-radius: 0.5rem;             /* rounded-lg */
+  border-radius: 0.5rem;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 button[type="submit"]:hover {
-  background-color: #1d4ed8;         /* Tailwind blue-700 */
+  background-color: #1d4ed8;
 }
 
 button[type="submit"]:active {
@@ -169,45 +187,23 @@ button[type="submit"]:active {
 }
 
 button[type="submit"]:disabled {
-  background-color: #9ca3af;         /* Tailwind gray-400 */
+  background-color: #9ca3af;
   cursor: not-allowed;
 }
 
 /* ===========================
-   🧾 Select Dropdown Styling
+   🔽 Select Dropdown
    =========================== */
 select {
-  width: 50%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;         /* gray-300 */
-  border-radius: 0.5rem;
-  background-color: white;
-  color: #111827;                    /* gray-900 */
-  font-size: 0.875rem;               /* text-sm */
-  font-family: inherit;
-  transition: border-color 0.3s, box-shadow 0.3s;
-  appearance: none;                  /* Remove default arrow */
+  appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg fill='none' stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1rem;
 }
 
-select:focus {
-  border-color: #4f46e5;             /* indigo-600 */
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-  outline: none;
-}
-
-/* Optional: responsive behavior */
-@media (max-width: 768px) {
-  select {
-    width: 100%;
-  }
-}
-
 /* ===========================
-   🎚️ Option Styling
+   🧩 Options (Dropdown Items)
    =========================== */
 option {
   color: #111827;
@@ -219,7 +215,7 @@ option {
    🔘 Radio Buttons
    =========================== */
 input[type="radio"] {
-  accent-color: #4f46e5;  /* Tailwind indigo-600 */
+  accent-color: #4f46e5;
   width: 1rem;
   height: 1rem;
   margin-right: 0.5rem;
@@ -236,7 +232,7 @@ input[type="checkbox"] {
 }
 
 /* ===========================
-   🔎 Search Input (Optional)
+   🔎 Search Inputs
    =========================== */
 input[type="search"] {
   width: 100%;
@@ -247,6 +243,5 @@ input[type="search"] {
   color: #111827;
   font-size: 0.875rem;
 }
-
-
 </style>
+

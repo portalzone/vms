@@ -17,12 +17,16 @@ class DashboardController extends Controller
    public function stats()
 {
     return response()->json([
-        'vehicles' => \App\Models\Vehicle::count(),
-        'drivers' => \App\Models\Driver::count(),
-        'expenses' => \App\Models\Expense::sum('amount'),
-        'maintenances' => \App\Models\Maintenance::count(),
+        'vehicles' => Vehicle::count(),
+        'drivers' => Driver::count(),
+        'expenses' => Expense::sum('amount'),
+        'maintenances' => [
+            'pending' => Maintenance::where('status', 'pending')->count(),
+            'in_progress' => Maintenance::where('status', 'in_progress')->count(),
+        ],
     ]);
 }
+
 
 
     public function recentActivity()

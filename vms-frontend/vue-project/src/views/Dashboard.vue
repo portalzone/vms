@@ -47,7 +47,12 @@
           <h3 class="text-sm font-medium flex items-center gap-2">
             🚲 Maintenance Tasks
           </h3>
-          <p class="text-2xl font-bold">{{ stats.maintenances ?? 0 }}</p>
+          <p class="text-2xl font-bold">
+  {{
+    (stats.maintenances?.pending ?? 0) + (stats.maintenances?.in_progress ?? 0)
+  }}
+</p>
+
         </router-link>
       </div>
 
@@ -100,6 +105,32 @@ onMounted(() => {
     intervalId = setInterval(fetchStats, 60000)
   }
 })
+
+onMounted(async () => {
+  try {
+    const response = await axios.get('/dashboard/monthly-trends')
+    console.log('📊 Monthly Trend Data:', response.data)
+  } catch (e) {
+    console.error('❌ Error loading trends:', e)
+  }
+})
+onMounted(async () => {
+  try {
+    const response = await axios.get('/dashboard/stats')
+    console.log('📊 Stats Data:', response.data)
+  } catch (e) {
+    console.error('❌ Error loading stats:', e)
+  }
+})
+onMounted(async () => {
+  try {
+    const response = await axios.get('/dashboard/activity')
+    console.log('📊 Activities Data:', response.data)
+  } catch (e) {
+    console.error('❌ Error loading Activities:', e)
+  }
+})
+
 
 onBeforeUnmount(() => {
   if (intervalId) {

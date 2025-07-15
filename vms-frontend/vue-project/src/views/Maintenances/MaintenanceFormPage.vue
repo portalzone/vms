@@ -24,7 +24,7 @@
         <label>Status</label>
         <select v-model="form.status" required class="w-full border px-3 py-2 rounded">
   <option value="Pending">Pending</option>
-  <option value="In Progress">In Progress</option>
+  <option value="in_progress">In Progress</option>
   <option value="Completed">Completed</option>
 </select>
 
