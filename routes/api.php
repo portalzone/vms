@@ -20,41 +20,35 @@ Route::post('/register', [AuthController::class, 'register']);
 // 🔒 Authenticated Routes (Token Required via Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get('/driver/me', [DriverController::class, 'me'])->middleware('auth:sanctum');
-Route::apiResource('trips', TripController::class)->middleware('auth:sanctum');
-
-    // ✅ Auth/User Info
+    // ✅ Fixes "Loading..." issue by supporting /me fetch
     Route::get('/me', [AuthController::class, 'me']);
+
+    // ✅ User info and logout
     Route::get('/user', fn(Request $request) => $request->user());
-    Route::get('/available-users', [UserController::class, 'availableForDrivers'])->middleware('auth:sanctum');
-    Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus'])->middleware('auth:sanctum');
-    Route::get('/users-available-for-drivers', [UserController::class, 'usersAvailableForDriverForm']);
-
-    // trip route
-
-
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // ✅ Roles (used for dropdowns etc)
+    // ✅ Roles
     Route::get('/roles', [RoleController::class, 'index']);
 
-    // ✅ Dashboard Data
+    // ✅ Users
+    Route::get('/users/{id}', [UserController::class, 'show']); // Custom show
+    Route::get('/available-users', [UserController::class, 'availableForDrivers']);
+    Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus']);
+    Route::get('/users-available-for-drivers', [UserController::class, 'usersAvailableForDriverForm']);
+    Route::apiResource('users', UserController::class)->except(['show']);
+
+    // ✅ Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/trends', [DashboardController::class, 'monthlyTrends']);
     Route::get('/dashboard/activity', [DashboardController::class, 'recentActivity']);
 
-    // ✅ Users (override GET /users/{id} to fix 405 error)
-    Route::get('/users/{id}', [UserController::class, 'show']); // 🛠️ Custom show route
-    Route::apiResource('users', UserController::class)->except(['show']);
-
-    // ✅ Other Resources
+    // ✅ Feature modules
     Route::apiResource('vehicles', VehicleController::class);
     Route::apiResource('drivers', DriverController::class);
+    Route::get('/driver/me', [DriverController::class, 'me']);
+
+    Route::apiResource('checkins', CheckInOutController::class);
     Route::apiResource('maintenances', MaintenanceController::class);
     Route::apiResource('expenses', ExpenseController::class);
-    Route::apiResource('checkins', CheckInOutController::class);
     Route::apiResource('trips', TripController::class);
-
-    // Route::apiResource('trips', \App\Http\Controllers\Api\TripController::class);
-
 });

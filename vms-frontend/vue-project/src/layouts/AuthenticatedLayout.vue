@@ -1,12 +1,15 @@
 <template>
   <div class="layout">
+    <!-- Header -->
     <header class="navbar">
       <div class="logo">🚗 VMS Portal</div>
-      <button class="menu-toggle" @click="toggleMenu">
+
+      <button class="menu-toggle" @click="toggleMenu" aria-label="Toggle Menu">
         <span v-if="!menuOpen">☰</span>
         <span v-else>✖</span>
       </button>
 
+      <!-- Navigation -->
       <nav :class="{ open: menuOpen }">
         <RouterLink to="/" exact-active-class="active">Home</RouterLink>
         <RouterLink to="/dashboard" exact-active-class="active">Dashboard</RouterLink>
@@ -23,10 +26,12 @@
       </nav>
     </header>
 
+    <!-- Main Content -->
     <main class="main-content">
       <slot />
     </main>
 
+    <!-- Footer -->
     <footer class="footer">
       &copy; {{ year }} Vehicle Management System. All rights reserved.
     </footer>
@@ -47,9 +52,11 @@ const auth = useAuthStore()
 function logout() {
   auth.logout(router)
 }
+
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
 }
+
 function hasRole(allowedRoles) {
   return allowedRoles.includes(props.user?.role)
 }
@@ -62,14 +69,16 @@ function hasRole(allowedRoles) {
   min-height: 100vh;
 }
 
+/* NAVBAR */
 .navbar {
   background-color: #1f2937;
   color: white;
-  padding: 1rem 2rem;
+  padding: 1rem 1.5rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .logo {
@@ -77,25 +86,28 @@ function hasRole(allowedRoles) {
   font-weight: bold;
 }
 
+/* Toggle button */
 .menu-toggle {
   display: none;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: white;
   cursor: pointer;
 }
 
+/* Navigation menu */
 nav {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
+  align-items: center;
 }
 
 nav a {
   color: #d1d5db;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: color 0.3s ease;
 }
 
 nav a:hover,
@@ -105,14 +117,16 @@ nav a.active {
   text-decoration: underline;
 }
 
+/* Main content */
 .main-content {
   flex: 1;
   width: 100%;
-  padding: 2rem;
+  padding: 1.5rem;
   background-color: #f9fafb;
   box-sizing: border-box;
 }
 
+/* Footer */
 .footer {
   background-color: #1f2937;
   color: white;
@@ -120,6 +134,9 @@ nav a.active {
   padding: 1rem;
 }
 
+/* ================================
+   📱 Responsive Styles (Mobile First)
+   ================================ */
 @media (max-width: 768px) {
   .menu-toggle {
     display: block;
@@ -128,8 +145,14 @@ nav a.active {
   nav {
     display: none;
     flex-direction: column;
+    align-items: flex-start;
     width: 100%;
-    margin-top: 1rem;
+    background-color: #1f2937;
+    padding: 1rem 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 999;
   }
 
   nav.open {
@@ -137,7 +160,10 @@ nav a.active {
   }
 
   nav a {
-    padding: 0.5rem 0;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
 </style>

@@ -1,3 +1,5 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
 @import './base.css';
 
 #app {
@@ -7,6 +9,7 @@
   font-weight: normal;
 }
 
+/* ✅ Links */
 a,
 .green {
   text-decoration: none;
@@ -21,15 +24,4 @@ a,
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
-}
+/* ✅ Remove old grid layout from app container */

@@ -16,18 +16,19 @@ export const useAuthStore = defineStore('auth', {
       this.fetchUser()
     },
 
-    async fetchUser() {
-      if (!this.token) return
+async fetchUser() {
+  if (!this.token) return
 
-      try {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
-        const response = await axios.get('/me')
-        this.user = response.data.user
-      } catch (err) {
-        console.error('🔒 Failed to fetch user:', err)
-        this.logout()
-      }
-    },
+  try {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
+    const response = await axios.get('/me') // ⚠️ Confirm this route works!
+    this.user = response.data.user
+  } catch (err) {
+    console.error('🔒 Failed to fetch user:', err)
+    this.logout() // this redirects to `/` so App.vue becomes GuestLayout
+  }
+},
+
 
     async login(credentials) {
       try {

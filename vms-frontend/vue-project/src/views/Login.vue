@@ -10,6 +10,7 @@
         <label>Password:</label>
         <input v-model="password" type="password" class="border p-2 w-full" required />
       </div>
+      <br>
       <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Login</button>
     </form>
     <p v-if="error" class="text-red-500 mt-2">{{ error }}</p>
