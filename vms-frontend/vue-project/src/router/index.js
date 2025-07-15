@@ -31,6 +31,9 @@ const MaintenanceFormPage = () => import('../views/Maintenances/MaintenanceFormP
 const ExpensesPage = () => import('../views/Expenses/ExpensesPage.vue')
 const ExpenseFormPage = () => import('../views/Expenses/ExpenseFormPage.vue')
 
+// recent activity
+import RecentActivityPage from '@/views/RecentActivityPage.vue';
+
 
 const routes = [
   {
@@ -203,6 +206,14 @@ const routes = [
   props: true,
   meta: { requiresAuth: true },
 },
+
+// recent activity
+{
+    path: '/recent-activity',
+    name: 'RecentActivity',
+    component: RecentActivityPage,
+    meta: { requiresAuth: true }
+  },
 
 
   // Fallback 404

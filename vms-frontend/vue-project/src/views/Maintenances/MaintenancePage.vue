@@ -18,36 +18,46 @@
     </div>
 
     <!-- Maintenance Table -->
-    <div class="overflow-x-auto rounded shadow bg-white">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Vehicle</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th class="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(m, index) in paginatedMaintenances" :key="m.id">
-            <td>{{ start + index + 1 }}</td>
-            <td>{{ m.vehicle?.plate_number ?? '—' }}</td>
-            <td>{{ m.description }}</td>
-            <td>{{ m.status }}</td>
-            <td class="text-right space-x-2">
-              <button class="text-blue-600 hover:underline" @click="edit(m.id)">Edit</button>
-              <button class="text-red-600 hover:underline" @click="remove(m.id)">Delete</button>
-            </td>
-          </tr>
-          <tr v-if="paginatedMaintenances.length === 0">
-            <td colspan="5" class="text-center text-gray-500 py-4">
-              No maintenance records found.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+<!-- Maintenance Table -->
+<div class="overflow-x-auto rounded shadow bg-white">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Vehicle</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Cost (₦)</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(m, index) in paginatedMaintenances" :key="m.id">
+        <td>{{ start + index + 1 }}</td>
+        <td>{{ m.vehicle?.plate_number ?? '—' }}</td>
+        <td>{{ m.description }}</td>
+        <td>
+          <span :class="m.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'">
+            {{ m.status }}
+          </span>
+        </td>
+        <td>₦{{ m.cost?.toLocaleString() ?? '0.00' }}</td>
+        <td class="text-right space-x-2">
+<button class="btn btn-edit" @click="edit(m.id)">Edit</button>
+<button class="btn btn-delete" @click="remove(m.id)">Delete</button>
+
+          
+        </td>
+      </tr>
+      <tr v-if="paginatedMaintenances.length === 0">
+        <td colspan="6" class="text-center text-gray-500 py-4">
+          No maintenance records found.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 
     <!-- Pagination -->
     <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
@@ -117,9 +127,11 @@ const filteredMaintenances = computed(() => {
   return allMaintenances.value.filter(m =>
     (m.description || '').toLowerCase().includes(keyword) ||
     (m.status || '').toLowerCase().includes(keyword) ||
-    (m.vehicle?.plate_number || '').toLowerCase().includes(keyword)
+    (m.vehicle?.plate_number || '').toLowerCase().includes(keyword) ||
+    String(m.cost ?? '').includes(keyword)
   )
 })
+
 
 const start = computed(() => (page.value - 1) * perPage)
 const paginatedMaintenances = computed(() =>

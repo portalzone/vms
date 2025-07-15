@@ -31,18 +31,9 @@
             {{ trip.start_time ? new Date(trip.start_time).toLocaleString() : '—' }}
           </td>
           <td class="px-4 py-2 text-right space-x-2">
-            <button
-              @click="$emit('edit', trip.id)"
-              class="text-blue-600 hover:underline"
-            >
-              Edit
-            </button>
-            <button
-              @click="$emit('remove', trip.id)"
-              class="text-red-600 hover:underline"
-            >
-              Delete
-            </button>
+<button @click="$emit('edit', trip.id)" class="btn btn-edit">Edit</button>
+<button @click="$emit('remove', trip.id)" class="btn btn-delete">Delete</button>
+
           </td>
         </tr>
 

@@ -37,9 +37,9 @@
             <td>{{ vehicle.year }}</td>
             <td>{{ vehicle.plate_number }}</td>
             <td class="text-right space-x-2">
-              <button class="text-blue-600 hover:underline" @click="edit(vehicle.id)">Edit</button>
-              <button class="text-red-600 hover:underline" @click="remove(vehicle.id)">Delete</button>
-            </td>
+   <button class="btn-edit" @click="edit(vehicle.id)">Edit</button>
+<button class="btn-delete" @click="remove(vehicle.id)">Delete</button>
+          </td>
           </tr>
           <tr v-if="paginatedVehicles.length === 0">
             <td colspan="6" class="text-center text-gray-500 py-4">No vehicles found.</td>

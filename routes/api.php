@@ -40,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/dashboard/monthly-trends', [DashboardController::class, 'monthlyTrends']);
-    Route::get('/dashboard/activity', [DashboardController::class, 'recentActivity']);
+    Route::get('/dashboard/recent', [DashboardController::class, 'recentActivity']);
 
     // ✅ Feature modules
     Route::apiResource('vehicles', VehicleController::class);

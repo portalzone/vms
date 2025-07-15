@@ -163,9 +163,157 @@ textarea {
   }
 }
 
+/* ================================
+   🔘 Primary Button Styles (Global)
+   ================================ */
+/* Shared base button style */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+  text-decoration: none;
+}
+/* ✅ Submit Button (Green) */
+.btn-submit {
+  background-color: #16a34a; /* Tailwind green-600 */
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+  background-color: #15803d; /* Tailwind green-700 */
+}
+
+/* 🚫 Cancel Button */
+.btn-cancel {
+  background-color: transparent;
+  border: 1px solid #d1d5db; /* Tailwind gray-300 */
+  color: #374151; /* Tailwind gray-700 */
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s ease;
+  text-align: center;
+  display: inline-block;
+}
+
+.btn-cancel:hover {
+  background-color: #f3f4f6; /* Tailwind gray-100 */
+}
+
+
+/* 🌐 Neutral Secondary Button (e.g., Cancel) */
+.btn-secondary {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151; /* Tailwind gray-700 */
+  background-color: #f9fafb; /* Tailwind gray-50 */
+  border: 1px solid #d1d5db; /* Tailwind gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  text-align: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background-color: #f3f4f6; /* Tailwind gray-100 */
+  border-color: #9ca3af;     /* Tailwind gray-400 */
+  color: #111827;            /* Tailwind gray-900 */
+}
+
+
+/* ✏️ Edit Button */
+.btn-edit {
+  color: #2563eb; /* Tailwind blue-600 */
+  font-weight: 500;
+  font-size: 0.875rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.btn-edit:hover {
+  color: #1d4ed8; /* Tailwind blue-700 */
+}
+
+/* 🗑️ Delete Button */
+.btn-delete {
+  color: #dc2626; /* Tailwind red-600 */
+  font-weight: 500;
+  font-size: 0.875rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.btn-delete:hover {
+  color: #b91c1c; /* Tailwind red-700 */
+}
+
+
+
+/* 🌐 Primary Button (Add / Submit actions) */
+.btn-primary {
+  display: inline-block;
+  background-color: #2563eb; /* Tailwind blue-600 */
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 600;
+  border: none;
+  border-radius: 0.375rem;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8; /* Tailwind blue-700 */
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  background-color: #9ca3af; /* Tailwind gray-400 */
+  cursor: not-allowed;
+}
+
+
 /* ===========================
    📤 Submit Button
    =========================== */
+
 button[type="submit"] {
   background-color: #2563eb;
   color: #ffffff;

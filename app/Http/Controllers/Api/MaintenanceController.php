@@ -16,24 +16,27 @@ class MaintenanceController extends Controller
         return Maintenance::with('vehicle')->latest()->get();
     }
 
-    // ✅ Store new maintenance record
-    public function store(Request $request)
-    {
-        $this->authorizeAccess('create');
+    // ✅ Store new maintenance record with cost
+ public function store(Request $request)
+{
+    $this->authorizeAccess('create');
 
-        $validated = $request->validate([
-            'vehicle_id'  => 'required|exists:vehicles,id',
-            'description' => 'required|string',
-            'status'      => 'required|in:Pending,in_progress,Completed',
-        ]);
+    $validated = $request->validate([
+        'vehicle_id'  => 'required|exists:vehicles,id',
+        'description' => 'required|string',
+        'status'      => 'required|in:Pending,in_progress,Completed',
+        'cost'        => 'required|numeric|min:0', // now required
+        'date'        => 'required|date',
+    ]);
 
-        $record = Maintenance::create($validated);
+    $record = Maintenance::create($validated);
 
-        return response()->json([
-            'message' => 'Maintenance record created.',
-            'data'    => $record->load('vehicle'),
-        ]);
-    }
+    return response()->json([
+        'message' => 'Maintenance record created.',
+        'data'    => $record->load('vehicle'),
+    ]);
+}
+
 
     // ✅ Show one maintenance record
     public function show($id)
@@ -45,26 +48,29 @@ class MaintenanceController extends Controller
         return response()->json($record);
     }
 
-    // ✅ Update maintenance record
-    public function update(Request $request, $id)
-    {
-        $this->authorizeAccess('update');
+    // ✅ Update maintenance record with cost
+public function update(Request $request, $id)
+{
+    $this->authorizeAccess('update');
 
-        $record = Maintenance::findOrFail($id);
+    $record = Maintenance::findOrFail($id);
 
-        $validated = $request->validate([
-            'vehicle_id'  => 'sometimes|exists:vehicles,id',
-            'description' => 'sometimes|string',
-            'status'      => 'sometimes|in:Pending,in_progress,Completed',
-        ]);
+    $validated = $request->validate([
+        'vehicle_id'  => 'sometimes|exists:vehicles,id',
+        'description' => 'sometimes|string',
+        'status'      => 'sometimes|in:Pending,in_progress,Completed',
+        'cost'        => 'sometimes|numeric|min:0',
+        'date'        => 'required|date', // still required
+    ]);
 
-        $record->update($validated);
+    $record->update($validated);
 
-        return response()->json([
-            'message' => 'Maintenance record updated.',
-            'data'    => $record->load('vehicle'),
-        ]);
-    }
+    return response()->json([
+        'message' => 'Maintenance record updated.',
+        'data'    => $record->load('vehicle'),
+    ]);
+}
+
 
     // ✅ Delete a record
     public function destroy($id)

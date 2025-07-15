@@ -54,8 +54,9 @@
             </td>
             <td>{{ new Date(driver.created_at).toLocaleDateString() }}</td>
             <td class="text-right space-x-2">
-              <button class="text-blue-600 hover:underline" @click="edit(driver.id)">Edit</button>
-              <button class="text-red-600 hover:underline" @click="remove(driver.id)">Delete</button>
+<button class="btn-edit" @click="edit(driver.id)">Edit</button>
+<button class="btn-delete" @click="remove(driver.id)">Delete</button>
+
             </td>
           </tr>
 

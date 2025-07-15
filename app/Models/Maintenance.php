@@ -13,6 +13,7 @@ class Maintenance extends Model
         'vehicle_id',
         'description',
         'status',
+        'cost',
     ];
 
     public function vehicle()

@@ -8,12 +8,9 @@
         placeholder="Search description or amount..."
         class="border px-4 py-2 rounded w-full md:w-1/2"
       />
-      <router-link
-        to="/expenses/new"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        ➕ Add Expense
-      </router-link>
+<router-link to="/expenses/new" class="btn-primary">
+  ➕ Add Expense
+</router-link>
     </div>
 
     <!-- Expenses Table -->
@@ -37,8 +34,9 @@
             <td>{{ expense.description }}</td>
             <td>{{ expense.date }}</td>
             <td class="text-right space-x-2">
-              <button @click="edit(expense.id)" class="text-blue-600 hover:underline">Edit</button>
-              <button @click="remove(expense.id)" class="text-red-600 hover:underline">Delete</button>
+<button @click="edit(expense.id)" class="btn-link btn-edit">Edit</button> | 
+<button @click="remove(expense.id)" class="btn-link btn-delete">Delete</button>
+
             </td>
           </tr>
           <tr v-if="paginated.length === 0">

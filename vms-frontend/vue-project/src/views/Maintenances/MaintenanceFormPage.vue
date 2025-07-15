@@ -5,6 +5,7 @@
     </h2>
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
+      <!-- Vehicle Selection -->
       <div>
         <label>Vehicle</label>
         <select v-model="form.vehicle_id" required class="w-full border px-3 py-2 rounded">
@@ -15,25 +16,50 @@
         </select>
       </div>
 
+      <!-- Description -->
       <div>
         <label>Description</label>
         <textarea v-model="form.description" required class="w-full border px-3 py-2 rounded"></textarea>
       </div>
 
+      <!-- Status -->
       <div>
         <label>Status</label>
         <select v-model="form.status" required class="w-full border px-3 py-2 rounded">
-  <option value="Pending">Pending</option>
-  <option value="in_progress">In Progress</option>
-  <option value="Completed">Completed</option>
-</select>
-
-
+          <option value="Pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
       </div>
 
-      <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        {{ isEdit ? 'Update' : 'Create' }}
-      </button>
+      <!-- Cost -->
+      <div>
+        <label>Cost (₦)</label>
+        <input
+          v-model.number="form.cost"
+          type="number"
+          min="0"
+          placeholder="Enter cost"
+          required
+          class="w-full border px-3 py-2 rounded"
+        />
+      </div>
+
+      <!-- Date -->
+      <div>
+        <label>Date</label>
+        <input
+          v-model="form.date"
+          type="date"
+          required
+          class="w-full border px-3 py-2 rounded"
+        />
+      </div>
+
+<button class="btn btn-primary">
+  {{ isEdit ? 'Update' : 'Create' }}
+</button>
+
     </form>
   </div>
 </template>
@@ -51,9 +77,10 @@ const id = route.params.id
 const form = ref({
   vehicle_id: '',
   description: '',
-  status: 'Pending', // Capitalized to match backend
+  status: 'Pending',
+  cost: 0,
+  date: '',
 })
-
 
 const vehicles = ref([])
 
@@ -64,11 +91,12 @@ onMounted(async () => {
   if (isEdit && id) {
     const res = await axios.get(`/maintenances/${id}`)
     form.value = {
-  vehicle_id: res.data.vehicle_id,
-  description: res.data.description,
-  status: res.data.status || 'pending', // fallback to 'pending' if empty
-}
-
+      vehicle_id: res.data.vehicle_id,
+      description: res.data.description,
+      status: res.data.status || 'Pending',
+      cost: res.data.cost ?? 0,
+      date: res.data.date ?? '',
+    }
   }
 })
 
@@ -81,7 +109,7 @@ const handleSubmit = async () => {
     }
     router.push('/maintenance')
   } catch (err) {
-    if (err.response && err.response.status === 422) {
+    if (err.response?.status === 422) {
       console.error('Validation errors:', err.response.data.errors)
       alert('Please fix the validation errors and try again.')
     } else {
@@ -90,5 +118,4 @@ const handleSubmit = async () => {
     }
   }
 }
-
 </script>
