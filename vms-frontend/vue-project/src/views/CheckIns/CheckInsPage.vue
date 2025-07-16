@@ -38,12 +38,14 @@
             <td class="px-4 py-2">{{ check.checked_in_at || '—' }}</td>
             <td class="px-4 py-2">{{ check.checked_out_at || '—' }}</td>
             <td class="px-4 py-2 text-right">
-              <router-link
-                :to="`/checkins/${check.id}/edit`"
+              <button
+                v-if="!check.checked_out_at"
                 class="text-blue-600 hover:underline"
+                @click="checkout(check.id)"
               >
-                Edit
-              </router-link>
+                Checkout
+              </button>
+              <span v-else class="text-gray-400">—</span>
             </td>
           </tr>
           <tr v-if="checkIns.length === 0">
@@ -133,7 +135,19 @@ const fetchCheckIns = async () => {
   }
 }
 
-// Pagination buttons with ellipsis
+const checkout = async (checkInId) => {
+  if (!confirm('Are you sure you want to check out this vehicle?')) return
+
+  try {
+    await axios.post(`/checkins/${checkInId}/checkout`)
+    alert('Checkout successful!')
+    fetchCheckIns()
+  } catch (err) {
+    console.error('❌ Checkout error:', err.response?.data || err.message)
+    alert(err.response?.data?.message || 'Checkout failed.')
+  }
+}
+
 const visiblePages = computed(() => {
   const pages = []
   const total = meta.value.last_page

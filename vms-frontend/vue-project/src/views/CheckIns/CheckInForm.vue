@@ -1,117 +1,109 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="bg-white p-6 rounded shadow space-y-4">
-    <div>
-      <label>Vehicle</label>
-      <select v-model="form.vehicle_id" required class="w-full border rounded px-3 py-2">
-        <option value="">Select Vehicle</option>
+  <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-lg font-semibold mb-4">Vehicle Check-In / Check-Out</h2>
+
+    <form @submit.prevent="submit">
+      <label class="block mb-1 font-medium">Vehicle</label>
+      <select v-model="form.vehicle_id" class="input w-full mb-4" required>
+        <option disabled value="">-- Select Vehicle --</option>
         <option v-for="v in vehicles" :key="v.id" :value="v.id">
-          {{ v.plate_number }} - {{ v.manufacturer }}
+          {{ v.plate_number }} - ({{ v.manufacturer }} - {{ v.model }})
         </option>
       </select>
-    </div>
 
-    <div>
-      <label>Driver</label>
-      <select v-model="form.driver_id" required class="w-full border rounded px-3 py-2">
-        <option value="">Select Driver</option>
-<option v-for="d in drivers" :key="d.id" :value="d.id">
-  {{ d.user?.name || 'Unnamed Driver' }}
-</option>
+      <div v-if="isAlreadyCheckedIn" class="text-red-600 mb-4">
+        This vehicle is already checked in.
+      </div>
 
-      </select>
-    </div>
-
-    <div v-if="isEdit">
-      <label>Checked In At</label>
-      <input type="datetime-local" v-model="form.checked_in_at" class="w-full border rounded px-3 py-2" />
-    </div>
-
-    <div class="flex gap-4">
       <button
-        v-if="!isEdit"
+        v-if="!isAlreadyCheckedIn"
+        class="btn-primary w-full"
         type="submit"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        :disabled="loading"
       >
-        Check In
+        {{ loading ? 'Checking in...' : 'Submit Check-In' }}
       </button>
 
       <button
-        v-if="isEdit"
-        type="submit"
-        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-      >
-        Update Check-In
-      </button>
-
-      <button
-        v-if="isEdit"
+        v-else
+        class="btn-secondary w-full"
         type="button"
-        @click="handleCheckOut"
-        class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        @click="submitCheckout"
+        :disabled="loading"
       >
-        ✅ Check Out
+        {{ loading ? 'Checking out...' : 'Submit Check-Out' }}
       </button>
-    </div>
-  </form>
+    </form>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
 import axios from '@/axios'
-
-const props = defineProps({
-  checkInId: [Number, String],
-  isEdit: Boolean,
-})
-
-const form = ref({
-  vehicle_id: '',
-  driver_id: '',
-  checked_in_at: new Date().toISOString().slice(0, 16), // Set now as default
-})
+import { useRouter } from 'vue-router'
 
 const vehicles = ref([])
-const drivers = ref([])
+const form = ref({ vehicle_id: '' })
+const loading = ref(false)
 const router = useRouter()
+const isAlreadyCheckedIn = ref(false)
+const activeCheckInId = ref(null)
 
-const fetchData = async () => {
-  const [vRes, dRes] = await Promise.all([
-    axios.get('/vehicles'),
-    axios.get('/drivers'),
-  ])
-  vehicles.value = vRes.data
-  drivers.value = dRes.data
+const fetchVehicles = async () => {
+  try {
+    const res = await axios.get('/vehicles/with-drivers')
+    vehicles.value = res.data
+  } catch (e) {
+    alert('Failed to load vehicles.')
+  }
+}
 
-  if (props.isEdit && props.checkInId) {
-    const res = await axios.get(`/checkins/${props.checkInId}`)
-    form.value = {
-      vehicle_id: res.data.vehicle_id,
-      driver_id: res.data.driver_id,
-      checked_in_at: res.data.checked_in_at?.slice(0, 16) || '',
+const checkIfCheckedIn = async (vehicleId) => {
+  if (!vehicleId) return
+  try {
+    const res = await axios.get(`/checkins?search=${vehicleId}&per_page=1`)
+    const latest = res.data.data?.[0]
+    if (latest && latest.vehicle?.id === vehicleId && !latest.checked_out_at) {
+      isAlreadyCheckedIn.value = true
+      activeCheckInId.value = latest.id
+    } else {
+      isAlreadyCheckedIn.value = false
+      activeCheckInId.value = null
     }
+  } catch (e) {
+    console.error('Failed to verify check-in status.')
+    isAlreadyCheckedIn.value = false
   }
 }
 
-const handleSubmit = async () => {
-  if (props.isEdit) {
-    await axios.put(`/checkins/${props.checkInId}`, form.value)
-  } else {
-    await axios.post('/checkins', {
-      ...form.value,
-      checked_in_at: new Date().toISOString(), // Auto check-in time
-    })
+const submit = async () => {
+  try {
+    loading.value = true
+    await axios.post('/checkins', form.value)
+    alert('Check-in successful')
+    router.push('/checkins')
+  } catch (err) {
+    alert(err.response?.data?.message || 'Check-in failed')
+  } finally {
+    loading.value = false
   }
-  router.push('/checkins')
 }
 
-const handleCheckOut = async () => {
-  if (!props.checkInId) return
-  await axios.put(`/checkins/${props.checkInId}`, {
-    checked_out_at: new Date().toISOString(),
-  })
-  router.push('/checkins')
+const submitCheckout = async () => {
+  if (!activeCheckInId.value) return
+  try {
+    loading.value = true
+    await axios.post(`/checkins/${activeCheckInId.value}/checkout`)
+    alert('Check-out successful')
+    router.push('/checkins')
+  } catch (err) {
+    alert(err.response?.data?.message || 'Check-out failed')
+  } finally {
+    loading.value = false
+  }
 }
 
-onMounted(fetchData)
+watch(() => form.value.vehicle_id, checkIfCheckedIn)
+
+onMounted(fetchVehicles)
 </script>

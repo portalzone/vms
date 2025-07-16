@@ -20,10 +20,8 @@ Route::post('/register', [AuthController::class, 'register']);
 // 🔒 Authenticated Routes (Token Required via Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
 
-    // ✅ Fixes "Loading..." issue by supporting /me fetch
+    // ✅ Auth & Profile
     Route::get('/me', [AuthController::class, 'me']);
-
-    // ✅ User info and logout
     Route::get('/user', fn(Request $request) => $request->user());
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -42,13 +40,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/monthly-trends', [DashboardController::class, 'monthlyTrends']);
     Route::get('/dashboard/recent', [DashboardController::class, 'recentActivity']);
 
-    // ✅ Feature modules
-    Route::apiResource('vehicles', VehicleController::class);
+    // ✅ Vehicles
+// ✅ Custom route must come first before apiResource
+Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);
+
+Route::apiResource('vehicles', VehicleController::class);
+
+Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']);
+
+
+
+    // ✅ Drivers
     Route::apiResource('drivers', DriverController::class);
     Route::get('/driver/me', [DriverController::class, 'me']);
 
+    // ✅ Check-In/Out
     Route::apiResource('checkins', CheckInOutController::class);
+
+    // ✅ Maintenance & Expenses
     Route::apiResource('maintenances', MaintenanceController::class);
     Route::apiResource('expenses', ExpenseController::class);
+
+    // ✅ Trip Logs
     Route::apiResource('trips', TripController::class);
 });

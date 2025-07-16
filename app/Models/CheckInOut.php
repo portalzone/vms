@@ -36,9 +36,10 @@ class CheckInOut extends Model
      * Relationship: Each check-in/out belongs to a driver
      */
     public function driver()
-    {
-        return $this->belongsTo(Driver::class);
-    }
+{
+    return $this->belongsTo(Driver::class)->with('user');
+}
+
 
     /**
      * Optional: Scope to filter only currently checked-in vehicles

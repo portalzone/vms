@@ -16,25 +16,39 @@ class Vehicle extends Model
         'plate_number',
     ];
 
-    // Relationship: One Vehicle has One Driver (optional)
+    /**
+     * Relationship: One Vehicle has One Driver (inverse of Driver::vehicle())
+     */
     public function driver()
     {
         return $this->hasOne(Driver::class);
     }
 
-    // Optional: Expenses, CheckIns, Maintenance
+    
+
+    
+
+    /**
+     * Vehicle has many check-in/out records
+     */
+    public function checkins()
+    {
+        return $this->hasMany(CheckInOut::class);
+    }
+
+    /**
+     * Vehicle has many expenses
+     */
     public function expenses()
     {
         return $this->hasMany(Expense::class);
     }
 
+    /**
+     * Vehicle has many maintenance records
+     */
     public function maintenances()
     {
         return $this->hasMany(Maintenance::class);
-    }
-
-    public function checkins()
-    {
-        return $this->hasMany(CheckInOut::class);
     }
 }

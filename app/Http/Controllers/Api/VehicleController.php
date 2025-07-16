@@ -5,15 +5,40 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use App\Models\Driver;
+
+
+
 
 class VehicleController extends Controller
 {
-    // ✅ List all vehicles
+    // ✅ List all vehicles with driver info
     public function index()
     {
         $this->authorizeAccess('view');
-        return Vehicle::all();
+
+        // Eager-load driver relationship
+        return Vehicle::with('driver')->get();
     }
+
+    // ✅ Return only vehicles that have an assigned driver (for Check-In)
+    public function vehiclesWithDrivers()
+    {
+        $this->authorizeAccess('view');
+
+        return Vehicle::whereHas('driver')->with('driver')->get();
+    }
+// vehicle with drivers
+    public function withDrivers()
+{
+    $this->authorizeAccess('view');
+
+    $vehicles = \App\Models\Vehicle::with(['driver.user'])
+        ->whereHas('driver')
+        ->get();
+
+    return response()->json($vehicles);
+}
 
     // ✅ Create a new vehicle
     public function store(Request $request)
@@ -32,11 +57,12 @@ class VehicleController extends Controller
         return response()->json($vehicle, 201);
     }
 
-    // ✅ Show a specific vehicle
+    // ✅ Show a specific vehicle with driver
     public function show($id)
     {
         $this->authorizeAccess('view');
-        return Vehicle::findOrFail($id);
+
+        return Vehicle::with('driver')->findOrFail($id);
     }
 
     // ✅ Update a vehicle
@@ -58,6 +84,8 @@ class VehicleController extends Controller
         return response()->json($vehicle);
     }
 
+    
+
     // ✅ Delete a vehicle
     public function destroy($id)
     {
@@ -69,9 +97,10 @@ class VehicleController extends Controller
         return response()->json(['message' => 'Vehicle deleted']);
     }
 
+    
+
     /**
-     * 🔐 Role-based permission checker.
-     * Define who can perform what action.
+     * 🔐 Role-based permission checker
      */
     private function authorizeAccess(string $action): void
     {
