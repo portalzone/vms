@@ -20,7 +20,7 @@ class DashboardController extends Controller
         return response()->json([
             'vehicles' => Vehicle::count(),
             'drivers' => Driver::count(),
-            'expenses' => Expense::count(),
+            'expenses' => Expense::sum('amount'),
             'trips' => Trip::count(),
             'maintenances' => [
                 'pending'     => Maintenance::where('status', 'pending')->count(),

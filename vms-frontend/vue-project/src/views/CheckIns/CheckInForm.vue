@@ -14,9 +14,10 @@
       <label>Driver</label>
       <select v-model="form.driver_id" required class="w-full border rounded px-3 py-2">
         <option value="">Select Driver</option>
-        <option v-for="d in drivers" :key="d.id" :value="d.id">
-          {{ d.name }}
-        </option>
+<option v-for="d in drivers" :key="d.id" :value="d.id">
+  {{ d.user?.name || 'Unnamed Driver' }}
+</option>
+
       </select>
     </div>
 

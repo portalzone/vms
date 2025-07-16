@@ -49,51 +49,27 @@ onMounted(async () => {
   try {
     const res = await axios.get('/dashboard/monthly-trends')
     const data = res.data
-    console.log('📊 Monthly Trend Data:', data)
+    // console.log('📊 Monthly Trend Data:', data)
 
     chartData.value = {
       labels: data.map(entry => entry.month),
       datasets: [
         {
-          label: 'Vehicles Registered',
-          data: data.map(entry => entry.vehicles),
+          label: 'Maintenance Costs (₦)',
+          data: data.map(entry => entry.maintenances),
           borderColor: '#3b82f6',
           backgroundColor: '#3b82f660',
           tension: 0.4,
           fill: false,
         },
         {
-          label: 'Drivers Registered',
-          data: data.map(entry => entry.drivers),
+          label: 'Expenses (₦)',
+          data: data.map(entry => entry.expenses),
           borderColor: '#10b981',
           backgroundColor: '#10b98160',
           tension: 0.4,
           fill: false,
         },
-        {
-          label: 'Expenses (₦)',
-          data: data.map(entry => entry.expenses),
-          borderColor: '#facc15',
-          backgroundColor: '#facc1560',
-          tension: 0.4,
-          fill: false,
-        },
-        {
-          label: 'Maintenance Costs (₦)',
-          data: data.map(entry => entry.maintenances),
-          borderColor: '#ef4444',
-          backgroundColor: '#ef444460',
-          tension: 0.4,
-          fill: false,
-        },
-        {
-          label: 'Trips Logged',
-          data: data.map(entry => entry.trips),
-          borderColor: '#8b5cf6',
-          backgroundColor: '#8b5cf660',
-          tension: 0.4,
-          fill: false,
-        }
       ]
     }
   } catch (error) {

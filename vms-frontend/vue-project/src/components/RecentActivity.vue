@@ -11,19 +11,15 @@
         class="border px-3 py-2 rounded w-full md:w-1/4"
       />
 
-<select
-  v-model="type"
-  class="border px-3 py-2 rounded w-full md:w-1/5"
->
-  <option value="">All Types</option>
-  <option value="Check-In">Check-In</option>
-  <option value="Maintenance">Maintenance</option>
-  <option value="Trip">Trip</option>
-  <option value="Vehicle Registered">Vehicle Registered</option>
-  <option value="Driver Registered">Driver Registered</option>
-  <option value="Expense">Expense</option>
-</select>
-
+      <select v-model="type" class="border px-3 py-2 rounded w-full md:w-1/5">
+        <option value="">All Types</option>
+        <option value="Check-In">Check-In</option>
+        <option value="Maintenance">Maintenance</option>
+        <option value="Trip">Trip</option>
+        <option value="Vehicle Registered">Vehicle Registered</option>
+        <option value="Driver Registered">Driver Registered</option>
+        <option value="Expense">Expense</option>
+      </select>
 
       <input
         v-model="fromDate"
@@ -41,60 +37,79 @@
     </div>
 
     <!-- List -->
-    <ul class="space-y-4">
-      <li
-        v-for="(activity, index) in activities"
-        :key="index"
-        class="flex items-start gap-4 p-4 bg-white rounded shadow"
-      >
-<span
-  class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white"
-  :class="{
-    'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
-    'bg-red-500': activity.type === 'Maintenance',
-    'bg-yellow-500': activity.type === 'Expense',
-    'bg-gray-500': activity.type === 'Trip',
-    'bg-green-500': activity.type === 'Driver Registered'
-  }"
->
-  <template v-if="activity.type === 'Check-In'">🚗</template>
-  <template v-else-if="activity.type === 'Maintenance'">🛠️</template>
-  <template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
-  <template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
-  <template v-else-if="activity.type === 'Trip'">🧭</template>
-  <template v-else-if="activity.type === 'Expense'">💸</template>
-  <template v-else>📌</template>
-</span>
+<ul class="space-y-4">
+  <li
+    v-for="(activity, index) in activities"
+    :key="index"
+    class="flex items-start gap-4 p-4 bg-white rounded shadow"
+  >
+    <!-- Serial Number -->
+    <div class="font-semibold w-6 text-right">{{ (currentPage - 1) * perPage + index + 1 }}.</div>
 
-        <div>
-          <p class="text-sm text-gray-800 leading-5">
-            <span class="font-semibold">{{ activity.type }}:</span>
-            {{ activity.message }}
-          </p>
-          <p class="text-xs text-gray-500 mt-1">
-            {{ new Date(activity.time).toLocaleString() }}
-          </p>
-          <hr>
-        </div>
-      </li>
-    </ul>
+    <!-- Icon -->
+    <span
+      class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white"
+      :class="{
+        'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
+        'bg-red-500': activity.type === 'Maintenance',
+        'bg-yellow-500': activity.type === 'Expense',
+        'bg-gray-500': activity.type === 'Trip',
+        'bg-green-500': activity.type === 'Driver Registered'
+      }"
+    >
+      <template v-if="activity.type === 'Check-In'">🚗</template>
+      <template v-else-if="activity.type === 'Maintenance'">🛠️</template>
+      <template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
+      <template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
+      <template v-else-if="activity.type === 'Trip'">🧭</template>
+      <template v-else-if="activity.type === 'Expense'">💸</template>
+      <template v-else>📌</template>
+    </span>
+
+    <!-- Details -->
+    <div>
+      <p class="text-sm text-gray-800 leading-5">
+        <span class="font-semibold">{{ activity.type }}:</span>
+        {{ activity.message }}
+      </p>
+      <p class="text-xs text-gray-500 mt-1">
+        {{ new Date(activity.time).toLocaleString() }}
+      </p>
+      <hr />
+    </div>
+  </li>
+</ul>
 
     <!-- Pagination Controls -->
-    <div class="flex justify-between mt-6">
+    <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
       <button
-        @click="prevPage"
         :disabled="currentPage === 1"
-        class="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+        @click="currentPage--"
+        class="btn-pagination"
       >
-        Previous
+        Prev
       </button>
-      <span class="text-sm text-gray-600 self-center">
-        Page {{ currentPage }} of {{ totalPages }}
-      </span>
+
       <button
-        @click="nextPage"
+        v-for="p in visiblePages"
+        :key="`page-${p}`"
+        @click="typeof p === 'number' && (currentPage = p)"
+        :class="[
+          'btn-pagination',
+          {
+            'bg-blue-600 text-white': p === currentPage,
+            'pointer-events-none text-gray-500': p === '...'
+          }
+        ]"
+        :disabled="p === '...'"
+      >
+        {{ p }}
+      </button>
+
+      <button
         :disabled="currentPage === totalPages"
-        class="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        @click="currentPage++"
+        class="btn-pagination"
       >
         Next
       </button>
@@ -102,9 +117,8 @@
   </div>
 </template>
 
-
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import axios from '@/axios'
 
 const activities = ref([])
@@ -144,13 +158,83 @@ watch([search, type, fromDate, toDate], () => {
   fetchActivities()
 })
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++
-}
-
-const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--
-}
-
 watch(currentPage, fetchActivities)
+
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  const pages = []
+
+  if (total <= 6) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 4) pages.push('...')
+    const start = Math.max(2, current - 1)
+    const end = Math.min(total - 1, current + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+    if (current < total - 3) pages.push('...')
+    pages.push(total)
+  }
+
+  return pages
+})
 </script>
+
+<style scoped>
+/* Header */
+h3 {
+  font-weight: 600;
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+}
+
+/* Filter inputs */
+input[type='text'],
+input[type='date'],
+select {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* Activity icons */
+.inline-flex {
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  width: 2rem;
+  height: 2rem;
+  text-align: center;
+  line-height: 2rem;
+}
+
+/* Activity item styling */
+ul li {
+  transition: background-color 0.3s ease;
+}
+
+ul li:hover {
+  background-color: #f9fafb;
+}
+
+ul li hr {
+  margin-top: 0.5rem;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+
+
+.text-sm {
+  font-size: 0.875rem;
+}
+</style>

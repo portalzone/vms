@@ -9,12 +9,27 @@ use Illuminate\Support\Carbon;
 
 class CheckInOutController extends Controller
 {
-    // ✅ List all check-in/out records with vehicle and driver
-    public function index()
+    // ✅ List check-ins with pagination, search, vehicle + driver (+ user)
+    public function index(Request $request)
     {
         $this->authorizeAccess('view');
 
-        return CheckInOut::with(['vehicle', 'driver'])->latest()->get();
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 10);
+
+        $query = CheckInOut::with(['vehicle', 'driver.user'])->latest();
+
+        if ($search) {
+            $query->whereHas('vehicle', function ($q) use ($search) {
+                $q->where('plate_number', 'like', '%' . $search . '%');
+            })->orWhereHas('driver.user', function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%');
+            });
+        }
+
+        $results = $query->paginate($perPage);
+
+        return response()->json($results);
     }
 
     // ✅ Store a new check-in/out record
@@ -29,7 +44,7 @@ class CheckInOutController extends Controller
             'checked_out_at' => 'nullable|date',
         ]);
 
-        // Prevent duplicate check-in if vehicle hasn't been checked out
+        // Prevent double check-in if vehicle isn't checked out yet
         $existing = CheckInOut::where('vehicle_id', $validated['vehicle_id'])
             ->whereNull('checked_out_at')
             ->latest()
@@ -37,33 +52,32 @@ class CheckInOutController extends Controller
 
         if ($existing && empty($validated['checked_out_at'])) {
             return response()->json([
-                'message' => 'This vehicle is already checked in and not yet checked out.'
+                'message' => 'This vehicle is already checked in and not yet checked out.',
             ], 422);
         }
 
-        // Auto-fill timestamps if not provided
-        $validated['checked_in_at']  = $validated['checked_in_at'] ?? Carbon::now();
-        $validated['checked_out_at'] = $validated['checked_out_at'] ?? Carbon::now();
+        // Auto-timestamp if not provided
+        $validated['checked_in_at'] = $validated['checked_in_at'] ?? Carbon::now();
 
         $record = CheckInOut::create($validated);
 
         return response()->json([
-            'message' => 'Check-in/out record created successfully.',
-            'data'    => $record->load(['vehicle', 'driver']),
+            'message' => 'Check-in/out record created.',
+            'data'    => $record->load(['vehicle', 'driver.user']),
         ]);
     }
 
-    // ✅ Get a single record by ID with related data
+    // ✅ Show a single check-in/out record
     public function show($id)
     {
         $this->authorizeAccess('view');
 
-        $record = CheckInOut::with(['vehicle', 'driver'])->findOrFail($id);
+        $record = CheckInOut::with(['vehicle', 'driver.user'])->findOrFail($id);
 
         return response()->json($record);
     }
 
-    // ✅ Update an existing check-in/out record
+    // ✅ Update a check-in/out record
     public function update(Request $request, $id)
     {
         $this->authorizeAccess('update');
@@ -77,10 +91,10 @@ class CheckInOutController extends Controller
             'checked_out_at' => 'nullable|date',
         ]);
 
-        // Auto-fill timestamps if needed during update
         if (!isset($validated['checked_in_at']) && !$record->checked_in_at) {
             $validated['checked_in_at'] = Carbon::now();
         }
+
         if (!isset($validated['checked_out_at']) && !$record->checked_out_at) {
             $validated['checked_out_at'] = Carbon::now();
         }
@@ -88,12 +102,12 @@ class CheckInOutController extends Controller
         $record->update($validated);
 
         return response()->json([
-            'message' => 'Check-in/out record updated successfully.',
-            'data'    => $record->load(['vehicle', 'driver']),
+            'message' => 'Check-in/out record updated.',
+            'data'    => $record->load(['vehicle', 'driver.user']),
         ]);
     }
 
-    // ✅ Delete a record
+    // ✅ Delete a check-in/out record
     public function destroy($id)
     {
         $this->authorizeAccess('delete');

@@ -261,6 +261,21 @@ textarea {
 .btn-edit:hover {
   color: #1d4ed8; /* Tailwind blue-700 */
 }
+/* Pagination */
+.btn-pagination {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: white;
+  transition: background-color 0.2s ease;
+}
+.btn-pagination:hover:not(:disabled) {
+  background-color: #f3f4f6;
+}
+.btn-pagination:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* 🗑️ Delete Button */
 .btn-delete {

@@ -1,8 +1,8 @@
 <template>
   <div class="bg-white rounded shadow p-6">
-    <h2 class="text-xl font-bold mb-4">
+    <!-- <h2 class="text-xl font-bold mb-4">
       {{ props.id ? 'Edit Vehicle' : 'Add New Vehicle' }}
-    </h2>
+    </h2> -->
 
     <form @submit.prevent="submit">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -46,24 +46,25 @@
             type="text"
             required
             class="w-full border rounded px-3 py-2"
-            placeholder="ABC-123XY"
+            placeholder="ABC-123-XY"
           />
         </div>
       </div>
+      <br>
 
       <div class="flex justify-end mt-6 gap-2">
-<button type="submit" class="btn-submit">
-  {{ props.id ? 'Update' : 'Create' }}
-</button>
+        <button type="submit" class="btn-submit">
+          {{ props.id ? 'Update' : 'Create' }}
+        </button>
 
-<router-link to="/vehicles" class="btn-cancel">
-  Cancel
-</router-link>
-
+        <router-link to="/vehicles" class="btn-cancel">
+          Cancel
+        </router-link>
       </div>
     </form>
   </div>
 </template>
+
 
 <script setup>
 import { reactive, onMounted } from 'vue'

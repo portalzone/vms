@@ -1,17 +1,21 @@
 <template>
   <div>
+    <div v-if="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4">
+  {{ successMessage }}
+</div>
+
     <!-- Search & Add -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
       <input
         v-model="search"
         type="text"
         placeholder="Search by name, email, license, or vehicle..."
-        class="border rounded px-4 py-2 w-full md:w-1/2"
+        class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
       />
 
       <router-link
         to="/drivers/new"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center"
+        class="btn-primary text-center"
       >
         ➕ Add Driver
       </router-link>
@@ -22,28 +26,28 @@
       <table class="min-w-full table-auto text-sm">
         <thead class="bg-gray-100 text-left">
           <tr>
-            <th>#</th>
-            <th>User</th>
-            <th>Email</th>
-            <th>License No.</th>
-            <th>Phone</th>
-            <th>Address</th>
-            <th>Sex</th>
-            <th>Vehicle</th>
-            <th>Date Added</th>
-            <th class="text-right">Actions</th>
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">User</th>
+            <th class="px-4 py-2">Email</th>
+            <th class="px-4 py-2">License No.</th>
+            <th class="px-4 py-2">Phone</th>
+            <th class="px-4 py-2">Address</th>
+            <th class="px-4 py-2">Sex</th>
+            <th class="px-4 py-2">Vehicle</th>
+            <th class="px-4 py-2">Date Added</th>
+            <th class="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(driver, index) in paginatedDrivers" :key="driver.id">
-            <td>{{ start + index + 1 }}</td>
-            <td>{{ driver.user?.name || '—' }}</td>
-            <td>{{ driver.user?.email || '—' }}</td>
-            <td>{{ driver.license_number }}</td>
-            <td>{{ driver.phone_number }}</td>
-            <td>{{ driver.home_address }}</td>
-            <td>{{ driver.sex }}</td>
-            <td>
+          <tr v-for="(driver, index) in paginatedDrivers" :key="driver.id" class="hover:bg-gray-50 even:bg-gray-50">
+            <td class="px-4 py-2">{{ start + index + 1 }}</td>
+            <td class="px-4 py-2">{{ driver.user?.name || '—' }}</td>
+            <td class="px-4 py-2">{{ driver.user?.email || '—' }}</td>
+            <td class="px-4 py-2">{{ driver.license_number }}</td>
+            <td class="px-4 py-2">{{ driver.phone_number }}</td>
+            <td class="px-4 py-2">{{ driver.home_address }}</td>
+            <td class="px-4 py-2">{{ driver.sex }}</td>
+            <td class="px-4 py-2">
               <div v-if="driver.vehicle">
                 <div>{{ driver.vehicle.plate_number }}</div>
                 <div class="text-xs text-gray-500">
@@ -52,11 +56,10 @@
               </div>
               <div v-else>—</div>
             </td>
-            <td>{{ new Date(driver.created_at).toLocaleDateString() }}</td>
-            <td class="text-right space-x-2">
-<button class="btn-edit" @click="edit(driver.id)">Edit</button>
-<button class="btn-delete" @click="remove(driver.id)">Delete</button>
-
+            <td class="px-4 py-2">{{ new Date(driver.created_at).toLocaleDateString() }}</td>
+            <td class="px-4 py-2 text-right space-x-2">
+              <button class="btn-edit" @click="edit(driver.id)">Edit</button>
+              <button class="btn-delete" @click="remove(driver.id)">Delete</button>
             </td>
           </tr>
 
@@ -72,7 +75,7 @@
       <button
         :disabled="page === 1"
         @click="page--"
-        class="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
+        class="btn-pagination"
       >
         Prev
       </button>
@@ -81,12 +84,13 @@
         v-for="p in visiblePages"
         :key="`page-${p}`"
         @click="typeof p === 'number' && (page = p)"
-        class="px-3 py-1 rounded border"
-        :class="{
-          'bg-blue-600 text-white': p === page,
-          'bg-white hover:bg-gray-100': typeof p === 'number' && p !== page,
-          'pointer-events-none text-gray-500': p === '...'
-        }"
+        :class="[
+          'btn-pagination',
+          {
+            'bg-blue-600 text-white': p === page,
+            'pointer-events-none text-gray-500': p === '...'
+          }
+        ]"
         :disabled="p === '...'"
       >
         {{ p }}
@@ -95,7 +99,7 @@
       <button
         :disabled="page === totalPages"
         @click="page++"
-        class="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
+        class="btn-pagination"
       >
         Next
       </button>
@@ -103,11 +107,22 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/axios'
 import { useAuthStore } from '@/stores/auth'
+
+const successMessage = ref('')
+
+function showSuccess(msg) {
+  successMessage.value = msg
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
+}
+
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -175,12 +190,14 @@ const remove = async (id) => {
     try {
       await axios.delete(`/drivers/${id}`)
       await fetchDrivers()
+      showSuccess('✅ Driver deleted successfully.')
     } catch (err) {
       console.error('❌ Failed to delete driver:', err)
       alert('Unable to delete driver.')
     }
   }
 }
+
 
 watch(search, () => {
   page.value = 1

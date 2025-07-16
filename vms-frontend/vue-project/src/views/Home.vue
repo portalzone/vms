@@ -10,9 +10,6 @@
           <RouterLink to="/dashboard">Go to Dashboard</RouterLink>
         </div>
       </div>
-
-      <h2 class="section-title">About the Vehicle Management System</h2>
-
       <div class="features-grid">
         <div v-for="(item, index) in features" :key="index" class="feature-card">
           <div class="feature-top">
@@ -91,12 +88,12 @@ const features = [
 .page-wrapper {
   min-height: 100vh;
   background-color: #f3f4f6; /* gray-100 */
-  padding: 2.5rem 1rem;
+  padding: 0.5rem 0.1rem;
 }
 
 @media (min-width: 768px) {
   .page-wrapper {
-    padding: 4rem 2rem;
+    padding: 0.2rem 0.1rem;
   }
 }
 

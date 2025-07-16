@@ -6,40 +6,41 @@
         v-model="search"
         type="text"
         placeholder="Search by manufacturer, model, or plate..."
-        class="border rounded px-4 py-2 w-full md:w-1/2"
+        class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
       />
-      <router-link
-        to="/vehicles/new"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center"
-      >
+      <router-link to="/vehicles/new" class="btn-primary text-center">
         ➕ Add Vehicle
       </router-link>
     </div>
 
     <!-- Table -->
     <div class="overflow-x-auto rounded shadow bg-white">
-      <table>
-        <thead>
+      <table class="w-full table-auto text-sm">
+        <thead class="bg-gray-100 text-left">
           <tr>
-            <th>#</th>
-            <th>Manufacturer</th>
-            <th>Model</th>
-            <th>Year</th>
-            <th>Plate No.</th>
-            <th class="text-right">Actions</th>
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Manufacturer</th>
+            <th class="px-4 py-2">Model</th>
+            <th class="px-4 py-2">Year</th>
+            <th class="px-4 py-2">Plate No.</th>
+            <th class="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(vehicle, index) in paginatedVehicles" :key="vehicle.id">
-            <td>{{ start + index + 1 }}</td>
-            <td>{{ vehicle.manufacturer }}</td>
-            <td>{{ vehicle.model }}</td>
-            <td>{{ vehicle.year }}</td>
-            <td>{{ vehicle.plate_number }}</td>
-            <td class="text-right space-x-2">
-   <button class="btn-edit" @click="edit(vehicle.id)">Edit</button>
-<button class="btn-delete" @click="remove(vehicle.id)">Delete</button>
-          </td>
+          <tr
+            v-for="(vehicle, index) in paginatedVehicles"
+            :key="vehicle.id"
+            class="hover:bg-gray-50 even:bg-gray-50"
+          >
+            <td class="px-4 py-2">{{ start + index + 1 }}</td>
+            <td class="px-4 py-2">{{ vehicle.manufacturer }}</td>
+            <td class="px-4 py-2">{{ vehicle.model }}</td>
+            <td class="px-4 py-2">{{ vehicle.year }}</td>
+            <td class="px-4 py-2">{{ vehicle.plate_number }}</td>
+            <td class="px-4 py-2 text-right space-x-2">
+              <button class="btn-edit" @click="edit(vehicle.id)">Edit</button>
+              <button class="btn-delete" @click="remove(vehicle.id)">Delete</button>
+            </td>
           </tr>
           <tr v-if="paginatedVehicles.length === 0">
             <td colspan="6" class="text-center text-gray-500 py-4">No vehicles found.</td>
@@ -53,7 +54,7 @@
       <button
         :disabled="page === 1"
         @click="page--"
-        class="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
+        class="btn-pagination"
       >
         Prev
       </button>
@@ -62,12 +63,13 @@
         v-for="p in visiblePages"
         :key="`page-${p}`"
         @click="typeof p === 'number' && (page = p)"
-        class="px-3 py-1 rounded border"
-        :class="{
-          'bg-blue-600 text-white': p === page,
-          'bg-white hover:bg-gray-100': typeof p === 'number' && p !== page,
-          'pointer-events-none text-gray-500': p === '...'
-        }"
+        :class="[
+          'btn-pagination',
+          {
+            'bg-blue-600 text-white': p === page,
+            'pointer-events-none text-gray-500': p === '...'
+          }
+        ]"
         :disabled="p === '...'"
       >
         {{ p }}
@@ -76,13 +78,15 @@
       <button
         :disabled="page === totalPages"
         @click="page++"
-        class="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
+        class="btn-pagination"
       >
         Next
       </button>
     </div>
   </div>
 </template>
+
+
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'

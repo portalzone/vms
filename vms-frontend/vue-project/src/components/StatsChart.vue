@@ -44,8 +44,6 @@ const chartData = computed(() => ({
   labels: [
     'Vehicles',
     'Drivers',
-    'Expenses',
-    'Maintenances',
     'Trips'
   ],
   datasets: [
@@ -55,10 +53,6 @@ const chartData = computed(() => ({
       data: [
         props.stats?.vehicles || 0,
         props.stats?.drivers || 0,
-        props.stats?.expenses || 0,
-        (props.stats?.maintenances?.pending || 0) +
-        (props.stats?.maintenances?.in_progress || 0) +
-        (props.stats?.maintenances?.completed || 0),
         props.stats?.trips || 0
       ]
     }
