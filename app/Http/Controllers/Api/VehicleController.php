@@ -119,7 +119,7 @@ public function assignedVehicles()
         $user = auth()->user();
 
         $rolePermissions = [
-            'view'   => ['admin', 'manager', 'vehicle_owner'],
+            'view'   => ['admin', 'manager', 'vehicle_owner', 'gate_security'],
             'create' => ['admin', 'manager'],
             'update' => ['admin', 'manager', 'vehicle_owner'],
             'delete' => ['admin'],

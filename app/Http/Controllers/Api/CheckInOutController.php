@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\CheckInOut;
 use App\Models\Driver;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 
 class CheckInOutController extends Controller
 {
-    // ✅ List check-ins with pagination, search, vehicle + driver (+ user)
+    // ✅ List check-ins with pagination, search, vehicle + driver + user + checked_by
     public function index(Request $request)
     {
         $this->authorizeAccess('view');
@@ -18,7 +17,12 @@ class CheckInOutController extends Controller
         $search = $request->input('search');
         $perPage = $request->input('per_page', 10);
 
-        $query = CheckInOut::with(['vehicle', 'driver.user'])->latest();
+        $query = CheckInOut::with([
+            'vehicle',
+            'driver.user',
+            'checkedInByUser',
+            'checkedOutByUser',
+        ])->latest();
 
         if ($search) {
             $query->whereHas('vehicle', function ($q) use ($search) {
@@ -57,12 +61,18 @@ class CheckInOutController extends Controller
 
         $validated['driver_id'] = $driver->id;
         $validated['checked_in_at'] = now();
+        $validated['checked_in_by'] = auth()->id();
 
         $checkIn = CheckInOut::create($validated);
 
         return response()->json([
             'message' => 'Check-in successful.',
-            'data' => $checkIn->load(['vehicle', 'driver.user']),
+            'data' => $checkIn->load([
+                'vehicle',
+                'driver.user',
+                'checkedInByUser',
+                'checkedOutByUser',
+            ]),
         ]);
     }
 
@@ -74,11 +84,17 @@ class CheckInOutController extends Controller
         $checkIn = CheckInOut::whereNull('checked_out_at')->findOrFail($id);
 
         $checkIn->checked_out_at = now();
+        $checkIn->checked_out_by = auth()->id();
         $checkIn->save();
 
         return response()->json([
             'message' => 'Check-out successful.',
-            'data' => $checkIn->load(['vehicle', 'driver.user']),
+            'data' => $checkIn->load([
+                'vehicle',
+                'driver.user',
+                'checkedInByUser',
+                'checkedOutByUser',
+            ]),
         ]);
     }
 
@@ -87,12 +103,17 @@ class CheckInOutController extends Controller
     {
         $this->authorizeAccess('view');
 
-        return response()->json(
-            CheckInOut::with(['vehicle', 'driver.user'])->findOrFail($id)
-        );
+        $record = CheckInOut::with([
+            'vehicle',
+            'driver.user',
+            'checkedInByUser',
+            'checkedOutByUser',
+        ])->findOrFail($id);
+
+        return response()->json($record);
     }
 
-    // ✅ Update a record
+    // ✅ Update a record (admin only)
     public function update(Request $request, $id)
     {
         $this->authorizeAccess('update');
@@ -103,18 +124,23 @@ class CheckInOutController extends Controller
             'checked_out_at' => 'nullable|date',
         ]);
 
-        // If user manually sets checked_out_at, use it, else use now()
         $validated['checked_out_at'] = $validated['checked_out_at'] ?? now();
+        $validated['checked_out_by'] = auth()->id();
 
         $record->update($validated);
 
         return response()->json([
             'message' => 'Check-in/out record updated.',
-            'data' => $record->load(['vehicle', 'driver.user']),
+            'data' => $record->load([
+                'vehicle',
+                'driver.user',
+                'checkedInByUser',
+                'checkedOutByUser',
+            ]),
         ]);
     }
 
-    // ✅ Delete
+    // ✅ Delete a record
     public function destroy($id)
     {
         $this->authorizeAccess('delete');

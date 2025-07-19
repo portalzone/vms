@@ -33,7 +33,7 @@
         <tbody>
           <tr v-for="trip in filteredTrips" :key="trip.id" class="hover:bg-gray-50">
             <td class="p-2 border">
-              {{ trip.driver?.name || 'N/A' }}
+              {{ trip.driver?.user?.name || 'N/A' }}
             </td>
             <td class="p-2 border">
               {{ trip.vehicle?.manufacturer || 'N/A' }} -
@@ -64,23 +64,37 @@
 
       <div v-else class="text-center py-10 text-gray-500">No trips found.</div>
 
-      <div class="mt-4 flex justify-center items-center space-x-4">
-        <button
-          @click="prevPage"
-          :disabled="!pagination.prev_page_url"
-          class="px-4 py-2 border rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span class="px-4 py-2">Page {{ pagination.current_page || 1 }}</span>
-        <button
-          @click="nextPage"
-          :disabled="!pagination.next_page_url"
-          class="px-4 py-2 border rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+<!-- Pagination -->
+<div class="mt-4 flex justify-center items-center space-x-2 flex-wrap text-sm">
+  <button
+    @click="prevPage"
+    :disabled="!pagination.prev_page_url"
+    class="btn-pagination"
+  >
+    Previous
+  </button>
+
+  <button
+    v-for="p in pages"
+    :key="p"
+    @click="fetchTrips(`/trips?page=${p}`)"
+    :class="[
+      'btn-pagination',
+      { 'bg-blue-600 text-white': p === pagination.current_page }
+    ]"
+  >
+    {{ p }}
+  </button>
+
+  <button
+    @click="nextPage"
+    :disabled="!pagination.next_page_url"
+    class="btn-pagination"
+  >
+    Next
+  </button>
+</div>
+
     </div>
   </div>
 </template>
@@ -98,13 +112,42 @@ const pagination = ref({
   prev_page_url: null
 })
 
+const pages = computed(() => {
+  const total = pagination.value.last_page || 1
+  const current = pagination.value.current_page || 1
+  const maxVisible = 5
+  const pagesToShow = []
+
+  let start = Math.max(1, current - Math.floor(maxVisible / 2))
+  let end = Math.min(start + maxVisible - 1, total)
+
+  if (end - start < maxVisible - 1) {
+    start = Math.max(1, end - maxVisible + 1)
+  }
+
+  for (let i = start; i <= end; i++) {
+    pagesToShow.push(i)
+  }
+
+  return pagesToShow
+})
+
+
 // Fetch trips from API
 const fetchTrips = async (url = '/trips') => {
   try {
     loading.value = true
     const res = await axios.get(url)
-    trips.value = res.data?.data || []
-    pagination.value = res.data?.meta || {}
+
+    // Laravel pagination structure (not using resource collection)
+    trips.value = res.data.data || []
+pagination.value = {
+  current_page: res.data.current_page,
+  next_page_url: res.data.next_page_url,
+  prev_page_url: res.data.prev_page_url,
+  last_page: res.data.last_page
+}
+
   } catch (err) {
     console.error('Error loading trips:', err)
   } finally {

@@ -19,14 +19,14 @@ class Trip extends Model
         'end_time',
     ];
 
-    public function vehicle()
-    {
-        return $this->belongsTo(Vehicle::class);
-    }
-
-    // driver_id points directly to users.id
     public function driver()
-    {
-        return $this->belongsTo(User::class, 'driver_id');
-    }
+{
+    return $this->belongsTo(Driver::class);
+}
+
+public function vehicle()
+{
+    return $this->belongsTo(Vehicle::class);
+}
+
 }

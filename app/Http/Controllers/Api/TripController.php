@@ -6,14 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Models\Trip;
 use App\Models\Driver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TripController extends Controller
 {
-    // ✅ Get all trips with vehicle and driver (user) details
-    public function index()
+    // ✅ List trips (Admin/Manager can see all, Driver sees only theirs)
+    public function index(Request $request)
     {
-        $trips = Trip::with(['driver', 'vehicle'])->latest()->paginate(10);
-        return response()->json($trips);
+        $query = Trip::with(['vehicle', 'driver.user']);
+
+        if (Auth::user()->hasRole('Driver')) {
+            $driver = Driver::where('user_id', Auth::id())->first();
+            if ($driver) {
+                $query->where('driver_id', $driver->id);
+            } else {
+                return response()->json([], 200);
+            }
+        }
+
+        return $query->latest()->paginate(10);
     }
 
     // ✅ Store a new trip
@@ -21,22 +32,22 @@ class TripController extends Controller
     {
         $validated = $request->validate([
             'vehicle_id'     => 'required|exists:vehicles,id',
-            'start_location' => 'required|string|max:255',
-            'end_location'   => 'required|string|max:255',
+            'start_location' => 'required|string',
+            'end_location'   => 'required|string',
             'start_time'     => 'required|date',
-            'end_time'       => 'nullable|date|after_or_equal:start_time',
+            'end_time'       => 'required|date|after_or_equal:start_time',
         ]);
 
-        // ✅ Get the driver assigned to this vehicle
+        // Get the driver assigned to the selected vehicle
         $driver = Driver::where('vehicle_id', $validated['vehicle_id'])->first();
 
         if (!$driver) {
-            return response()->json(['message' => 'No driver assigned to this vehicle.'], 422);
+            return response()->json(['error' => 'Driver not assigned to vehicle'], 422);
         }
 
-        // ✅ Create the trip using the driver's user_id as driver_id
+        // ✅ Create trip using the correct driver ID
         $trip = Trip::create([
-            'driver_id'      => $driver->user_id, // 👈 this stores user_id
+            'driver_id'      => $driver->id, // ⬅️ use driver's ID (not user_id)
             'vehicle_id'     => $validated['vehicle_id'],
             'start_location' => $validated['start_location'],
             'end_location'   => $validated['end_location'],
@@ -44,42 +55,49 @@ class TripController extends Controller
             'end_time'       => $validated['end_time'],
         ]);
 
-        return response()->json([
-            'message' => 'Trip created successfully.',
-            'trip' => $trip->load(['driver', 'vehicle'])
-        ], 201);
+        return response()->json($trip->load(['driver.user', 'vehicle']), 201);
     }
 
-    // ✅ Show one trip with full relationships
+    // ✅ Show a single trip
     public function show(Trip $trip)
     {
-        $trip->load(['driver', 'vehicle']);
+        $trip->load(['vehicle', 'driver.user']);
         return response()->json($trip);
     }
 
-    // ✅ Update a trip
+    // ✅ Update an existing trip
     public function update(Request $request, Trip $trip)
     {
         $validated = $request->validate([
             'vehicle_id'     => 'required|exists:vehicles,id',
-            'start_location' => 'required|string|max:255',
-            'end_location'   => 'required|string|max:255',
+            'start_location' => 'required|string',
+            'end_location'   => 'required|string',
             'start_time'     => 'required|date',
-            'end_time'       => 'nullable|date|after_or_equal:start_time',
+            'end_time'       => 'required|date|after_or_equal:start_time',
         ]);
 
-        $trip->update($validated);
+        $driver = Driver::where('vehicle_id', $validated['vehicle_id'])->first();
 
-        return response()->json([
-            'message' => 'Trip updated successfully.',
-            'trip' => $trip->load(['driver', 'vehicle'])
+        if (!$driver) {
+            return response()->json(['error' => 'Driver not assigned to vehicle'], 422);
+        }
+
+        $trip->update([
+            'driver_id'      => $driver->id,
+            'vehicle_id'     => $validated['vehicle_id'],
+            'start_location' => $validated['start_location'],
+            'end_location'   => $validated['end_location'],
+            'start_time'     => $validated['start_time'],
+            'end_time'       => $validated['end_time'],
         ]);
+
+        return response()->json($trip->load(['driver.user', 'vehicle']));
     }
 
     // ✅ Delete a trip
     public function destroy(Trip $trip)
     {
         $trip->delete();
-        return response()->json(['message' => 'Trip deleted successfully.']);
+        return response()->json(['message' => 'Trip deleted successfully']);
     }
 }

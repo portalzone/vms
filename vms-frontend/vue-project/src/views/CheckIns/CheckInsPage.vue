@@ -18,39 +18,42 @@
       <table class="w-full table-auto text-sm">
         <thead class="bg-gray-100 text-left">
           <tr>
-            <th class="px-4 py-2">#</th>
-            <th class="px-4 py-2">Vehicle</th>
-            <th class="px-4 py-2">Driver</th>
-            <th class="px-4 py-2">Checked In</th>
-            <th class="px-4 py-2">Checked Out</th>
-            <th class="px-4 py-2 text-right">Actions</th>
-          </tr>
+  <th class="px-4 py-2">#</th>
+  <th class="px-4 py-2">Vehicle</th>
+  <th class="px-4 py-2">Driver</th>
+  <th class="px-4 py-2">Checked In</th>
+  <th class="px-4 py-2">Checked Out</th>
+  <th class="px-4 py-2">Checked In By</th>
+  <th class="px-4 py-2">Checked Out By</th>
+  <th class="px-4 py-2 text-right">Actions</th>
+</tr>
+
         </thead>
         <tbody>
-          <tr
-            v-for="(check, index) in checkIns"
-            :key="check.id"
-            class="hover:bg-gray-50 even:bg-gray-50"
-          >
-            <td class="px-4 py-2">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-            <td class="px-4 py-2">{{ check.vehicle?.plate_number || '—' }}</td>
-            <td class="px-4 py-2">{{ check.driver?.user?.name || '—' }}</td>
-            <td class="px-4 py-2">{{ check.checked_in_at || '—' }}</td>
-            <td class="px-4 py-2">{{ check.checked_out_at || '—' }}</td>
-            <td class="px-4 py-2 text-right">
-              <button
-                v-if="!check.checked_out_at"
-                class="text-blue-600 hover:underline"
-                @click="checkout(check.id)"
-              >
-                Checkout
-              </button>
-              <span v-else class="text-gray-400">—</span>
-            </td>
-          </tr>
-          <tr v-if="checkIns.length === 0">
-            <td colspan="6" class="text-center text-gray-500 py-4">No check-ins found.</td>
-          </tr>
+<tr
+  v-for="(check, index) in checkIns"
+  :key="check.id"
+  class="hover:bg-gray-50 even:bg-gray-50"
+>
+  <td class="px-4 py-2">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
+  <td class="px-4 py-2">{{ check.vehicle?.plate_number || '—' }}</td>
+  <td class="px-4 py-2">{{ check.driver?.user?.name || '—' }}</td>
+  <td class="px-4 py-2">{{ check.checked_in_at || '—' }}</td>
+  <td class="px-4 py-2">{{ check.checked_out_at || '—' }}</td>
+  <td class="px-4 py-2">{{ check.checked_in_by_user?.name || '—' }}</td>
+  <td class="px-4 py-2">{{ check.checked_out_by_user?.name || '—' }}</td>
+  <td class="px-4 py-2 text-right">
+    <button
+      v-if="!check.checked_out_at"
+      class="text-blue-600 hover:underline"
+      @click="checkout(check.id)"
+    >
+      Checkout
+    </button>
+    <span v-else class="text-gray-400">—</span>
+  </td>
+</tr>
+
         </tbody>
       </table>
     </div>

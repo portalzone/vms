@@ -39,13 +39,33 @@ class DashboardController extends Controller
         $from = $request->input('from');
         $to = $request->input('to');
 
-        $checkIns = CheckInOut::with(['vehicle', 'driver'])->get()->map(function ($c) {
-            return [
-                'type' => 'Check-In',
-                'message' => ($c->vehicle?->plate_number ?? 'Unknown Vehicle') . ' checked in by ' . ($c->driver?->name ?? 'Unknown Driver'),
-                'time' => $c->created_at,
-            ];
-        });
+        $checkInsOuts = CheckInOut::with(['vehicle', 'driver.user', 'checkedInBy', 'checkedOutBy'])
+            ->get()
+            ->flatMap(function ($c) {
+                $activities = [];
+
+                if ($c->checked_in_at) {
+                    $activities[] = [
+                        'type' => 'Check-In',
+                        'message' => ($c->vehicle?->plate_number ?? 'Unknown Vehicle') .
+                                     ' checked in by ' .
+                                     ($c->checkedInBy?->name ?? 'Unknown User'),
+                        'time' => $c->checked_in_at,
+                    ];
+                }
+
+                if ($c->checked_out_at) {
+                    $activities[] = [
+                        'type' => 'Check-Out',
+                        'message' => ($c->vehicle?->plate_number ?? 'Unknown Vehicle') .
+                                     ' checked out by ' .
+                                     ($c->checkedOutBy?->name ?? 'Unknown User'),
+                        'time' => $c->checked_out_at,
+                    ];
+                }
+
+                return $activities;
+            });
 
         $maintenances = Maintenance::with('vehicle')->get()->map(function ($m) {
             return [
@@ -79,19 +99,18 @@ class DashboardController extends Controller
             ];
         });
 
-$trips = Trip::with(['vehicle', 'driver'])->get()->map(function ($t) {
-    return [
-        'type' => 'Trip',
-        'message' => 'Trip from ' . $t->start_location . ' to ' . $t->end_location .
-            ' by ' . ($t->driver?->name ?? 'Unknown Driver') .
-            ' using ' . ($t->vehicle?->plate_number ?? 'Unknown Vehicle'),
-        'time' => $t->created_at,
-    ];
-});
-
+        $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
+            return [
+                'type' => 'Trip',
+                'message' => 'Trip from ' . $t->start_location . ' to ' . $t->end_location .
+                             ' by ' . ($t->driver?->user?->name ?? 'Unknown Driver') .
+                             ' using ' . ($t->vehicle?->plate_number ?? 'Unknown Vehicle'),
+                'time' => $t->created_at,
+            ];
+        });
 
         $all = collect()
-            ->merge($checkIns)
+            ->merge($checkInsOuts)
             ->merge($maintenances)
             ->merge($vehicles)
             ->merge($drivers)
@@ -133,38 +152,21 @@ $trips = Trip::with(['vehicle', 'driver'])->get()->map(function ($t) {
         foreach ($months as $monthLabel) {
             $month = Carbon::createFromFormat('M Y', $monthLabel);
 
-            $vehicles = DB::table('vehicles')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->count();
-
-            $drivers = DB::table('drivers')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->count();
-
-            $expenses = DB::table('expenses')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->sum('amount');
-
-            $maintenances = DB::table('maintenances')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->sum('cost');
-
-            $trips = DB::table('trips')
-                ->whereMonth('created_at', $month->month)
-                ->whereYear('created_at', $month->year)
-                ->count();
+            $vehicles = DB::table('vehicles')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->count();
+            $drivers = DB::table('drivers')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->count();
+                        $expenses = DB::table('expenses')->whereMonth('date', $month->month)->whereYear('date', $month->year)->sum('amount');
+            $maintenances = DB::table('maintenances')->whereMonth('date', $month->month)->whereYear('date', $month->year)->sum('cost');
+            // $expenses = DB::table('expenses')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->sum('amount');
+            // $maintenances = DB::table('maintenances')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->sum('cost');
+            $trips = DB::table('trips')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->count();
 
             $data[] = [
-                'month'        => $monthLabel,
-                'vehicles'     => $vehicles,
-                'drivers'      => $drivers,
-                'expenses'     => (float) $expenses,
+                'month' => $monthLabel,
+                'vehicles' => $vehicles,
+                'drivers' => $drivers,
+                'expenses' => (float) $expenses,
                 'maintenances' => (float) $maintenances,
-                'trips'        => $trips,
+                'trips' => $trips,
             ];
         }
 

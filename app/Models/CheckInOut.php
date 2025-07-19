@@ -14,6 +14,8 @@ class CheckInOut extends Model
         'driver_id',
         'checked_in_at',
         'checked_out_at',
+        'checked_in_by',
+        'checked_out_by',
     ];
 
     /**
@@ -36,10 +38,25 @@ class CheckInOut extends Model
      * Relationship: Each check-in/out belongs to a driver
      */
     public function driver()
-{
-    return $this->belongsTo(Driver::class)->with('user');
-}
+    {
+        return $this->belongsTo(Driver::class)->with('user');
+    }
 
+    /**
+     * Relationship: User who checked the vehicle in
+     */
+    public function checkedInBy()
+    {
+        return $this->belongsTo(User::class, 'checked_in_by');
+    }
+
+    /**
+     * Relationship: User who checked the vehicle out
+     */
+    public function checkedOutBy()
+    {
+        return $this->belongsTo(User::class, 'checked_out_by');
+    }
 
     /**
      * Optional: Scope to filter only currently checked-in vehicles
@@ -48,4 +65,15 @@ class CheckInOut extends Model
     {
         return $query->whereNull('checked_out_at');
     }
+
+    public function checkedInByUser()
+{
+    return $this->belongsTo(User::class, 'checked_in_by');
+}
+
+public function checkedOutByUser()
+{
+    return $this->belongsTo(User::class, 'checked_out_by');
+}
+
 }

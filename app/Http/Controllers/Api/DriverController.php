@@ -4,143 +4,125 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class DriverController extends Controller
 {
-    // ✅ Get all drivers with vehicle relationship
- public function index()
-{
-    $this->authorizeAccess('view');
-    return Driver::with(['user', 'vehicle'])->get(); // 👈 make sure 'user' is included
-}
-
-
-
-    // ✅ Store a new driver with validation
-public function store(Request $request)
-{
-    $this->authorizeAccess('create');
-
-    $validated = $request->validate([
-        'user_id'              => 'required|exists:users,id|unique:drivers,user_id',
-        'license_number'       => 'required|string|max:50|unique:drivers',
-        'phone_number'         => 'required|string|max:20',
-        'home_address'         => 'required|string|max:255',
-        'sex'                  => 'required|in:male,female,other',
-        'vehicle_id'           => 'nullable|exists:vehicles,id',
-    ]);
-
-    // Assign 'driver' role to user if not already
-    $user = \App\Models\User::findOrFail($validated['user_id']);
-    if (!$user->hasRole('driver')) {
-        // $user->assignRole('driver', 'api'); // 👈 specify the 'api' guard
-        $user->assignRole('driver');
-
-
-    }
-
-    
-    $driver = Driver::create($validated);
-
-    return response()->json($driver->load(['user', 'vehicle']), 201);
-}
-
-// 
-public function me()
-{
-    $user = auth()->user();
-
-    $driver = \App\Models\Driver::with('vehicle')
-        ->where('user_id', $user->id)
-        ->first();
-
-    if (!$driver) {
-        return response()->json(['message' => 'Driver profile not found.'], 404);
-    }
-
-    return response()->json($driver);
-}
-
-public function getDriverUserIdByVehicle($vehicleId)
-{
-    $driver = \App\Models\Driver::with('user')->where('vehicle_id', $vehicleId)->first();
-
-    if (!$driver) {
-        return response()->json(['message' => 'No driver assigned to this vehicle.'], 404);
-    }
-
-    return response()->json([
-        'user_id' => $driver->user_id,
-        'name' => $driver->user->name, // Optional: display name in TripForm
-        'license' => $driver->user->driver_licence_number, // Optional
-    ]);
-}
-
-
-
-    // ✅ Show single driver
-    public function show($id)
+    // ✅ Get all drivers with user and vehicle relationships
+    public function index()
     {
         $this->authorizeAccess('view');
-        return Driver::with('vehicle')->findOrFail($id);
+        return Driver::with(['user', 'vehicle'])->get();
     }
 
-    // ✅ Update driver
-public function update(Request $request, $id)
-{
-    $this->authorizeAccess('update');
+    // ✅ Store a new driver
+    public function store(Request $request)
+    {
+        $this->authorizeAccess('create');
 
-    $driver = Driver::with('user')->findOrFail($id);
+        $validated = $request->validate([
+            'user_id'        => 'required|exists:users,id|unique:drivers,user_id',
+            'license_number' => 'required|string|max:50|unique:drivers',
+            'phone_number'   => 'required|string|max:20',
+            'home_address'   => 'required|string|max:255',
+            'sex'            => 'required|in:male,female,other',
+            'vehicle_id'     => 'nullable|exists:vehicles,id|unique:drivers,vehicle_id',
+        ]);
 
-    $validated = $request->validate([
-        'user_id'         => 'sometimes|required|exists:users,id|unique:drivers,user_id,' . $id,
-        'license_number'  => 'sometimes|required|string|max:50|unique:drivers,license_number,' . $id,
-        'phone_number'    => 'sometimes|required|string|max:20',
-        'home_address'    => 'sometimes|required|string|max:255',
-        'sex'             => 'sometimes|required|in:male,female,other',
-        'vehicle_id'      => 'nullable|exists:vehicles,id',
-        'name'            => 'sometimes|required|string|max:100',
-        'email'           => 'sometimes|required|email|max:100|unique:users,email,' . $driver->user_id,
-    ]);
-
-    // ✅ Update user_id if changed
-    if (isset($validated['user_id']) && $validated['user_id'] != $driver->user_id) {
-        $newUser = \App\Models\User::findOrFail($validated['user_id']);
-
-        // Optionally reassign role if needed
-        if (!$newUser->hasRole('driver')) {
-            $newUser->assignRole('driver');
-
-            
+        $user = User::findOrFail($validated['user_id']);
+        if (!$user->hasRole('driver')) {
+            $user->assignRole('driver');
         }
 
-        $driver->user_id = $validated['user_id'];
+        $driver = Driver::create($validated);
+        return response()->json($driver->load(['user', 'vehicle']), 201);
     }
 
-    // ✅ Update other driver fields
-    $driver->license_number = $validated['license_number'] ?? $driver->license_number;
-    $driver->phone_number   = $validated['phone_number'] ?? $driver->phone_number;
-    $driver->home_address   = $validated['home_address'] ?? $driver->home_address;
-    $driver->sex            = $validated['sex'] ?? $driver->sex;
-    $driver->vehicle_id     = $validated['vehicle_id'] ?? $driver->vehicle_id;
-    $driver->save();
+    // ✅ Authenticated driver's data
+    public function me()
+    {
+        $user = auth()->user();
 
-    // ✅ Update linked user info if provided
-    if (isset($validated['name']) || isset($validated['email'])) {
-        $driver->user->update([
-            'name'  => $validated['name'] ?? $driver->user->name,
-            'email' => $validated['email'] ?? $driver->user->email,
+        $driver = Driver::with('vehicle')->where('user_id', $user->id)->first();
+
+        if (!$driver) {
+            return response()->json(['message' => 'Driver profile not found.'], 404);
+        }
+
+        return response()->json($driver);
+    }
+
+    // ✅ Get driver by vehicle ID (for TripForm.vue)
+    public function getDriverUserIdByVehicle($vehicleId)
+    {
+        $driver = Driver::with('user')->where('vehicle_id', $vehicleId)->first();
+
+        if (!$driver) {
+            return response()->json(['message' => 'No driver assigned to this vehicle.'], 404);
+        }
+
+        return response()->json([
+            'user_id' => $driver->user_id,
+            'name'    => $driver->user->name,
+            'license' => $driver->license_number,
         ]);
     }
 
-    return response()->json($driver->load(['user', 'vehicle']));
-}
+    // ✅ Show a single driver
+    public function show($id)
+    {
+        $this->authorizeAccess('view');
+        return Driver::with(['user', 'vehicle'])->findOrFail($id);
+    }
 
+    // ✅ Update a driver
+    public function update(Request $request, $id)
+    {
+        $this->authorizeAccess('update');
 
+        $driver = Driver::with('user')->findOrFail($id);
 
+        $validated = $request->validate([
+            'user_id'        => 'sometimes|required|exists:users,id|unique:drivers,user_id,' . $id,
+            'license_number' => 'sometimes|required|string|max:50|unique:drivers,license_number,' . $id,
+            'phone_number'   => 'sometimes|required|string|max:20',
+            'home_address'   => 'sometimes|required|string|max:255',
+            'sex'            => 'sometimes|required|in:male,female,other',
+            'vehicle_id'     => 'nullable|exists:vehicles,id|unique:drivers,vehicle_id,' . $id,
+            'name'           => 'sometimes|required|string|max:100',
+            'email'          => 'sometimes|required|email|max:100|unique:users,email,' . $driver->user_id,
+        ]);
 
-    // ✅ Delete driver
+        // Handle potential user change
+        if (isset($validated['user_id']) && $validated['user_id'] != $driver->user_id) {
+            $newUser = User::findOrFail($validated['user_id']);
+            if (!$newUser->hasRole('driver')) {
+                $newUser->assignRole('driver');
+            }
+            $driver->user_id = $validated['user_id'];
+        }
+
+        // Update driver model fields
+        $driver->license_number = $validated['license_number'] ?? $driver->license_number;
+        $driver->phone_number   = $validated['phone_number'] ?? $driver->phone_number;
+        $driver->home_address   = $validated['home_address'] ?? $driver->home_address;
+        $driver->sex            = $validated['sex'] ?? $driver->sex;
+        $driver->vehicle_id     = $validated['vehicle_id'] ?? $driver->vehicle_id;
+        $driver->save();
+
+        // Update user data if provided
+        if (isset($validated['name']) || isset($validated['email'])) {
+            $driver->user->update([
+                'name'  => $validated['name'] ?? $driver->user->name,
+                'email' => $validated['email'] ?? $driver->user->email,
+            ]);
+        }
+
+        return response()->json($driver->load(['user', 'vehicle']));
+    }
+
+    // ✅ Delete a driver
     public function destroy($id)
     {
         $this->authorizeAccess('delete');
@@ -152,22 +134,20 @@ public function update(Request $request, $id)
     }
 
     /**
-     * 🔐 Role-based permission checker.
+     * 🔐 Role-based access control
      */
     private function authorizeAccess(string $action): void
     {
         $user = auth()->user();
 
-        $rolePermissions = [
-            'view'   => ['admin', 'manager'],
+        $roles = [
+            'view'   => ['admin', 'manager',  'gate_security'],
             'create' => ['admin', 'manager'],
             'update' => ['admin', 'manager'],
             'delete' => ['admin'],
         ];
 
-        $allowedRoles = $rolePermissions[$action] ?? [];
-
-        if (!$user || !$user->hasAnyRole($allowedRoles)) {
+        if (!$user || !$user->hasAnyRole($roles[$action] ?? [])) {
             abort(403, 'Unauthorized for this action.');
         }
     }
