@@ -21,6 +21,18 @@ class VehicleController extends Controller
         return Vehicle::with('driver')->get();
     }
 
+public function assignedVehicles()
+{
+    $vehicles = Driver::with('vehicle')
+        ->whereNotNull('vehicle_id')
+        ->get()
+        ->pluck('vehicle')
+        ->filter()
+        ->values();
+
+    return response()->json($vehicles);
+}
+
     // ✅ Return only vehicles that have an assigned driver (for Check-In)
     public function vehiclesWithDrivers()
     {

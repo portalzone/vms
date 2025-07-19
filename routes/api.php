@@ -51,8 +51,13 @@ Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']
 
 
     // ✅ Drivers
+    // Route::get('/drivers/me', [DriverController::class, 'me']);
+    Route::get('/assigned-vehicles', [VehicleController::class, 'assignedVehicles']);
+
+    Route::get('/vehicles/{vehicle}/driver-user-id', [DriverController::class, 'getDriverUserIdByVehicle']);
+
     Route::apiResource('drivers', DriverController::class);
-    Route::get('/driver/me', [DriverController::class, 'me']);
+
 
     // ✅ Check-In/Out
     Route::apiResource('checkins', CheckInOutController::class);

@@ -18,16 +18,21 @@ class Driver extends Model
     'sex',
 ];
 
-
     public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+{
+    return $this->belongsTo(\App\Models\User::class);
+}
 
-    
 
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);
     }
+
+
+public function trips()
+{
+    return $this->hasMany(Trip::class);
+}
+
 }

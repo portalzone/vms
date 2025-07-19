@@ -51,16 +51,33 @@ public function me()
 {
     $user = auth()->user();
 
-    if (!$user->hasRole('driver')) {
-        abort(403, 'Not a driver.');
-    }
-
     $driver = \App\Models\Driver::with('vehicle')
         ->where('user_id', $user->id)
-        ->firstOrFail();
+        ->first();
+
+    if (!$driver) {
+        return response()->json(['message' => 'Driver profile not found.'], 404);
+    }
 
     return response()->json($driver);
 }
+
+public function getDriverUserIdByVehicle($vehicleId)
+{
+    $driver = \App\Models\Driver::with('user')->where('vehicle_id', $vehicleId)->first();
+
+    if (!$driver) {
+        return response()->json(['message' => 'No driver assigned to this vehicle.'], 404);
+    }
+
+    return response()->json([
+        'user_id' => $driver->user_id,
+        'name' => $driver->user->name, // Optional: display name in TripForm
+        'license' => $driver->user->driver_licence_number, // Optional
+    ]);
+}
+
+
 
     // ✅ Show single driver
     public function show($id)

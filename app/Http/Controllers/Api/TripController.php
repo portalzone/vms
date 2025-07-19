@@ -4,116 +4,82 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Trip;
+use App\Models\Driver;
 use Illuminate\Http\Request;
-
 
 class TripController extends Controller
 {
-
-public function index()
-{
-    $this->authorizeAccess('view');
-
-    $user = auth()->user();
-
-    if ($user->hasRole('driver')) {
-        return Trip::with(['vehicle', 'driver.user']) // ✅ FIXED
-            ->where('driver_id', $user->driver->id)
-            ->get();
+    // ✅ Get all trips with vehicle and driver (user) details
+    public function index()
+    {
+        $trips = Trip::with(['driver', 'vehicle'])->latest()->paginate(10);
+        return response()->json($trips);
     }
 
-    return Trip::with(['vehicle', 'driver.user']) // ✅ FIXED
-        ->get();
-}
+    // ✅ Store a new trip
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'vehicle_id'     => 'required|exists:vehicles,id',
+            'start_location' => 'required|string|max:255',
+            'end_location'   => 'required|string|max:255',
+            'start_time'     => 'required|date',
+            'end_time'       => 'nullable|date|after_or_equal:start_time',
+        ]);
 
+        // ✅ Get the driver assigned to this vehicle
+        $driver = Driver::where('vehicle_id', $validated['vehicle_id'])->first();
 
-public function store(Request $request)
-{
-$request->validate([
-    'user_id'       => 'required|exists:users,id',
-    'vehicle_id'    => 'required|exists:vehicles,id',
-    'start_location'=> 'required|string|max:255',
-    'end_location'  => 'required|string|max:255',
-    'start_time'    => 'required|date',
-    'end_time'      => 'nullable|date|after_or_equal:start_time',
-]);
+        if (!$driver) {
+            return response()->json(['message' => 'No driver assigned to this vehicle.'], 422);
+        }
 
-// 🔁 Find driver by user_id
-$driver = \App\Models\Driver::where('user_id', $request->user_id)->first();
+        // ✅ Create the trip using the driver's user_id as driver_id
+        $trip = Trip::create([
+            'driver_id'      => $driver->user_id, // 👈 this stores user_id
+            'vehicle_id'     => $validated['vehicle_id'],
+            'start_location' => $validated['start_location'],
+            'end_location'   => $validated['end_location'],
+            'start_time'     => $validated['start_time'],
+            'end_time'       => $validated['end_time'],
+        ]);
 
-if (!$driver) {
-    return response()->json(['message' => 'User is not assigned as a driver.'], 422);
-}
-
-// ✅ Use driver_id in the Trip
-$trip = \App\Models\Trip::create([
-    'driver_id'     => $driver->id,
-    'vehicle_id'    => $request->vehicle_id,
-    'start_location'=> $request->start_location,
-    'end_location'  => $request->end_location,
-    'start_time'    => $request->start_time,
-    'end_time'      => $request->end_time,
-]);
-
-return response()->json($trip->load('driver.user', 'vehicle'), 201);
-
-}
-
-public function show($id)
-{
-    $trip = Trip::with(['vehicle', 'driver.user'])->findOrFail($id);
-
-    // ✅ Add user_id to top-level trip data
-    $trip->user_id = $trip->driver?->user_id;
-
-    return response()->json($trip);
-}
-
-
-public function update(Request $request, $id)
-{
-    $trip = Trip::findOrFail($id);
-
-    $validated = $request->validate([
-        'start_location' => 'sometimes|string',
-        'end_location' => 'sometimes|string',
-        'start_time' => 'sometimes|date',
-        'end_time' => 'nullable|date|after_or_equal:start_time',
-        'notes' => 'nullable|string',
-        'vehicle_id' => 'sometimes|exists:vehicles,id',
-        'driver_id' => 'sometimes|exists:drivers,id',
-    ]);
-
-    $trip->update($validated);
-
-    return response()->json($trip->load(['vehicle', 'driver.user']));
-}
-
-private function authorizeAccess(string $action): void
-{
-    $user = auth()->user();
-
-    $permissions = [
-        'view'   => ['admin', 'manager', 'driver'],
-        'create' => ['admin', 'manager', 'driver'],
-        'update' => ['admin', 'manager', 'driver'],
-        'delete' => ['admin', 'manager'],
-    ];
-
-    $allowedRoles = $permissions[$action] ?? [];
-
-    if (!$user || !$user->hasAnyRole($allowedRoles)) {
-        abort(403, 'Unauthorized for this action.');
+        return response()->json([
+            'message' => 'Trip created successfully.',
+            'trip' => $trip->load(['driver', 'vehicle'])
+        ], 201);
     }
-}
 
+    // ✅ Show one trip with full relationships
+    public function show(Trip $trip)
+    {
+        $trip->load(['driver', 'vehicle']);
+        return response()->json($trip);
+    }
 
-public function destroy($id)
-{
-    $trip = Trip::findOrFail($id);
-    $trip->delete();
+    // ✅ Update a trip
+    public function update(Request $request, Trip $trip)
+    {
+        $validated = $request->validate([
+            'vehicle_id'     => 'required|exists:vehicles,id',
+            'start_location' => 'required|string|max:255',
+            'end_location'   => 'required|string|max:255',
+            'start_time'     => 'required|date',
+            'end_time'       => 'nullable|date|after_or_equal:start_time',
+        ]);
 
-    return response()->json(['message' => 'Trip deleted']);
-}
+        $trip->update($validated);
 
+        return response()->json([
+            'message' => 'Trip updated successfully.',
+            'trip' => $trip->load(['driver', 'vehicle'])
+        ]);
+    }
+
+    // ✅ Delete a trip
+    public function destroy(Trip $trip)
+    {
+        $trip->delete();
+        return response()->json(['message' => 'Trip deleted successfully.']);
+    }
 }

@@ -10,26 +10,27 @@ class Trip extends Model
     use HasFactory;
 
     protected $fillable = [
-        'driver_id',
-        'vehicle_id',
+        'driver_id',       // This references the user_id of the driver
+        'vehicle_id',      // This references the vehicle used
         'start_location',
         'end_location',
         'start_time',
         'end_time',
     ];
 
-    protected $casts = [
-        'start_time' => 'datetime',
-        'end_time'   => 'datetime',
-    ];
-
-    public function driver()
-    {
-        return $this->belongsTo(\App\Models\Driver::class);
-    }
-
+    /**
+     * Get the vehicle associated with the trip.
+     */
     public function vehicle()
     {
-        return $this->belongsTo(\App\Models\Vehicle::class);
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    /**
+     * Get the driver (User) associated with the trip.
+     */
+    public function driver()
+    {
+        return $this->belongsTo(User::class, 'driver_id');
     }
 }

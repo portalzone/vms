@@ -1,49 +1,72 @@
 <template>
-  <div class="max-w-xl mx-auto p-4 bg-white rounded shadow">
-    <h2 class="text-2xl font-bold mb-4">
-      {{ trip.id ? 'Edit Trip' : 'New Trip' }}
-    </h2>
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">{{ isEdit ? 'Edit Trip' : 'Create New Trip' }}</h2>
 
-    <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div>
-        <label class="block font-medium mb-1">Start Location</label>
-        <input v-model="trip.start_location" type="text" class="form-input w-full" required />
-      </div>
-
-      <div>
-        <label class="block font-medium mb-1">End Location</label>
-        <input v-model="trip.end_location" type="text" class="form-input w-full" required />
-      </div>
-
-      <div>
-        <label class="block font-medium mb-1">Start Time</label>
-        <input v-model="trip.start_time" type="datetime-local" class="form-input w-full" required />
-      </div>
-
-      <div>
-        <label class="block font-medium mb-1">End Time</label>
-        <input v-model="trip.end_time" type="datetime-local" class="form-input w-full" />
-      </div>
-
-      <div>
+    <form @submit.prevent="submit">
+      <!-- Vehicle Select -->
+      <div class="mb-4">
         <label class="block font-medium mb-1">Vehicle</label>
-        <select v-model="trip.vehicle_id" class="form-select w-full" required>
-          <option disabled value="">-- Select Vehicle --</option>
+        <select v-model="trip.vehicle_id" class="w-full border rounded px-3 py-2">
+          <option disabled value="">Select a vehicle</option>
           <option v-for="vehicle in vehicles" :key="vehicle.id" :value="vehicle.id">
-            {{ vehicle.plate_number }} ({{ vehicle.manufacturer }} {{ vehicle.model }})
+            {{ vehicle.plate_number }}
           </option>
         </select>
+        <div v-if="errors.vehicle_id" class="text-red-600 text-sm">{{ errors.vehicle_id[0] }}</div>
       </div>
 
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        {{ trip.id ? 'Update Trip' : 'Create Trip' }}
-      </button>
+      <!-- Auto-filled Driver Info -->
+      <input type="hidden" v-model="trip.driver_id" />
+      <div class="mb-4" v-if="driverName">
+        <label class="block font-medium text-green-700">
+          Driver: {{ driverName }}
+        </label>
+      </div>
+
+      <!-- Start Location -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Start Location</label>
+        <input v-model="trip.start_location" type="text" class="w-full border rounded px-3 py-2" />
+        <div v-if="errors.start_location" class="text-red-600 text-sm">{{ errors.start_location[0] }}</div>
+      </div>
+
+      <!-- End Location -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">End Location</label>
+        <input v-model="trip.end_location" type="text" class="w-full border rounded px-3 py-2" />
+        <div v-if="errors.end_location" class="text-red-600 text-sm">{{ errors.end_location[0] }}</div>
+      </div>
+
+      <!-- Start Time -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Start Time</label>
+        <input v-model="trip.start_time" type="datetime-local" class="w-full border rounded px-3 py-2" />
+        <div v-if="errors.start_time" class="text-red-600 text-sm">{{ errors.start_time[0] }}</div>
+      </div>
+
+      <!-- End Time -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">End Time</label>
+        <input v-model="trip.end_time" type="datetime-local" class="w-full border rounded px-3 py-2" />
+        <div v-if="errors.end_time" class="text-red-600 text-sm">{{ errors.end_time[0] }}</div>
+      </div>
+
+      <!-- Submit -->
+      <div>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          :disabled="loading"
+        >
+          {{ isEdit ? 'Update Trip' : 'Create Trip' }}
+        </button>
+      </div>
     </form>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/axios'
 
@@ -51,89 +74,85 @@ const route = useRoute()
 const router = useRouter()
 
 const trip = ref({
+  id: null,
+  vehicle_id: '',
+  driver_id: '',
   start_location: '',
   end_location: '',
   start_time: '',
-  end_time: '',
-  vehicle_id: '',
-  user_id: '',
+  end_time: ''
 })
 
 const vehicles = ref([])
+const errors = ref({})
+const loading = ref(false)
+const isEdit = ref(false)
 
+// 🔁 Fetch vehicles that are assigned to drivers
 const fetchVehicles = async () => {
   try {
-    const res = await axios.get('/vehicles')
+    const res = await axios.get('/assigned-vehicles')
     vehicles.value = res.data
   } catch (err) {
-    console.error('❌ Error fetching vehicles:', err)
+    console.error('Error loading vehicles', err)
   }
 }
 
-const fetchDriverInfo = async () => {
-  try {
-    const res = await axios.get('/drivers/me')
-    const driver = res.data
-    trip.value.user_id = driver.user_id
-    trip.value.vehicle_id = driver.vehicle_id
-  } catch (err) {
-    console.warn('🔒 Not a driver or failed to load driver info:', err)
+// 🎯 Auto-fill driver_id when vehicle is selected
+watch(() => trip.value.vehicle_id, vehicleId => {
+  const selected = vehicles.value.find(v => v.id === vehicleId)
+  if (selected?.driver?.user_id) {
+    trip.value.driver_id = selected.driver.user_id
+  } else {
+    trip.value.driver_id = ''
   }
-}
+})
 
-const fetchTrip = async (id) => {
-  try {
-    const res = await axios.get(`/trips/${id}`)
-    const data = res.data
-    trip.value = {
-      id: data.id,
-      start_location: data.start_location,
-      end_location: data.end_location,
-      start_time: data.start_time?.slice(0, 16),
-      end_time: data.end_time?.slice(0, 16),
-      vehicle_id: data.vehicle_id,
-      user_id: data.driver?.user_id || '',
-    }
-  } catch (err) {
-    console.error('❌ Failed to load trip:', err)
-  }
-}
+// 📛 Get driver's name for display
+const driverName = computed(() => {
+  const selected = vehicles.value.find(v => v.id === trip.value.vehicle_id)
+  return selected?.driver?.user?.name || ''
+})
 
-const handleSubmit = async () => {
+// 🚀 Submit form
+const submit = async () => {
+  loading.value = true
+  errors.value = {}
+
   try {
     const payload = { ...trip.value }
-
-    if (trip.value.id) {
+    if (isEdit.value) {
       await axios.put(`/trips/${trip.value.id}`, payload)
-      alert('Trip updated!')
     } else {
       await axios.post('/trips', payload)
-      alert('Trip created!')
     }
-
     router.push('/trips')
   } catch (err) {
-    console.error('❌ Failed to submit trip:', err)
-    alert('Error saving trip.')
+    if (err.response?.status === 422) {
+      errors.value = err.response.data.errors || {}
+    } else {
+      alert(err.response?.data?.message || 'Failed to save trip.')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// 🛠️ Load trip for editing
+const fetchTrip = async () => {
+  try {
+    const res = await axios.get(`/trips/${route.params.id}`)
+    trip.value = res.data
+    isEdit.value = true
+  } catch (err) {
+    console.error('Trip not found', err)
   }
 }
 
 onMounted(async () => {
   await fetchVehicles()
-
   if (route.params.id) {
-    await fetchTrip(route.params.id)
-  } else {
-    await fetchDriverInfo()
+    await fetchTrip()
   }
 })
 </script>
-
-<style scoped>
-.form-input,
-.form-select {
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  border-radius: 4px;
-}
-</style>

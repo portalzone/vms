@@ -34,6 +34,10 @@ const ExpenseFormPage = () => import('../views/Expenses/ExpenseFormPage.vue')
 // recent activity
 import RecentActivityPage from '@/views/RecentActivityPage.vue';
 
+// trip view
+import TripsPage from '@/views/Trips/TripsPage.vue'
+import TripFormPage from '@/views/Trips/TripFormPage.vue'
+
 
 const routes = [
   {
@@ -187,25 +191,22 @@ const routes = [
 },
 
 // Trips
-{
-  path: '/trips',
-  name: 'Trips',
-  component: () => import('@/views/Trips/TripsPage.vue'),
-  meta: { requiresAuth: true },
-},
-{
-  path: '/trips/new',
-  name: 'TripCreate',
-  component: () => import('@/views/Trips/TripFormPage.vue'),
-  meta: { requiresAuth: true },
-},
-{
-  path: '/trips/:id/edit',
-  name: 'TripEdit',
-  component: () => import('@/views/Trips/TripFormPage.vue'),
-  props: true,
-  meta: { requiresAuth: true },
-},
+ {
+    path: '/trips',
+    name: 'Trips',
+    component: TripsPage,
+  },
+  {
+    path: '/trips/create',
+    name: 'TripCreate',
+    component: TripFormPage,
+  },
+  {
+    path: '/trips/:id/edit',
+    name: 'TripEdit',
+    component: TripFormPage,
+    props: true,
+  },
 
 // recent activity
 {

@@ -13,6 +13,7 @@ class Expense extends Model
         'vehicle_id',
         'amount',
         'description',
+        'date',
     ];
 
     public function vehicle()
