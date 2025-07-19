@@ -33,7 +33,7 @@
         <tbody>
           <tr v-for="trip in filteredTrips" :key="trip.id" class="hover:bg-gray-50">
             <td class="p-2 border">
-              {{ trip.driver?.user?.name || 'N/A' }}
+              {{ trip.driver?.name || 'N/A' }}
             </td>
             <td class="p-2 border">
               {{ trip.vehicle?.manufacturer || 'N/A' }} -
