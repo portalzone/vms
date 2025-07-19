@@ -79,15 +79,16 @@ class DashboardController extends Controller
             ];
         });
 
-        $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
-            return [
-                'type' => 'Trip',
-                'message' => 'Trip from ' . $t->start_location . ' to ' . $t->end_location .
-                    ' by ' . ($t->driver?->user?->name ?? 'Unknown Driver') .
-                    ' using ' . ($t->vehicle?->plate_number ?? 'Unknown Vehicle'),
-                'time' => $t->created_at,
-            ];
-        });
+$trips = Trip::with(['vehicle', 'driver'])->get()->map(function ($t) {
+    return [
+        'type' => 'Trip',
+        'message' => 'Trip from ' . $t->start_location . ' to ' . $t->end_location .
+            ' by ' . ($t->driver?->name ?? 'Unknown Driver') .
+            ' using ' . ($t->vehicle?->plate_number ?? 'Unknown Vehicle'),
+        'time' => $t->created_at,
+    ];
+});
+
 
         $all = collect()
             ->merge($checkIns)
