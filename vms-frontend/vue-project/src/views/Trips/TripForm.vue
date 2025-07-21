@@ -88,7 +88,16 @@ const errors = ref({})
 const loading = ref(false)
 const isEdit = ref(false)
 
-// 🔁 Fetch vehicles that are assigned to drivers
+// Helper: Format date to "YYYY-MM-DDTHH:MM" for datetime-local
+const formatForInput = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const pad = (n) => n.toString().padStart(2, '0')
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+// Fetch assigned vehicles
 const fetchVehicles = async () => {
   try {
     const res = await axios.get('/assigned-vehicles')
@@ -98,34 +107,36 @@ const fetchVehicles = async () => {
   }
 }
 
-// 🎯 Auto-fill driver_id when vehicle is selected
+// Autofill driver_id
 watch(() => trip.value.vehicle_id, vehicleId => {
   const selected = vehicles.value.find(v => v.id === vehicleId)
-  if (selected?.driver?.user_id) {
-    trip.value.driver_id = selected.driver.user_id
-  } else {
-    trip.value.driver_id = ''
-  }
+  trip.value.driver_id = selected?.driver?.user_id || ''
 })
 
-// 📛 Get driver's name for display
+// Driver display
 const driverName = computed(() => {
   const selected = vehicles.value.find(v => v.id === trip.value.vehicle_id)
   return selected?.driver?.user?.name || ''
 })
 
-// 🚀 Submit form
+// Submit form
 const submit = async () => {
   loading.value = true
   errors.value = {}
 
   try {
-    const payload = { ...trip.value }
+    const payload = {
+      ...trip.value,
+      start_time: new Date(trip.value.start_time).toISOString(),
+      end_time: new Date(trip.value.end_time).toISOString()
+    }
+
     if (isEdit.value) {
       await axios.put(`/trips/${trip.value.id}`, payload)
     } else {
       await axios.post('/trips', payload)
     }
+
     router.push('/trips')
   } catch (err) {
     if (err.response?.status === 422) {
@@ -138,11 +149,15 @@ const submit = async () => {
   }
 }
 
-// 🛠️ Load trip for editing
+// Fetch trip for editing
 const fetchTrip = async () => {
   try {
     const res = await axios.get(`/trips/${route.params.id}`)
-    trip.value = res.data
+    trip.value = {
+      ...res.data,
+      start_time: formatForInput(res.data.start_time),
+      end_time: formatForInput(res.data.end_time)
+    }
     isEdit.value = true
   } catch (err) {
     console.error('Trip not found', err)

@@ -17,68 +17,64 @@
         <option value="Maintenance">Maintenance</option>
         <option value="Trip">Trip</option>
         <option value="Vehicle Registered">Vehicle Registered</option>
+        <option value="Vehicle Updated">Vehicle Updated</option>
         <option value="Driver Registered">Driver Registered</option>
+        <option value="Driver Updated">Driver Updated</option>
         <option value="Expense">Expense</option>
       </select>
 
-      <input
-        v-model="fromDate"
-        type="date"
-        class="border px-3 py-2 rounded"
-        placeholder="From"
-      />
-
-      <input
-        v-model="toDate"
-        type="date"
-        class="border px-3 py-2 rounded"
-        placeholder="To"
-      />
+      <input v-model="fromDate" type="date" class="border px-3 py-2 rounded" />
+      <input v-model="toDate" type="date" class="border px-3 py-2 rounded" />
     </div>
 
-    <!-- List -->
-<ul class="space-y-4">
-  <li
-    v-for="(activity, index) in activities"
-    :key="index"
-    class="flex items-start gap-4 p-4 bg-white rounded shadow"
-  >
-    <!-- Serial Number -->
-    <div class="font-semibold w-6 text-right">{{ (currentPage - 1) * perPage + index + 1 }}.</div>
+    <!-- Activity List -->
+    <ul class="space-y-4">
+      <li
+        v-for="(activity, index) in activities"
+        :key="index"
+        class="flex items-start gap-4 p-4 bg-white rounded shadow"
+      >
+        <!-- Serial Number -->
+        <div class="font-semibold w-6 text-right">
+          {{ (currentPage - 1) * perPage + index + 1 }}.
+        </div>
 
-    <!-- Icon -->
-    <span
-      class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white"
-      :class="{
-        'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
-        'bg-red-500': activity.type === 'Maintenance',
-        'bg-yellow-500': activity.type === 'Expense',
-        'bg-gray-500': activity.type === 'Trip',
-        'bg-green-500': activity.type === 'Driver Registered'
-      }"
-    >
-      <template v-if="activity.type === 'Check-In'">🚗</template>
-      <template v-else-if="activity.type === 'Maintenance'">🛠️</template>
-      <template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
-      <template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
-      <template v-else-if="activity.type === 'Trip'">🧭</template>
-      <template v-else-if="activity.type === 'Expense'">💸</template>
-      <template v-else>📌</template>
-    </span>
+        <!-- Icon -->
+        <span
+          class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white"
+          :class="{
+            'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
+            'bg-brown-500': activity.type === 'Driver Updated' || activity.type === 'Vehicle Updated',
+            'bg-red-500': activity.type === 'Maintenance',
+            'bg-yellow-500': activity.type === 'Expense',
+            'bg-gray-500': activity.type === 'Trip',
+            'bg-green-500': activity.type === 'Driver Registered'
+          }"
+        >
+          <template v-if="activity.type === 'Check-In'">🚗</template>
+          <template v-else-if="activity.type === 'Maintenance'">🛠️</template>
+          <template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
+          <template v-else-if="activity.type === 'Vehicle Updated'">🛠️</template>
+          <template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
+          <template v-else-if="activity.type === 'Driver Updated'">👤</template>
+          <template v-else-if="activity.type === 'Trip'">🧭</template>
+          <template v-else-if="activity.type === 'Expense'">💸</template>
+          <template v-else>📌</template>
+        </span>
 
-    <!-- Details -->
-    <div>
-      <p class="text-sm text-gray-800 leading-5">
-        <span class="font-semibold">{{ activity.type }}:</span>
-        {{ activity.message }}
-      </p>
-      <p class="text-xs text-gray-500 mt-1">
-        {{ new Date(activity.time).toLocaleString() }}
-      </p>
-      <hr />
-    </div>
-  </li>
-</ul>
+        <!-- Details -->
+        <div>
+          <p class="text-sm text-gray-800 leading-5">
+            <span class="font-semibold">{{ activity.type }}:</span>
+            {{ activity.message }}
+          </p>
+          <p class="text-xs text-gray-500 mt-1">
+            {{ new Date(activity.time).toLocaleString() }}
+          </p>
+          <hr />
+        </div>
+      </li>
+    </ul>
 
     <!-- Pagination Controls -->
     <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
@@ -181,15 +177,13 @@ const visiblePages = computed(() => {
 })
 </script>
 
-<style scoped>
-/* Header */
+<style>
 h3 {
   font-weight: 600;
   font-size: 1.125rem;
   margin-bottom: 1rem;
 }
 
-/* Filter inputs */
 input[type='text'],
 input[type='date'],
 select {
@@ -206,7 +200,6 @@ select:focus {
   box-shadow: 0 0 0 1px #3b82f6;
 }
 
-/* Activity icons */
 .inline-flex {
   font-size: 1rem;
   font-weight: 600;
@@ -217,7 +210,6 @@ select:focus {
   line-height: 2rem;
 }
 
-/* Activity item styling */
 ul li {
   transition: background-color 0.3s ease;
 }
@@ -232,9 +224,15 @@ ul li hr {
   border-top: 1px solid #e5e7eb;
 }
 
-
-
 .text-sm {
   font-size: 0.875rem;
+}
+
+.btn-pagination {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
 }
 </style>

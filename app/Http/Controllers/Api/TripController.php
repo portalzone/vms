@@ -7,6 +7,7 @@ use App\Models\Trip;
 use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class TripController extends Controller
 {
@@ -38,21 +39,23 @@ class TripController extends Controller
             'end_time'       => 'required|date|after_or_equal:start_time',
         ]);
 
-        // Get the driver assigned to the selected vehicle
+        // Format datetime values to MySQL format
+        $startTime = Carbon::parse($validated['start_time'])->format('Y-m-d H:i:s');
+        $endTime   = Carbon::parse($validated['end_time'])->format('Y-m-d H:i:s');
+
         $driver = Driver::where('vehicle_id', $validated['vehicle_id'])->first();
 
         if (!$driver) {
             return response()->json(['error' => 'Driver not assigned to vehicle'], 422);
         }
 
-        // ✅ Create trip using the correct driver ID
         $trip = Trip::create([
-            'driver_id'      => $driver->id, // ⬅️ use driver's ID (not user_id)
+            'driver_id'      => $driver->id,
             'vehicle_id'     => $validated['vehicle_id'],
             'start_location' => $validated['start_location'],
             'end_location'   => $validated['end_location'],
-            'start_time'     => $validated['start_time'],
-            'end_time'       => $validated['end_time'],
+            'start_time'     => $startTime,
+            'end_time'       => $endTime,
         ]);
 
         return response()->json($trip->load(['driver.user', 'vehicle']), 201);
@@ -76,6 +79,9 @@ class TripController extends Controller
             'end_time'       => 'required|date|after_or_equal:start_time',
         ]);
 
+        $startTime = Carbon::parse($validated['start_time'])->format('Y-m-d H:i:s');
+        $endTime   = Carbon::parse($validated['end_time'])->format('Y-m-d H:i:s');
+
         $driver = Driver::where('vehicle_id', $validated['vehicle_id'])->first();
 
         if (!$driver) {
@@ -87,8 +93,8 @@ class TripController extends Controller
             'vehicle_id'     => $validated['vehicle_id'],
             'start_location' => $validated['start_location'],
             'end_location'   => $validated['end_location'],
-            'start_time'     => $validated['start_time'],
-            'end_time'       => $validated['end_time'],
+            'start_time'     => $startTime,
+            'end_time'       => $endTime,
         ]);
 
         return response()->json($trip->load(['driver.user', 'vehicle']));

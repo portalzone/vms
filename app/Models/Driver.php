@@ -16,6 +16,8 @@ class Driver extends Model
     'phone_number',
     'home_address',
     'sex',
+    'created_by', 
+    'updated_by',
 ];
 
     public function user()
@@ -34,6 +36,17 @@ public function trips()
 {
     return $this->hasMany(Trip::class, 'driver_id', 'user_id');
 }
+
+public function creator() {
+    return $this->belongsTo(User::class, 'created_by');
+}
+
+public function editor() {
+    return $this->belongsTo(User::class, 'updated_by');
+}
+
+
+
 
 
 }

@@ -14,6 +14,8 @@ class Vehicle extends Model
         'model',
         'year',
         'plate_number',
+        'created_by',
+        'updated_by'
     ];
 
     /**
@@ -28,6 +30,18 @@ public function trips()
 {
     return $this->hasMany(Trip::class);
 }
+
+// User that created and edited a vehicle
+public function creator()
+{
+    return $this->belongsTo(User::class, 'created_by');
+}
+
+public function editor()
+{
+    return $this->belongsTo(User::class, 'updated_by');
+}
+
     
 
     
@@ -55,4 +69,7 @@ public function trips()
     {
         return $this->hasMany(Maintenance::class);
     }
+
+    
+    
 }

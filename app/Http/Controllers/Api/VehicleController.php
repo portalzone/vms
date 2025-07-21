@@ -18,7 +18,7 @@ class VehicleController extends Controller
         $this->authorizeAccess('view');
 
         // Eager-load driver relationship
-        return Vehicle::with('driver')->get();
+        return Vehicle::with(['driver', 'creator', 'editor'])->get();
     }
 
 public function assignedVehicles()
@@ -53,48 +53,56 @@ public function assignedVehicles()
 }
 
     // ✅ Create a new vehicle
-    public function store(Request $request)
-    {
-        $this->authorizeAccess('create');
+public function store(Request $request)
+{
+    $this->authorizeAccess('create');
 
-        $validated = $request->validate([
-            'manufacturer' => 'required|string|max:255',
-            'model'        => 'required|string|max:255',
-            'year'         => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'plate_number' => 'required|string|max:20|unique:vehicles',
-        ]);
+    $validated = $request->validate([
+        'manufacturer' => 'required|string|max:255',
+        'model'        => 'required|string|max:255',
+        'year'         => 'required|integer|min:1900|max:' . (date('Y') + 1),
+        'plate_number' => 'required|string|max:20|unique:vehicles',
+    ]);
 
-        $vehicle = Vehicle::create($validated);
+    // Attach authenticated user
+    $vehicle = new Vehicle($validated);
+    $vehicle->created_by = auth()->id();
+    $vehicle->updated_by = auth()->id();
+    $vehicle->save();
 
-        return response()->json($vehicle, 201);
-    }
+    return response()->json($vehicle, 201);
+}
 
     // ✅ Show a specific vehicle with driver
     public function show($id)
     {
         $this->authorizeAccess('view');
-
-        return Vehicle::with('driver')->findOrFail($id);
+        
+        return Vehicle::with(['driver', 'creator', 'editor'])->findOrFail($id);
     }
 
     // ✅ Update a vehicle
-    public function update(Request $request, $id)
-    {
-        $this->authorizeAccess('update');
+public function update(Request $request, $id)
+{
+    $this->authorizeAccess('update');
 
-        $vehicle = Vehicle::findOrFail($id);
+    $vehicle = Vehicle::findOrFail($id);
 
-        $validated = $request->validate([
-            'manufacturer' => 'sometimes|required|string|max:255',
-            'model'        => 'sometimes|required|string|max:255',
-            'year'         => 'sometimes|required|integer|min:1900|max:' . (date('Y') + 1),
-            'plate_number' => 'sometimes|required|string|max:20|unique:vehicles,plate_number,' . $id,
-        ]);
+    $validated = $request->validate([
+        'manufacturer' => 'sometimes|required|string|max:255',
+        'model'        => 'sometimes|required|string|max:255',
+        'year'         => 'sometimes|required|integer|min:1900|max:' . (date('Y') + 1),
+        'plate_number' => 'sometimes|required|string|max:20|unique:vehicles,plate_number,' . $id,
+    ]);
 
-        $vehicle->update($validated);
+    $vehicle->update($validated);
 
-        return response()->json($vehicle);
-    }
+    // ✅ Set updated_by and save
+    $vehicle->updated_by = auth()->id();
+    $vehicle->save();
+
+    return response()->json($vehicle->load(['driver', 'creator', 'editor']));
+}
 
     
 

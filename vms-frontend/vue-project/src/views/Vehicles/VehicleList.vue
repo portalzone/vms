@@ -23,6 +23,10 @@
             <th class="px-4 py-2">Model</th>
             <th class="px-4 py-2">Year</th>
             <th class="px-4 py-2">Plate No.</th>
+            <th class="px-4 py-2">Created By</th>
+            <th class="px-4 py-2">Created Time</th>
+            <th class="px-4 py-2">Last Edited By</th>
+            <th class="px-4 py-2">Last Edited Time</th>
             <th class="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
@@ -37,6 +41,10 @@
             <td class="px-4 py-2">{{ vehicle.model }}</td>
             <td class="px-4 py-2">{{ vehicle.year }}</td>
             <td class="px-4 py-2">{{ vehicle.plate_number }}</td>
+            <td class="px-4 py-2">{{ vehicle.creator?.name ?? 'N/A'  }}</td>
+            <td class="px-4 py-2">{{ formatDate(vehicle.created_at) }}</td>
+            <td class="px-4 py-2">{{ vehicle.editor?.name ?? 'N/A'  }}</td>
+            <td class="px-4 py-2">{{ formatDate(vehicle.updated_at) }}</td>
             <td class="px-4 py-2 text-right space-x-2">
               <button class="btn-edit" @click="edit(vehicle.id)">Edit</button>
               <button class="btn-delete" @click="remove(vehicle.id)">Delete</button>
@@ -101,6 +109,12 @@ const allVehicles = ref([])
 const search = ref('')
 const page = ref(1)
 const perPage = 10
+
+// Format timestamp
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  return new Date(dateStr).toLocaleString()
+}
 
 const fetchVehicles = async () => {
   if (!auth.token) return

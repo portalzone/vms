@@ -25,6 +25,7 @@
             <th class="p-2 border">Vehicle</th>
             <th class="p-2 border">From</th>
             <th class="p-2 border">To</th>
+            <th class="p-2 border">Duration</th>
             <th class="p-2 border">Start Time</th>
             <th class="p-2 border">End Time</th>
             <th class="p-2 border">Actions</th>
@@ -42,6 +43,9 @@
             </td>
             <td class="p-2 border">{{ trip.start_location || 'N/A' }}</td>
             <td class="p-2 border">{{ trip.end_location || 'N/A' }}</td>
+            <td class="p-2 border">
+              {{ calculateDuration(trip.start_time, trip.end_time) }}
+            </td>
             <td class="p-2 border">{{ formatDate(trip.start_time) }}</td>
             <td class="p-2 border">{{ formatDate(trip.end_time) }}</td>
             <td class="p-2 border space-x-2">
@@ -192,6 +196,23 @@ const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A'
   return new Date(dateStr).toLocaleString()
 }
+
+const calculateDuration = (start, end) => {
+  if (!start || !end) return 'N/A'
+
+  const startTime = new Date(start)
+  const endTime = new Date(end)
+
+  const diffMs = endTime - startTime
+  if (isNaN(diffMs) || diffMs < 0) return 'Invalid'
+
+  const totalMinutes = Math.floor(diffMs / (1000 * 60))
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  return `${hours}h ${minutes}m`
+}
+
 
 // Initial load
 onMounted(fetchTrips)

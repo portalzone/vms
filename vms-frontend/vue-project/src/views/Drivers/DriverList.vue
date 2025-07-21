@@ -24,49 +24,69 @@
     <!-- Table -->
     <div class="overflow-x-auto rounded shadow bg-white">
       <table class="min-w-full table-auto text-sm">
-        <thead class="bg-gray-100 text-left">
-          <tr>
-            <th class="px-4 py-2">#</th>
-            <th class="px-4 py-2">User</th>
-            <th class="px-4 py-2">Email</th>
-            <th class="px-4 py-2">License No.</th>
-            <th class="px-4 py-2">Phone</th>
-            <th class="px-4 py-2">Address</th>
-            <th class="px-4 py-2">Sex</th>
-            <th class="px-4 py-2">Vehicle</th>
-            <th class="px-4 py-2">Date Added</th>
-            <th class="px-4 py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(driver, index) in paginatedDrivers" :key="driver.id" class="hover:bg-gray-50 even:bg-gray-50">
-            <td class="px-4 py-2">{{ start + index + 1 }}</td>
-            <td class="px-4 py-2">{{ driver.user?.name || '—' }}</td>
-            <td class="px-4 py-2">{{ driver.user?.email || '—' }}</td>
-            <td class="px-4 py-2">{{ driver.license_number }}</td>
-            <td class="px-4 py-2">{{ driver.phone_number }}</td>
-            <td class="px-4 py-2">{{ driver.home_address }}</td>
-            <td class="px-4 py-2">{{ driver.sex }}</td>
-            <td class="px-4 py-2">
-              <div v-if="driver.vehicle">
-                <div>{{ driver.vehicle.plate_number }}</div>
-                <div class="text-xs text-gray-500">
-                  {{ driver.vehicle.manufacturer }} {{ driver.vehicle.model }}
-                </div>
-              </div>
-              <div v-else>—</div>
-            </td>
-            <td class="px-4 py-2">{{ new Date(driver.created_at).toLocaleDateString() }}</td>
-            <td class="px-4 py-2 text-right space-x-2">
-              <button class="btn-edit" @click="edit(driver.id)">Edit</button>
-              <button class="btn-delete" @click="remove(driver.id)">Delete</button>
-            </td>
-          </tr>
+<thead class="bg-gray-100 text-left">
+  <tr>
+    <th class="px-4 py-2">#</th>
+    <th class="px-4 py-2">User</th>
+    <th class="px-4 py-2">Email</th>
+    <th class="px-4 py-2">License No.</th>
+    <th class="px-4 py-2">Phone</th>
+    <th class="px-4 py-2">Address</th>
+    <th class="px-4 py-2">Sex</th>
+    <th class="px-4 py-2">Vehicle</th>
+    <th class="px-4 py-2">Date Added</th>
+        <th class="px-4 py-2">Latest Update</th>
+    <th class="px-4 py-2">Registerd By</th>
+        <th class="px-4 py-2">Last Edited By</th>
+    <th class="px-4 py-2 text-right">Actions</th>
+  </tr>
+</thead>
+<tbody>
+  <tr
+    v-for="(driver, index) in paginatedDrivers"
+    :key="driver.id"
+    class="hover:bg-gray-50 even:bg-gray-50"
+  >
+    <td class="px-4 py-2">{{ start + index + 1 }}</td>
+    <td class="px-4 py-2">{{ driver.user?.name || '—' }}</td>
+    <td class="px-4 py-2">{{ driver.user?.email || '—' }}</td>
+    <td class="px-4 py-2">{{ driver.license_number }}</td>
+    <td class="px-4 py-2">{{ driver.phone_number }}</td>
+    <td class="px-4 py-2">{{ driver.home_address }}</td>
+    <td class="px-4 py-2">{{ driver.sex }}</td>
+    <td class="px-4 py-2">
+      <div v-if="driver.vehicle">
+        <div>{{ driver.vehicle.plate_number }}</div>
+        <div class="text-xs text-gray-500">
+          {{ driver.vehicle.manufacturer }} {{ driver.vehicle.model }}
+        </div>
+      </div>
+      <div v-else>—</div>
+    </td>
+<td class="px-4 py-2">
+  {{ new Date(driver.created_at).toLocaleString() }}
+</td>
+<td class="px-4 py-2">
+  {{ new Date(driver.updated_at).toLocaleString() }}
+</td>
 
-          <tr v-if="paginatedDrivers.length === 0">
-            <td colspan="10" class="text-center text-gray-500 py-4">No drivers found.</td>
-          </tr>
-        </tbody>
+    <td class="px-4 py-2">
+      {{ driver.creator?.name || '—' }}
+    </td>
+    <td class="px-4 py-2">
+      {{ driver.editor?.name || '—' }}
+    </td>
+    <td class="px-4 py-2 text-right space-x-2">
+      <button class="btn-edit" @click="edit(driver.id)">Edit</button>
+      <button class="btn-delete" @click="remove(driver.id)">Delete</button>
+    </td>
+  </tr>
+
+  <tr v-if="paginatedDrivers.length === 0">
+    <td colspan="11" class="text-center text-gray-500 py-4">No drivers found.</td>
+  </tr>
+</tbody>
+
       </table>
     </div>
 

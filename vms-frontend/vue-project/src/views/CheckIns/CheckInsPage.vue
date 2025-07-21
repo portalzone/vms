@@ -38,8 +38,8 @@
   <td class="px-4 py-2">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
   <td class="px-4 py-2">{{ check.vehicle?.plate_number || '—' }}</td>
   <td class="px-4 py-2">{{ check.driver?.user?.name || '—' }}</td>
-  <td class="px-4 py-2">{{ check.checked_in_at || '—' }}</td>
-  <td class="px-4 py-2">{{ check.checked_out_at || '—' }}</td>
+  <td class="px-4 py-2">{{ formatDate(check.checked_in_at) || '—' }}</td>
+  <td class="px-4 py-2">{{ formatDate(check.checked_out_at) || '—' }}</td>
   <td class="px-4 py-2">{{ check.checked_in_by_user?.name || '—' }}</td>
   <td class="px-4 py-2">{{ check.checked_out_by_user?.name || '—' }}</td>
   <td class="px-4 py-2 text-right">
@@ -108,6 +108,12 @@ const meta = ref({
   per_page: 10,
   total: 0
 })
+
+// Format timestamp
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  return new Date(dateStr).toLocaleString()
+}
 
 const search = ref('')
 const page = ref(1)

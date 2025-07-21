@@ -19,6 +19,9 @@ return new class extends Migration
             $table->string('phone_number');
             $table->string('home_address');
             $table->enum('sex', ['male', 'female', 'other']);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+
             $table->timestamps();
         });
     }
