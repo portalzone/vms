@@ -48,7 +48,12 @@
     class="hover:bg-gray-50 even:bg-gray-50"
   >
     <td class="px-4 py-2">{{ start + index + 1 }}</td>
-    <td class="px-4 py-2">{{ driver.user?.name || '—' }}</td>
+    <td class="px-4 py-2">    <router-link
+  :to="{ name: 'DriverProfile', params: { id: driver.id } }"
+  class="text-blue-600 hover:underline"
+>
+  {{ driver.user?.name || '—'  }}
+    </router-link></td>
     <td class="px-4 py-2">{{ driver.user?.email || '—' }}</td>
     <td class="px-4 py-2">{{ driver.license_number }}</td>
     <td class="px-4 py-2">{{ driver.phone_number }}</td>

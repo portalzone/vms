@@ -3,6 +3,10 @@
     <!-- User Selection -->
     <div>
       <label for="user_id">Select User</label>
+      <div v-if="form.user_id">
+  <p class="text-sm text-gray-600">Selected: {{ selectedUser?.name }} ({{ selectedUser?.email }})</p>
+</div>
+
       <select v-model="form.user_id" id="user_id" class="w-full border rounded px-3 py-2" required>
         <option value="">-- Select User --</option>
         <option v-for="user in users" :key="user.id" :value="user.id">
@@ -67,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/axios'
 
@@ -88,6 +92,11 @@ const form = ref({
 const errors = ref({})
 const users = ref([])
 const vehicles = ref([])
+
+const selectedUser = computed(() =>
+  users.value.find((u) => u.id === form.value.user_id)
+)
+
 
 // const loadUsers = async () => {
 //   const res = await axios.get('/available-users')
@@ -114,16 +123,20 @@ const loadDriver = async () => {
   if (props.isEdit && props.driverId) {
     const res = await axios.get(`/drivers/${props.driverId}`)
     const d = res.data
+
+    console.log('driver response:', d)
+
     form.value = {
-      user_id: d.user_id,
+      user_id: d.user_id || '',
       license_number: d.license_number || '',
       phone_number: d.phone_number || '',
       home_address: d.home_address || '',
       sex: d.sex || '',
-      vehicle_id: d.vehicle_id || '',
+      vehicle_id: d.vehicle?.id || '',
     }
   }
 }
+
 
 const handleSubmit = async () => {
   errors.value = {}

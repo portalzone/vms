@@ -93,6 +93,12 @@ const routes = [
     component: DriverFormPage,
     meta: { requiresAuth: true },
   },
+  {
+  path: '/drivers/:id',
+  name: 'DriverProfile',
+  component: () => import('@/views/Drivers/DriverProfilePage.vue'),
+  meta: { requiresAuth: true },
+},
 
   // Vehicles
   {

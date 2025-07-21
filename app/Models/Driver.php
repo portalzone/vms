@@ -34,8 +34,11 @@ class Driver extends Model
 
 public function trips()
 {
-    return $this->hasMany(Trip::class, 'driver_id', 'user_id');
+    return $this->hasMany(Trip::class, 'driver_id', 'id');
 }
+
+
+
 
 public function creator() {
     return $this->belongsTo(User::class, 'created_by');

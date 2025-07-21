@@ -69,6 +69,12 @@ public function editor()
     {
         return $this->hasMany(Maintenance::class);
     }
+    
+public function maintenanceRecords()
+{
+    return $this->hasMany(\App\Models\Maintenance::class);
+}
+
 
     
     

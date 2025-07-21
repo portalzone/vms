@@ -56,6 +56,13 @@ Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']
 
     Route::get('/vehicles/{vehicle}/driver-user-id', [DriverController::class, 'getDriverUserIdByVehicle']);
 
+    // drivers profile
+    Route::get('/drivers/{id}', [DriverController::class, 'show']);
+
+    //export drivers details
+    Route::get('/drivers/{id}/export-trips-excel', [DriverController::class, 'exportDriverTripsExcel']);
+
+
     Route::apiResource('drivers', DriverController::class);
 
 
