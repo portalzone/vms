@@ -11,14 +11,19 @@ return new class extends Migration
      */
    public function up()
 {
-    Schema::create('expenses', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('vehicle_id')->constrained('vehicles')->onDelete('cascade');
-        $table->string('description');
-        $table->decimal('amount', 10, 2);
-        $table->date('date');
-        $table->timestamps();
-    });
+Schema::create('expenses', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('vehicle_id')->constrained('vehicles')->onDelete('cascade');
+    $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+    $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+    // Optional link to a maintenance record (nullable)
+    $table->foreignId('maintenance_id')->nullable()->constrained('maintenances')->onDelete('set null');
+    $table->string('description');
+    $table->decimal('amount', 10, 2);
+    $table->date('date');
+    $table->timestamps();
+});
+
 
     
 }

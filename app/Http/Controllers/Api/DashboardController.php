@@ -67,18 +67,34 @@ class DashboardController extends Controller
                 return $activities;
             });
 
-$maintenances = Maintenance::with('vehicle')->get()->map(function ($m) {
-    return [
-        'type' => 'Maintenance',
-        'message' => 
-            ($m->vehicle?->manufacturer ?? 'Unknown Car Manufacturer') . ' ' .
-            ($m->vehicle?->model ?? 'Unknown Car Model') . 
-            ' with plate number (' . ($m->vehicle?->plate_number ?? 'Unknown Plate Number') . ') maintenance details: (' . 
-            ($m->description ?? '') . ') cost implication is: ₦' . 
-            number_format($m->cost ?? 0),
+$maintenances = Maintenance::with(['vehicle', 'createdBy', 'updatedBy'])->get()->flatMap(function ($m) {
+    $activities = [];
+
+    $vehicle = $m->vehicle;
+    $vehicleName = $vehicle ? "{$vehicle->manufacturer} {$vehicle->model} (Plate: {$vehicle->plate_number})" : "Unknown Vehicle";
+
+    $creatorName = $m->createdBy?->name ?? 'Unknown User';
+    $editorName = $m->updatedBy?->name ?? 'Unknown User';
+
+    // Created entry
+    $activities[] = [
+        'type' => 'Maintenance Created',
+        'message' => "{$vehicleName} maintenance created by {$creatorName}. Description: \"{$m->description}\", Cost: ₦" . number_format($m->cost, 2),
         'time' => $m->created_at,
     ];
+
+    // Updated entry
+    if ($m->updated_at != $m->created_at) {
+        $activities[] = [
+            'type' => 'Maintenance Updated',
+            'message' => "{$vehicleName} maintenance updated by {$editorName}. Description: \"{$m->description}\", Cost: ₦" . number_format($m->cost, 2),
+            'time' => $m->updated_at,
+        ];
+    }
+
+    return $activities;
 });
+
 
 $vehicles = Vehicle::with(['driver.user', 'creator', 'editor'])->get()->flatMap(function ($v) {
     $activities = [];
@@ -145,13 +161,41 @@ $drivers = Driver::with(['user', 'vehicle', 'creator', 'editor'])->get()->flatMa
 
 
 
-        $expenses = Expense::with('vehicle')->get()->map(function ($e) {
-            return [
-                'type' => 'Expense',
-                'message' => '₦' . number_format($e->amount, 2) . ' expense for ' . ($e->vehicle?->plate_number ?? 'Unknown Vehicle'),
-                'time' => $e->created_at,
-            ];
-        });
+$expenses = Expense::with(['vehicle', 'maintenance', 'creator', 'updater'])->get()->flatMap(function ($e) {
+    $activities = [];
+
+    $vehicle = $e->vehicle;
+    $maintenance = $e->maintenance;
+
+    $vehicleName = $vehicle ? "{$vehicle->manufacturer} {$vehicle->model} (Plate: {$vehicle->plate_number})" : "Unknown Vehicle";
+    $maintenanceNote = $maintenance ? "Linked to maintenance: \"{$maintenance->description}\" (₦" . number_format($maintenance->cost, 2) . ")." : "Standalone expense.";
+
+    $creatorName = $e->creator?->name ?? 'Unknown User';
+    $updaterName = $e->updater?->name ?? 'Unknown User';
+
+    // Created
+    $activities[] = [
+        'type' => 'Expense Created',
+        'message' => "₦" . number_format($e->amount, 2) . " — {$e->description} for {$vehicleName}. {$maintenanceNote} Created by {$creatorName}.",
+        'time' => $e->created_at,
+        'link' => $maintenance ? "/maintenances/{$maintenance->id}" : null,
+    ];
+
+    // Updated
+    if ($e->updated_at != $e->created_at) {
+        $activities[] = [
+            'type' => 'Expense Updated',
+            'message' => "₦" . number_format($e->amount, 2) . " — {$e->description} for {$vehicleName}. {$maintenanceNote} Updated by {$updaterName}.",
+            'time' => $e->updated_at,
+            'link' => $maintenance ? "/maintenances/{$maintenance->id}" : null,
+        ];
+    }
+
+    return $activities;
+});
+
+
+
 
 $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
     $startTime = Carbon::parse($t->start_time);

@@ -32,7 +32,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{id}', [UserController::class, 'show']); // Custom show
     Route::get('/available-users', [UserController::class, 'availableForDrivers']);
     Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus']);
-    Route::get('/users-available-for-drivers', [UserController::class, 'usersAvailableForDriverForm']);
+    // Route::get('/users-available-for-drivers', [UserController::class, 'usersAvailableForDriverForm']);
+    Route::get('/users-available-for-drivers', [UserController::class, 'availableForDrivers']);
+
     Route::apiResource('users', UserController::class)->except(['show']);
 
     // ✅ Dashboard
@@ -43,6 +45,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Vehicles
 // ✅ Custom route must come first before apiResource
 Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);
+Route::get('/vehicles-available-for-drivers', [VehicleController::class, 'availableForDrivers']);
+
 
 Route::apiResource('vehicles', VehicleController::class);
 
@@ -70,6 +74,7 @@ Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']
     Route::apiResource('checkins', CheckInOutController::class);
 
     // ✅ Maintenance & Expenses
+    Route::get('/vehicles/{id}/maintenances', [MaintenanceController::class, 'byVehicle']);
     Route::apiResource('maintenances', MaintenanceController::class);
     Route::apiResource('expenses', ExpenseController::class);
 

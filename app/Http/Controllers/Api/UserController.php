@@ -113,17 +113,17 @@ class UserController extends Controller
         return response()->json(['message' => 'User deleted successfully']);
     }
 
-// available for driver
-public function availableForDrivers()
-{
-    $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
+// // available for driver
+// public function availableForDrivers()
+// {
+//     $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
 
-    $users = User::whereNotIn('id', $assignedUserIds)
-                ->select('id', 'name', 'email')
-                ->get();
+//     $users = User::whereNotIn('id', $assignedUserIds)
+//                 ->select('id', 'name', 'email')
+//                 ->get();
 
-    return response()->json($users);
-}
+//     return response()->json($users);
+// }
 
 // user available for driver form
 
@@ -141,6 +141,26 @@ public function usersAvailableForDriverForm(Request $request)
     }
 
     $users = User::whereNotIn('id', $assignedUserIds)
+        ->select('id', 'name', 'email')
+        ->get();
+
+    return response()->json($users);
+}
+// user available for driver
+public function availableForDrivers(Request $request)
+{
+    $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
+
+    if ($request->filled('driver_id')) {
+        // Get the currently assigned user_id for this driver
+        $currentUserId = \App\Models\Driver::where('id', $request->driver_id)->value('user_id');
+
+        // Allow this user_id in the results
+        $assignedUserIds = array_diff($assignedUserIds, [$currentUserId]);
+    }
+
+    $users = \App\Models\User::role('driver')
+        ->whereNotIn('id', $assignedUserIds)
         ->select('id', 'name', 'email')
         ->get();
 

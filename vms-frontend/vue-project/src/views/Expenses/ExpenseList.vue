@@ -1,73 +1,119 @@
 <template>
   <div>
-    <!-- Search & Add Button -->
-    <div class="flex justify-between items-center mb-4 gap-4">
+    <!-- Search + Filters -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
       <input
         v-model="search"
         type="text"
-        placeholder="Search description or amount..."
-        class="border px-4 py-2 rounded w-full md:w-1/2"
+        placeholder="Search by vehicle, description, or amount..."
+        class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
       />
-<router-link to="/expenses/new" class="btn-primary">
-  ➕ Add Expense
-</router-link>
+
+      <div class="flex gap-2 items-center">
+        <select
+          v-model="dateRange"
+          class="border border-gray-300 rounded px-3 py-2 text-sm"
+        >
+          <option value="all">All Time</option>
+          <option value="1">Today</option>
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+        </select>
+
+        <router-link to="/expenses/new" class="btn-primary">
+          ➕ Add Expense
+        </router-link>
+      </div>
     </div>
 
-    <!-- Expenses Table -->
+    <!-- Per Page Dropdown -->
+    <div class="flex items-center space-x-2 mb-4">
+      <label class="font-medium">Items per page:</label>
+      <select v-model="perPage" class="border px-3 py-1 rounded">
+        <option v-for="n in [5, 10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
+      </select>
+    </div>
+
+    <!-- Table -->
     <div class="overflow-x-auto rounded shadow bg-white">
-      <table>
-        <thead>
+      <table class="w-full table-auto text-sm">
+        <thead class="bg-gray-100 text-left">
           <tr>
-            <th>#</th>
-            <th>Vehicle</th>
-            <th>Amount (₦)</th>
-            <th>Description</th>
-            <th>Date</th>
-            <th class="text-right">Actions</th>
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Vehicle</th>
+            <th class="px-4 py-2">Description</th>
+            <th class="px-4 py-2">Amount (₦)</th>
+            <th class="px-4 py-2">Date</th>
+            <th class="px-4 py-2">Maintenance</th>
+            <th class="px-4 py-2">Created By</th>
+            <th class="px-4 py-2">Updated By</th>
+            <th class="px-4 py-2">Created Time</th>
+            <th class="px-4 py-2">Updated Time</th>
+            <th class="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(expense, index) in paginated" :key="expense.id">
-            <td>{{ start + index + 1 }}</td>
-            <td>{{ expense.vehicle?.plate_number || 'N/A' }}</td>
-            <td>₦{{ Number(expense.amount).toFixed(2) }}</td>
-            <td>{{ expense.description }}</td>
-            <td>{{ expense.date }}</td>
-            <td class="text-right space-x-2">
-<button @click="edit(expense.id)" class="btn-link btn-edit">Edit</button> | 
-<button @click="remove(expense.id)" class="btn-link btn-delete">Delete</button>
-
+          <tr
+            v-for="(e, index) in paginatedExpenses"
+            :key="e.id"
+            class="hover:bg-gray-50 even:bg-gray-50"
+          >
+            <td class="px-4 py-2">{{ start + index + 1 }}</td>
+            <td class="px-4 py-2">{{ e.vehicle?.plate_number ?? '—' }}</td>
+            <td class="px-4 py-2">{{ e.description }}</td>
+            <td class="px-4 py-2">₦{{ e.amount?.toLocaleString() ?? '0.00' }}</td>
+            <td class="px-4 py-2">{{ e.date }}</td>
+            <td class="px-4 py-2">
+  <router-link
+    v-if="e.maintenance_id"
+    :to="`/maintenance/${e.maintenance_id}/edit`"
+    class="text-blue-600 hover:underline text-sm"
+  >
+    View
+  </router-link>
+  <span v-else class="text-gray-400">—</span>
+</td>
+            <td class="px-4 py-2">{{ e.creator?.name ?? 'N/A' }}</td>
+            <td class="px-4 py-2">{{ e.updater?.name ?? 'N/A' }}</td>
+            <td class="px-4 py-2">{{ formatDate(e.created_at) }}</td>
+            <td class="px-4 py-2">{{ formatDate(e.updated_at) }}</td>
+            <td class="px-4 py-2 text-right space-x-2">
+              <button class="btn-edit" @click="edit(e.id)">Edit</button>
+              <button class="btn-delete" @click="remove(e.id)">Delete</button>
             </td>
           </tr>
-          <tr v-if="paginated.length === 0">
-            <td colspan="6" class="text-center text-gray-500 py-4">No expenses found.</td>
+          <tr v-if="paginatedExpenses.length === 0">
+            <td colspan="10" class="text-center text-gray-500 py-4">No expense records found.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="mt-6 flex justify-center gap-2 flex-wrap">
-      <button :disabled="page === 1" @click="page--" class="btn">Prev</button>
+    <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
+      <button :disabled="page === 1" @click="page--" class="btn-pagination">Prev</button>
       <button
         v-for="p in visiblePages"
-        :key="p"
+        :key="`page-${p}`"
         @click="typeof p === 'number' && (page = p)"
-        :class="{
-          'bg-blue-600 text-white': p === page,
-          'btn': true,
-          'text-gray-400 pointer-events-none': typeof p !== 'number',
-        }"
+        :class="[
+          'btn-pagination',
+          {
+            'bg-blue-600 text-white': p === page,
+            'pointer-events-none text-gray-500': p === '...'
+          }
+        ]"
+        :disabled="p === '...'"
       >
         {{ p }}
       </button>
-      <button :disabled="page === totalPages" @click="page++" class="btn">Next</button>
+      <button :disabled="page === totalPages" @click="page++" class="btn-pagination">Next</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/axios'
 import { useAuthStore } from '@/stores/auth'
@@ -77,59 +123,90 @@ const auth = useAuthStore()
 
 const allExpenses = ref([])
 const search = ref('')
+const dateRange = ref('all')
 const page = ref(1)
-const perPage = 10
+const perPage = ref(10)
 
-// ✅ Fetch only if authenticated
 const fetchExpenses = async () => {
   if (!auth.token) return
   try {
     const res = await axios.get('/expenses')
     allExpenses.value = Array.isArray(res.data) ? res.data : res.data.data || []
   } catch (err) {
-    console.error('❌ Failed to fetch expenses:', err.response?.data || err.message)
-    alert('Error loading expenses. Please log in again.')
+    console.error('❌ Error fetching expenses:', err.response?.data || err.message)
+    alert('Unauthorized or failed to load expenses. Please log in again.')
   }
 }
 
-onMounted(() => {
-  if (auth.token) {
-    fetchExpenses()
-  }
+const filteredExpenses = computed(() => {
+  const keyword = search.value.toLowerCase()
+  const days = parseInt(dateRange.value)
+  const now = new Date()
+  const cutoff = new Date(now.setDate(now.getDate() - days))
+
+  return allExpenses.value.filter(e => {
+    const matchesSearch =
+      (e.description || '').toLowerCase().includes(keyword) ||
+      (e.vehicle?.plate_number || '').toLowerCase().includes(keyword) ||
+      String(e.amount ?? '').includes(keyword)
+
+    const matchesDate =
+      dateRange.value === 'all' || new Date(e.date) >= cutoff
+
+    return matchesSearch && matchesDate
+  })
 })
 
-const filtered = computed(() => {
-  const term = search.value.toLowerCase()
-  return allExpenses.value.filter(exp =>
-    (exp.description || '').toLowerCase().includes(term) ||
-    (exp.amount || '').toString().includes(term)
-  )
-})
+const start = computed(() => (page.value - 1) * perPage.value)
+const paginatedExpenses = computed(() =>
+  filteredExpenses.value.slice(start.value, start.value + perPage.value)
+)
 
-const start = computed(() => (page.value - 1) * perPage)
-const paginated = computed(() => filtered.value.slice(start.value, start.value + perPage))
-const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / perPage)))
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredExpenses.value.length / perPage.value))
+)
 
 const visiblePages = computed(() => {
   const total = totalPages.value
   const current = page.value
-  if (total <= 6) return [...Array(total).keys()].map(n => n + 1)
-  if (current <= 3) return [1, 2, 3, '...', total]
-  if (current >= total - 2) return [1, '...', total - 2, total - 1, total]
-  return [1, '...', current - 1, current, current + 1, '...', total]
+  const pages = []
+
+  if (total <= 6) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 4) pages.push('...')
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i)
+    }
+    if (current < total - 3) pages.push('...')
+    pages.push(total)
+  }
+
+  return pages
 })
 
-watch(search, () => (page.value = 1))
+watch([search, dateRange, perPage], () => {
+  page.value = 1
+})
 
-const edit = id => router.push(`/expenses/${id}/edit`)
-const remove = async id => {
-  if (confirm('Delete this expense?')) {
+watch(page, fetchExpenses)
+onMounted(fetchExpenses)
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  return new Date(dateStr).toLocaleString()
+}
+
+const edit = (id) => router.push(`/expenses/${id}/edit`)
+const remove = async (id) => {
+  if (confirm('Are you sure you want to delete this expense record?')) {
     try {
       await axios.delete(`/expenses/${id}`)
       await fetchExpenses()
     } catch (err) {
-      console.error('❌ Delete failed:', err)
-      alert('Failed to delete expense.')
+      console.error('❌ Delete failed:', err.response?.data || err.message)
+      alert('Failed to delete record.')
     }
   }
 }

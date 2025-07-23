@@ -104,6 +104,28 @@ public function update(Request $request, $id)
     return response()->json($vehicle->load(['driver', 'creator', 'editor']));
 }
 
+public function availableForDrivers(Request $request)
+{
+    // Get IDs of already assigned vehicles
+    $assignedVehicleIds = \App\Models\Driver::pluck('vehicle_id')->toArray();
+
+    if ($request->filled('driver_id')) {
+        // Get the currently assigned vehicle_id for this driver
+        $currentVehicleId = \App\Models\Driver::where('id', $request->driver_id)->value('vehicle_id');
+
+        // Remove the current vehicle from the exclusion list
+        $assignedVehicleIds = array_diff($assignedVehicleIds, [$currentVehicleId]);
+    }
+
+    // Get unassigned vehicles (plus the current one if editing)
+    $vehicles = \App\Models\Vehicle::whereNotIn('id', $assignedVehicleIds)
+        ->select('id', 'plate_number', 'model')
+        ->get();
+
+    return response()->json($vehicles);
+}
+
+
     
 
     // ✅ Delete a vehicle

@@ -14,13 +14,15 @@
       <select v-model="type" class="border px-3 py-2 rounded w-full md:w-1/5">
         <option value="">All Types</option>
         <option value="Check-In">Check-In</option>
-        <option value="Maintenance">Maintenance</option>
+        <option value="Maintenance Created">Maintenance Created</option>
+        <option value="Maintenance Updated">Maintenance Updated</option>
         <option value="Trip">Trip</option>
         <option value="Vehicle Registered">Vehicle Registered</option>
         <option value="Vehicle Updated">Vehicle Updated</option>
         <option value="Driver Registered">Driver Registered</option>
         <option value="Driver Updated">Driver Updated</option>
-        <option value="Expense">Expense</option>
+        <option value="Expense Created">Expense Created</option>
+        <option value="Expense Updated">Expense Updated</option>
       </select>
 
       <input v-model="fromDate" type="date" class="border px-3 py-2 rounded" />
@@ -45,8 +47,8 @@
           :class="{
             'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
             'bg-brown-500': activity.type === 'Driver Updated' || activity.type === 'Vehicle Updated',
-            'bg-red-500': activity.type === 'Maintenance',
-            'bg-yellow-500': activity.type === 'Expense',
+            'bg-red-500': activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated',
+            'bg-yellow-500': activity.type === 'Expense Created' || activity.type === 'Expense Updated',
             'bg-gray-500': activity.type === 'Trip',
             'bg-green-500': activity.type === 'Driver Registered'
           }"

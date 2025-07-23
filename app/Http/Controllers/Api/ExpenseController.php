@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -8,40 +9,56 @@ use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
-    // ✅ Get all expenses
-    public function index(Request $request)
-    {
-        $this->authorizeAccess('view');
+// ExpenseController.php
+public function index(Request $request)
+{
+    $this->authorizeAccess('view');
 
-        return Expense::with('vehicle')->latest()->get();
+    $expenses = Expense::with(['vehicle', 'maintenance', 'creator', 'updater'])
+        ->latest()
+        ->get();
+
+    return response()->json($expenses);
+}
+
+
+
+public function store(Request $request)
+{
+    $this->authorizeAccess('create');
+
+    $validated = $request->validate([
+        'vehicle_id'     => 'required|exists:vehicles,id',
+        'maintenance_id' => 'nullable|exists:maintenances,id',
+        'amount'         => 'required|numeric',
+        'description'    => 'required|string',
+        'date'           => 'required|date',
+    ]);
+
+    $validated['created_by'] = auth()->id();
+
+    $expense = Expense::create($validated);
+
+    // ✅ If linked to maintenance, mark it as completed
+    if (!empty($validated['maintenance_id'])) {
+        \App\Models\Maintenance::where('id', $validated['maintenance_id'])
+            ->update(['status' => 'completed']);
     }
 
-    // ✅ Store a new expense
-    public function store(Request $request)
-    {
-        $this->authorizeAccess('create');
+    return response()->json(
+        $expense->load(['vehicle', 'maintenance', 'creator', 'updater']),
+        201
+    );
+}
 
-        $validated = $request->validate([
-            'vehicle_id'  => 'required|exists:vehicles,id',
-            'amount'      => 'required|numeric',
-            'description' => 'required|string',
-            'date'        => 'required|date',
-        ]);
 
-        $expense = Expense::create($validated);
-
-        return response()->json($expense, 201);
-    }
-
-    // ✅ Show a single expense
     public function show($id)
     {
         $this->authorizeAccess('view');
 
-        return Expense::with('vehicle')->findOrFail($id);
+        return Expense::with(['vehicle', 'maintenance', 'creator', 'updater'])->findOrFail($id);
     }
 
-    // ✅ Update an existing expense
     public function update(Request $request, $id)
     {
         $this->authorizeAccess('update');
@@ -49,18 +66,22 @@ class ExpenseController extends Controller
         $expense = Expense::findOrFail($id);
 
         $validated = $request->validate([
-            'vehicle_id'  => 'sometimes|exists:vehicles,id',
-            'amount'      => 'sometimes|numeric',
-            'description' => 'sometimes|string',
-            'date'        => 'sometimes|date',
+            'vehicle_id'     => 'sometimes|exists:vehicles,id',
+            'maintenance_id' => 'nullable|exists:maintenances,id',
+            'amount'         => 'sometimes|numeric',
+            'description'    => 'sometimes|string',
+            'date'           => 'sometimes|date',
         ]);
+
+        $validated['updated_by'] = auth()->id();
 
         $expense->update($validated);
 
-        return response()->json($expense);
+        return response()->json(
+            $expense->load(['vehicle', 'maintenance', 'creator', 'updater'])
+        );
     }
 
-    // ✅ Delete an expense
     public function destroy($id)
     {
         $this->authorizeAccess('delete');
@@ -71,9 +92,6 @@ class ExpenseController extends Controller
         return response()->json(['message' => 'Expense deleted']);
     }
 
-    /**
-     * 🔐 Centralized role-based access control.
-     */
     private function authorizeAccess(string $action)
     {
         $user = auth()->user();
@@ -85,9 +103,7 @@ class ExpenseController extends Controller
             'delete' => ['admin'],
         ];
 
-        $allowedRoles = $permissions[$action] ?? [];
-
-        if (!$user || !$user->hasAnyRole($allowedRoles)) {
+        if (!$user || !$user->hasAnyRole($permissions[$action] ?? [])) {
             abort(403, 'Unauthorized for this action.');
         }
     }

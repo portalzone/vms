@@ -17,11 +17,17 @@ const loadRoles = async () => {
 }
 
 const loadUser = async () => {
-  if (route.params.id !== 'new') {
-    const res = await axios.get(`/users/${route.params.id}`)
-    user.value = res.data
+  const userId = route.params.id
+  if (userId && userId !== 'new') {
+    try {
+      const res = await axios.get(`/users/${userId}`)
+      user.value = res.data
+    } catch (e) {
+      console.error('Failed to load user:', e)
+    }
   }
 }
+
 
 const handleSaved = () => {
   router.push('/users')

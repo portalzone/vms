@@ -1,96 +1,140 @@
 <template>
   <div>
-    <!-- Header + Search + Add Button -->
+    <!-- Search + Filters -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
       <input
         v-model="search"
         type="text"
-        placeholder="Search by description or status..."
-        class="border rounded px-4 py-2 w-full md:w-1/2"
-      />
+        placeholder="Search by vehicle, description, or status..."
+        class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
+      />         <router-link to="/maintenance/new" class="btn-primary">
+          ➕ Add New Maintenance
+        </router-link>
 
-      <router-link
-        to="/maintenance/new"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center"
-      >
-        ➕ Add Maintenance
-      </router-link>
+      <div class="flex gap-2 items-center">
+        <select
+          v-model="dateRange"
+          class="border border-gray-300 rounded px-3 py-2 text-sm"
+        >
+          <option value="all">All Time</option>
+          <option value="1">Today</option>
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+        </select>
+        <select
+  v-model="statusSort"
+  class="border border-gray-300 rounded px-3 py-2 text-sm"
+>
+  <option value="">Sort by Status</option>
+  <option value="Completed">Completed</option>
+  <option value="in_progress">In Progress</option>
+  <option value="Pending">Pending</option>
+</select>
+
+
+
+      </div>
     </div>
 
-    <!-- Maintenance Table -->
-<!-- Maintenance Table -->
-<div class="overflow-x-auto rounded shadow bg-white">
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Vehicle</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>Cost (₦)</th>
-        <th class="text-right">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(m, index) in paginatedMaintenances" :key="m.id">
-        <td>{{ start + index + 1 }}</td>
-        <td>{{ m.vehicle?.plate_number ?? '—' }}</td>
-        <td>{{ m.description }}</td>
-        <td>
-          <span :class="m.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'">
-            {{ m.status }}
-          </span>
-        </td>
-        <td>₦{{ m.cost?.toLocaleString() ?? '0.00' }}</td>
-        <td class="text-right space-x-2">
-<button class="btn btn-edit" @click="edit(m.id)">Edit</button>
-<button class="btn btn-delete" @click="remove(m.id)">Delete</button>
+    <!-- Per Page Dropdown -->
+    <div class="flex items-center space-x-2 mb-4">
+      <label class="font-medium">Items per page:</label>
+      <select v-model="perPage" class="border px-3 py-1 rounded">
+        <option v-for="n in [5, 10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
+      </select>
+    </div>
 
-          
-        </td>
-      </tr>
-      <tr v-if="paginatedMaintenances.length === 0">
-        <td colspan="6" class="text-center text-gray-500 py-4">
-          No maintenance records found.
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
+    <!-- Table -->
+    <div class="overflow-x-auto rounded shadow bg-white">
+      <table class="w-full table-auto text-sm">
+        <thead class="bg-gray-100 text-left">
+          <tr>
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Vehicle</th>
+            <th class="px-4 py-2">Description</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Cost (₦)</th>
+            <th class="px-4 py-2">Created By</th>
+            <th class="px-4 py-2">Created Time</th>
+            <th class="px-4 py-2">Last Edited By</th>
+            <th class="px-4 py-2">Last Edited Time</th>
+            <th class="px-4 py-2 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(m, index) in paginatedMaintenances"
+            :key="m.id"
+            class="hover:bg-gray-50 even:bg-gray-50"
+          >
+            <td class="px-4 py-2">{{ start + index + 1 }}</td>
+            <td class="px-4 py-2">{{ m.vehicle?.plate_number ?? '—' }}</td>
+            <td class="px-4 py-2">{{ m.description }}</td>
+            <td class="px-4 py-2">
+              <span
+                :class="{
+                  'text-green-600 font-semibold': m.status === 'Completed',
+                  'text-yellow-600': m.status === 'Pending',
+                  'text-blue-600': m.status === 'in_progress'
+                }"
+              >
+                {{ formatStatus(m.status) }}
+              </span>
+            </td>
+            <td class="px-4 py-2">₦{{ m.cost?.toLocaleString() ?? '0.00' }}</td>
+            <td class="px-4 py-2">
+              <router-link
+                v-if="m.created_by"
+                :to="`/users/${m.created_by.id}`"
+                class="text-blue-600 hover:underline"
+              >
+                {{ m.created_by.name }}
+              </router-link>
+              <span v-else>N/A</span>
+            </td>
+            <td class="px-4 py-2">{{ formatDate(m.created_at) }}</td>
+            <td class="px-4 py-2">
+              <router-link
+                v-if="m.updated_by"
+                :to="`/users/${m.updated_by.id}`"
+                class="text-blue-600 hover:underline"
+              >
+                {{ m.updated_by.name }}
+              </router-link>
+              <span v-else>N/A</span>
+            </td>
+            <td class="px-4 py-2">{{ formatDate(m.updated_at) }}</td>
+            <td class="px-4 py-2 text-right space-x-2">
+              <button class="btn-edit" @click="edit(m.id)">Edit</button>
+              <button class="btn-delete" @click="remove(m.id)">Delete</button>
+            </td>
+          </tr>
+          <tr v-if="paginatedMaintenances.length === 0">
+            <td colspan="10" class="text-center text-gray-500 py-4">No maintenance records found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Pagination -->
     <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
-      <button
-        :disabled="page === 1"
-        @click="page--"
-        class="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
-      >
-        Prev
-      </button>
-
+      <button :disabled="page === 1" @click="page--" class="btn-pagination">Prev</button>
       <button
         v-for="p in visiblePages"
-        :key="p"
+        :key="`page-${p}`"
         @click="typeof p === 'number' && (page = p)"
-        class="px-3 py-1 rounded border"
-        :class="{
-          'bg-blue-600 text-white': p === page,
-          'bg-white hover:bg-gray-100': typeof p === 'number' && p !== page,
-          'pointer-events-none text-gray-500': p === '...'
-        }"
+        :class="[
+          'btn-pagination',
+          {
+            'bg-blue-600 text-white': p === page,
+            'pointer-events-none text-gray-500': p === '...'
+          }
+        ]"
         :disabled="p === '...'"
       >
         {{ p }}
       </button>
-
-      <button
-        :disabled="page === totalPages"
-        @click="page++"
-        class="px-3 py-1 rounded border bg-white hover:bg-gray-100 disabled:opacity-50"
-      >
-        Next
-      </button>
+      <button :disabled="page === totalPages" @click="page++" class="btn-pagination">Next</button>
     </div>
   </div>
 </template>
@@ -104,15 +148,17 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const auth = useAuthStore()
 
+const statusSort = ref('')
+
+
 const allMaintenances = ref([])
 const search = ref('')
+const dateRange = ref('all')
 const page = ref(1)
-const perPage = 10
+const perPage = ref(10)
 
-// ✅ Secure fetch with error handling
 const fetchMaintenances = async () => {
-  if (!auth.token) return // Skip if no token
-
+  if (!auth.token) return
   try {
     const res = await axios.get('/maintenances')
     allMaintenances.value = Array.isArray(res.data) ? res.data : res.data.data || []
@@ -124,22 +170,38 @@ const fetchMaintenances = async () => {
 
 const filteredMaintenances = computed(() => {
   const keyword = search.value.toLowerCase()
-  return allMaintenances.value.filter(m =>
-    (m.description || '').toLowerCase().includes(keyword) ||
-    (m.status || '').toLowerCase().includes(keyword) ||
-    (m.vehicle?.plate_number || '').toLowerCase().includes(keyword) ||
-    String(m.cost ?? '').includes(keyword)
-  )
+  const days = parseInt(dateRange.value)
+  const now = new Date()
+  const cutoff = new Date(now.setDate(now.getDate() - days))
+
+  let results = allMaintenances.value.filter(m => {
+    const matchesSearch =
+      (m.description || '').toLowerCase().includes(keyword) ||
+      (m.status || '').toLowerCase().includes(keyword) ||
+      (m.vehicle?.plate_number || '').toLowerCase().includes(keyword) ||
+      String(m.cost ?? '').includes(keyword)
+
+    const matchesDate =
+      dateRange.value === 'all' || new Date(m.date) >= cutoff
+
+    return matchesSearch && matchesDate
+  })
+
+  if (statusSort.value) {
+    results = results.filter(m => m.status === statusSort.value)
+  }
+
+  return results
 })
 
 
-const start = computed(() => (page.value - 1) * perPage)
+const start = computed(() => (page.value - 1) * perPage.value)
 const paginatedMaintenances = computed(() =>
-  filteredMaintenances.value.slice(start.value, start.value + perPage)
+  filteredMaintenances.value.slice(start.value, start.value + perPage.value)
 )
 
 const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredMaintenances.value.length / perPage))
+  Math.max(1, Math.ceil(filteredMaintenances.value.length / perPage.value))
 )
 
 const visiblePages = computed(() => {
@@ -162,9 +224,32 @@ const visiblePages = computed(() => {
   return pages
 })
 
-watch(search, () => (page.value = 1))
+watch([search, dateRange, perPage, statusSort], () => {
+  page.value = 1
+})
+
+
 watch(page, fetchMaintenances)
 onMounted(fetchMaintenances)
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  return new Date(dateStr).toLocaleString()
+}
+
+const formatStatus = (status) => {
+  switch (status) {
+    case 'Completed':
+      return 'Completed'
+    case 'in_progress':
+      return 'In Progress'
+    case 'Pending':
+      return 'Pending'
+    default:
+      return status
+  }
+}
+
 
 const edit = (id) => router.push(`/maintenance/${id}/edit`)
 const remove = async (id) => {

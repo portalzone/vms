@@ -4,8 +4,8 @@
     <div>
       <label for="user_id">Select User</label>
       <div v-if="form.user_id">
-  <p class="text-sm text-gray-600">Selected: {{ selectedUser?.name }} ({{ selectedUser?.email }})</p>
-</div>
+        <p class="text-sm text-gray-600">Selected: {{ selectedUser?.name }} ({{ selectedUser?.email }})</p>
+      </div>
 
       <select v-model="form.user_id" id="user_id" class="w-full border rounded px-3 py-2" required>
         <option value="">-- Select User --</option>
@@ -97,25 +97,19 @@ const selectedUser = computed(() =>
   users.value.find((u) => u.id === form.value.user_id)
 )
 
-
-// const loadUsers = async () => {
-//   const res = await axios.get('/available-users')
-//   users.value = res.data
-// }
-
 const loadUsers = async () => {
   const url = props.isEdit
     ? `/users-available-for-drivers?driver_id=${props.driverId}`
     : '/users-available-for-drivers'
-
   const res = await axios.get(url)
   users.value = res.data
 }
 
-
-
 const loadVehicles = async () => {
-  const res = await axios.get('/vehicles')
+  const url = props.isEdit
+    ? `/vehicles-available-for-drivers?driver_id=${props.driverId}`
+    : '/vehicles-available-for-drivers'
+  const res = await axios.get(url)
   vehicles.value = res.data
 }
 
@@ -123,8 +117,6 @@ const loadDriver = async () => {
   if (props.isEdit && props.driverId) {
     const res = await axios.get(`/drivers/${props.driverId}`)
     const d = res.data
-
-    console.log('driver response:', d)
 
     form.value = {
       user_id: d.user_id || '',
@@ -136,7 +128,6 @@ const loadDriver = async () => {
     }
   }
 }
-
 
 const handleSubmit = async () => {
   errors.value = {}
@@ -158,9 +149,8 @@ const handleSubmit = async () => {
   }
 }
 
-onMounted(() => {
-  loadUsers()
-  loadVehicles()
-  loadDriver()
+onMounted(async () => {
+  await Promise.all([loadUsers(), loadVehicles()])
+  await loadDriver()
 })
 </script>
