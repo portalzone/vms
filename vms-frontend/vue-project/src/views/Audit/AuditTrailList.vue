@@ -4,22 +4,14 @@
 
     <!-- Search -->
     <div class="mb-4">
-      <input
+<div class="flex flex-wrap gap-3 items-center mb-4">
+    <input
   v-model="search"
   @input="fetchLogs"
   type="text"
   placeholder="Search by log name or description"
   class="audit-search-input"
 />
-
-<div class="flex flex-wrap gap-3 items-center mb-4">
-  <input
-    v-model="search"
-    type="text"
-    placeholder="Search logs..."
-    class="border px-3 py-2 rounded w-full md:w-64"
-  />
-
   <select v-model="selectedModule" class="border px-3 py-2 rounded">
     <option value="all">All Modules</option>
     <option v-for="name in moduleOptions" :key="name" :value="name">
@@ -32,6 +24,10 @@
     <option value="24h">Last 24 Hours</option>
     <option value="7d">Last 7 Days</option>
     <option value="30d">Last 30 Days</option>
+    <option value="2m">Last 2 Months</option>
+    <option value="3m">Last 3 Months</option>
+    <option value="6m">Last 6 Months</option>
+    <option value="1y">This Year</option>
     <option value="custom">Custom Range</option>
   </select>
 

@@ -1,6 +1,8 @@
 <template>
   <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-    <h2 class="text-xl font-semibold mb-4">{{ isEdit ? 'Edit Trip' : 'Create New Trip' }}</h2>
+    <h2 class="text-xl font-semibold mb-4">
+      {{ isEdit ? 'Edit Trip' : 'Create New Trip' }}
+    </h2>
 
     <form @submit.prevent="submit">
       <!-- Vehicle Select -->
@@ -44,12 +46,25 @@
         <div v-if="errors.start_time" class="text-red-600 text-sm">{{ errors.start_time[0] }}</div>
       </div>
 
-      <!-- End Time -->
+      <!-- End Time (optional) -->
       <div class="mb-4">
-        <label class="block font-medium mb-1">End Time</label>
+        <label class="block font-medium mb-1">
+          End Time <span class="text-gray-500 text-sm">(optional)</span>
+        </label>
         <input v-model="trip.end_time" type="datetime-local" class="w-full border rounded px-3 py-2" />
         <div v-if="errors.end_time" class="text-red-600 text-sm">{{ errors.end_time[0] }}</div>
       </div>
+      <!-- Trip Status (auto-calculated) -->
+<div class="mb-4">
+  <label class="block font-medium mb-1">Trip Status</label>
+  <input
+    type="text"
+    class="w-full border rounded px-3 py-2 bg-gray-100"
+    :value="tripStatus"
+    disabled
+  />
+</div>
+
 
       <!-- Submit -->
       <div>
@@ -69,6 +84,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/axios'
+import dayjs from 'dayjs'
 
 const route = useRoute()
 const router = useRouter()
@@ -83,53 +99,57 @@ const trip = ref({
   end_time: ''
 })
 
+// Automatically compute trip status based on presence of end_time
+const tripStatus = computed(() => {
+  return trip.value.end_time ? 'completed' : 'in_progress'
+})
+
+
 const vehicles = ref([])
 const errors = ref({})
 const loading = ref(false)
 const isEdit = ref(false)
 
-// Helper: Format date to "YYYY-MM-DDTHH:MM" for datetime-local
-const formatForInput = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const pad = (n) => n.toString().padStart(2, '0')
-
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+// Format for datetime-local input: YYYY-MM-DDTHH:mm
+const formatForInput = (datetime) => {
+  return datetime ? dayjs(datetime).format('YYYY-MM-DDTHH:mm') : ''
 }
 
-// Fetch assigned vehicles
+// Fetch available vehicles (with assigned drivers)
 const fetchVehicles = async () => {
   try {
     const res = await axios.get('/assigned-vehicles')
     vehicles.value = res.data
   } catch (err) {
-    console.error('Error loading vehicles', err)
+    console.error('Error fetching vehicles:', err)
   }
 }
 
-// Autofill driver_id
-watch(() => trip.value.vehicle_id, vehicleId => {
+// Watch vehicle selection to autofill driver_id
+watch(() => trip.value.vehicle_id, (vehicleId) => {
   const selected = vehicles.value.find(v => v.id === vehicleId)
   trip.value.driver_id = selected?.driver?.user_id || ''
 })
 
-// Driver display
+// Show driver name in UI
 const driverName = computed(() => {
   const selected = vehicles.value.find(v => v.id === trip.value.vehicle_id)
   return selected?.driver?.user?.name || ''
 })
 
-// Submit form
+// Submit form data to API
 const submit = async () => {
   loading.value = true
   errors.value = {}
 
   try {
-    const payload = {
-      ...trip.value,
-      start_time: new Date(trip.value.start_time).toISOString(),
-      end_time: new Date(trip.value.end_time).toISOString()
-    }
+const payload = {
+  ...trip.value,
+  start_time: trip.value.start_time ? dayjs(trip.value.start_time).toISOString() : null,
+  end_time: trip.value.end_time ? dayjs(trip.value.end_time).toISOString() : null,
+  status: trip.value.end_time ? 'completed' : 'in_progress'
+}
+
 
     if (isEdit.value) {
       await axios.put(`/trips/${trip.value.id}`, payload)
@@ -142,7 +162,7 @@ const submit = async () => {
     if (err.response?.status === 422) {
       errors.value = err.response.data.errors || {}
     } else {
-      alert(err.response?.data?.message || 'Failed to save trip.')
+      alert(err.response?.data?.message || 'An error occurred.')
     }
   } finally {
     loading.value = false
@@ -160,7 +180,7 @@ const fetchTrip = async () => {
     }
     isEdit.value = true
   } catch (err) {
-    console.error('Trip not found', err)
+    console.error('Error fetching trip:', err)
   }
 }
 

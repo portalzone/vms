@@ -20,6 +20,7 @@ class Trip extends Model
         'end_location',
         'start_time',
         'end_time',
+        'status', // add this
     ];
 
     /**
