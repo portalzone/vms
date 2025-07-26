@@ -63,6 +63,18 @@ p {
   margin-bottom: 1rem;
 }
 
+.sectiontitle {
+  text-align: left;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #151618;
+  padding: 0.5rem 1rem;
+  margin-top: 1rem;
+  background-color: #e5eaf3;
+  border-top: 4px solid #555353; /* black top border */
+}
+
+
 /* ===========================
    🧾 Table Styles
    =========================== */
@@ -566,4 +578,11 @@ option {
   font-size: 1.5rem;
   color: #374151;
   cursor: pointer;
+}
+/* Profile history list */
+.profile-history li {
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
 }

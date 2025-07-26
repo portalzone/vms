@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-
+use Spatie\Activitylog\Models\Activity;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 
 class UserController extends Controller
@@ -110,6 +111,34 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+public function profileHistory()
+{
+    $user = Auth::user();
+
+    // Get paginated activities
+    $logs = Activity::where('log_name', 'user')
+        ->where('causer_id', $user->id)
+        ->orderByDesc('created_at')
+        ->paginate(1); // paginate instead of take(20)
+
+    // Map each activity item to a structured array
+    $transformed = $logs->getCollection()->map(function ($log) {
+        return [
+            'description' => $log->description,
+            'changes' => $log->properties['attributes'] ?? [],
+            'old' => $log->properties['old'] ?? [],
+            'date' => $log->created_at->toDateTimeString(),
+        ];
+    });
+
+    // Replace the original collection with the transformed one
+    $logs->setCollection($transformed);
+
+    return response()->json($logs);
+}
+
+
 
     // ✅ Delete a user
     public function destroy($id)

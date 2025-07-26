@@ -71,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/audit-trail/{id}', [AuditTrailController::class, 'show']);
 
     // user profile
-Route::get('/profile', [UserController::class, 'profile']);
+    Route::get('/profile', [UserController::class, 'profile']);
     Route::put('/profile', [UserController::class, 'updateProfile']);
+    Route::get('/profile/history', [UserController::class, 'profileHistory']);
 });

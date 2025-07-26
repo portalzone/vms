@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-3xl mx-auto p-6 bg-white rounded shadow">
-    <h2 class="section-title">Profile Summary</h2>
+    <h2 class="sectiontitle">Profile Summary</h2>
 
     <!-- Profile Display -->
     <div class="flex gap-4 mb-4 items-center">
@@ -12,8 +12,67 @@
       </div>
     </div>
 
+
     <!-- Edit Button -->
     <button @click="openModal" class="button">Edit Profile</button>
+        <!-- Profile History -->
+<!-- Profile History -->
+<div v-if="history.length" class="mt-8">
+  <h2 class="sectiontitle">Profile History</h2>
+
+  <ul class="text-sm text-gray-700 space-y-3">
+    <li v-for="(log, index) in history" :key="index" class="bg-gray-50 p-3 rounded border">
+      <p><strong>{{ log.date }}</strong> — {{ log.description }}</p>
+      <div v-if="Object.keys(log.changes).length">
+        <p class="text-xs text-gray-500">Updated fields:</p>
+        <ul class="list-disc ml-5 text-xs">
+          <li v-for="(newVal, key) in log.changes" :key="key">
+            {{ key }}: <span class="text-green-600">{{ newVal }}</span>
+            <span v-if="log.old[key]"> (was <span class="text-red-600">{{ log.old[key] }}</span>)</span>
+          </li>
+        </ul>
+      </div>
+    </li>
+  </ul>
+
+<!-- Enhanced Pagination -->
+<div v-if="totalPages > 1" class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
+  <button
+    :disabled="page === 1"
+    @click="changePage(page - 1)"
+    class="btn-pagination"
+  >
+    Prev
+  </button>
+
+  <button
+    v-for="p in visiblePages"
+    :key="`page-${p}`"
+    @click="typeof p === 'number' && changePage(p)"
+    :class="[
+      'btn-pagination',
+      {
+        'bg-blue-600 text-white': p === page,
+        'pointer-events-none text-gray-500': p === '...'
+      }
+    ]"
+    :disabled="p === '...'"
+  >
+    {{ p }}
+  </button>
+
+  <button
+    :disabled="page === totalPages"
+    @click="changePage(page + 1)"
+    class="btn-pagination"
+  >
+    Next
+  </button>
+</div>
+
+</div>
+
+
 
     <!-- Modal -->
 <!-- Modal -->
@@ -83,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import axios from '@/axios'
 
 const isModalOpen = ref(false)
@@ -99,9 +158,66 @@ const form = ref({
   password_confirmation: '',
 })
 
+
 const errors = ref({})
 const successMessage = ref('')
 const loading = ref(false)
+
+const history = ref([])
+const historyMeta = ref({
+  current_page: 1,
+  last_page: 1,
+})
+
+// Fetch history with pagination
+const fetchHistory = async (pageNumber = 1) => {
+  try {
+    const { data } = await axios.get(`/profile/history?page=${pageNumber}`)
+
+    history.value = data.data
+    historyMeta.value = {
+      current_page: data.current_page,
+      last_page: data.last_page,
+    }
+
+    page.value = data.current_page
+    totalPages.value = data.last_page
+  } catch (error) {
+    console.error('Failed to fetch history:', error)
+  }
+}
+
+
+const page = ref(1)
+const totalPages = ref(1)
+const visiblePages = computed(() => {
+  const range = []
+  const delta = 2
+
+  const left = Math.max(2, page.value - delta)
+  const right = Math.min(totalPages.value - 1, page.value + delta)
+
+  range.push(1)
+  if (left > 2) range.push('...')
+
+  for (let i = left; i <= right; i++) {
+    range.push(i)
+  }
+
+  if (right < totalPages.value - 1) range.push('...')
+  if (totalPages.value > 1) range.push(totalPages.value)
+
+  return range
+})
+
+const changePage = (newPage) => {
+  if (newPage !== page.value && newPage >= 1 && newPage <= totalPages.value) {
+    page.value = newPage
+    fetchHistory(newPage)
+  }
+}
+
+
 
 const openModal = () => {
   isModalOpen.value = true
@@ -124,11 +240,6 @@ const handleEscape = (e) => {
     closeModal()
   }
 }
-
-onMounted(() => {
-  window.addEventListener('keydown', handleEscape)
-  fetchProfile()
-})
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEscape)
@@ -180,6 +291,9 @@ const updateProfile = async () => {
     form.value.password_confirmation = ''
     previewUrl.value = null
     isModalOpen.value = false
+
+    await fetchProfile()  // 👈 Refresh UI after update
+
   } catch (err) {
     if (err.response && err.response.data && err.response.data.errors) {
       errors.value = err.response.data.errors
@@ -188,4 +302,11 @@ const updateProfile = async () => {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  fetchProfile()
+  fetchHistory()
+  window.addEventListener('keydown', handleEscape)
+})
+
 </script>
