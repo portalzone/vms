@@ -102,28 +102,34 @@
     </div>
 
     <!-- Modal -->
-<div v-if="selectedLog" class="modal-overlay">
-  <div class="modal-content">
+<!-- Modal -->
+<div
+  v-if="selectedLog"
+  class="modal-overlay"
+  @click.self="selectedLog = null"
+>
+  <div class="modal-content overflow-y-auto max-h-[90vh] relative">
     <div class="modal-header">
-      <h3>Audit Log Details</h3>
-      <button @click="selectedLog = null" class="modal-close-btn">✖</button>
+      <h3 class="text-xl font-semibold">Audit Log Details</h3>
+      <button @click="selectedLog = null" class="modal-close">✖</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body space-y-2 text-sm text-gray-800">
       <p><strong>User:</strong> {{ selectedLog.causer?.name || 'System' }}</p>
       <p><strong>Action:</strong> {{ selectedLog.description }}</p>
       <p><strong>Model:</strong> {{ selectedLog.subject_type?.split('\\').pop() || '—' }}</p>
       <p><strong>Date:</strong> {{ formatDate(selectedLog.created_at) }}</p>
       <div>
         <strong>Old Values:</strong>
-        <pre>{{ formatJSON(selectedLog.properties?.old) }}</pre>
+        <pre class="bg-gray-100 p-2 rounded text-xs overflow-auto">{{ formatJSON(selectedLog.properties?.old) }}</pre>
       </div>
       <div>
         <strong>New Values:</strong>
-        <pre>{{ formatJSON(selectedLog.properties?.attributes) }}</pre>
+        <pre class="bg-gray-100 p-2 rounded text-xs overflow-auto">{{ formatJSON(selectedLog.properties?.attributes) }}</pre>
       </div>
     </div>
   </div>
 </div>
+
 
   </div>
 </template>
@@ -177,6 +183,8 @@ const formatJSON = (obj) => {
 const openModal = (log) => {
   selectedLog.value = log
 }
+
+
 
 const totalPages = computed(() => logs.value?.last_page || 1)
 

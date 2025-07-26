@@ -1,96 +1,95 @@
 <template>
-  <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-    <h2 class="text-xl font-semibold mb-4">My Profile</h2>
+  <div class="max-w-3xl mx-auto p-6 bg-white rounded shadow">
+    <h2 class="section-title">Profile Summary</h2>
 
-    <form @submit.prevent="updateProfile" class="space-y-4" enctype="multipart/form-data">
-      <!-- Name -->
+    <!-- Profile Display -->
+    <div class="flex gap-4 mb-4 items-center">
+      <img v-if="avatarUrl" :src="avatarUrl" class="profile-avatar border" />
       <div>
-        <label class="block text-sm font-medium mb-1">Name</label>
-        <input
-          v-model="form.name"
-          type="text"
-          class="w-full border rounded px-4 py-2"
-        />
-        <p v-if="errors.name" class="text-red-500 text-sm">{{ errors.name[0] }}</p>
+        <p><strong>Name:</strong> {{ form.name }}</p>
+        <p><strong>Email:</strong> {{ form.email }}</p>
+        <p v-if="form.phone"><strong>Phone:</strong> {{ form.phone }}</p>
       </div>
+    </div>
 
-      <!-- Email -->
-      <div>
-        <label class="block text-sm font-medium mb-1">Email</label>
-        <input
-          v-model="form.email"
-          type="email"
-          class="w-full border rounded px-4 py-2"
-        />
-        <p v-if="errors.email" class="text-red-500 text-sm">{{ errors.email[0] }}</p>
+    <!-- Edit Button -->
+    <button @click="openModal" class="button">Edit Profile</button>
+
+    <!-- Modal -->
+<!-- Modal -->
+<div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
+  <div class="modal-content">
+    <button @click="closeModal" class="modal-close">✖</button>
+    <h3 class="section-title">Edit Profile</h3>
+
+    <form @submit.prevent="updateProfile" class="space-y-4 mt-4" enctype="multipart/form-data">
+          <!-- Name -->
+          <div>
+            <label class="label">Name</label>
+            <input v-model="form.name" type="text" class="input" />
+            <p v-if="errors.name" class="input-error">{{ errors.name[0] }}</p>
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="label">Email</label>
+            <input v-model="form.email" type="email" class="input" />
+            <p v-if="errors.email" class="input-error">{{ errors.email[0] }}</p>
+          </div>
+
+          <!-- Phone -->
+          <div>
+            <label class="label">Phone</label>
+            <input v-model="form.phone" type="text" class="input" />
+            <p v-if="errors.phone" class="input-error">{{ errors.phone[0] }}</p>
+          </div>
+
+          <!-- Avatar -->
+          <div>
+            <label class="label">Avatar</label>
+            <input type="file" @change="handleAvatarChange" class="input" />
+            <p v-if="errors.avatar" class="input-error">{{ errors.avatar[0] }}</p>
+            <div v-if="previewUrl || avatarUrl" class="mt-2 w-16 h-16">
+              <img :src="previewUrl || avatarUrl" class="profile-avatar" />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label class="label">New Password</label>
+            <input v-model="form.password" type="password" class="input" />
+            <p v-if="errors.password" class="input-error">{{ errors.password[0] }}</p>
+          </div>
+
+          <!-- Confirm Password -->
+          <div>
+            <label class="label">Confirm Password</label>
+            <input v-model="form.password_confirmation" type="password" class="input" />
+          </div>
+
+          <!-- Submit -->
+          <div class="pt-4">
+            <button type="submit" class="button" :disabled="loading">
+              <span v-if="loading">Updating...</span>
+              <span v-else>Update Profile</span>
+            </button>
+
+            <p v-if="successMessage" class="toast-success mt-2 text-sm">{{ successMessage }}</p>
+          </div>
+        </form>
       </div>
-
-      <!-- Phone -->
-      <div>
-        <label class="block text-sm font-medium mb-1">Phone</label>
-        <input
-          v-model="form.phone"
-          type="text"
-          class="w-full border rounded px-4 py-2"
-        />
-        <p v-if="errors.phone" class="text-red-500 text-sm">{{ errors.phone[0] }}</p>
-      </div>
-
-      <!-- Avatar -->
-      <div>
-        <label class="block text-sm font-medium mb-1">Avatar</label>
-        <input
-          type="file"
-          @change="handleAvatarChange"
-          class="w-full"
-        />
-        <p v-if="errors.avatar" class="text-red-500 text-sm">{{ errors.avatar[0] }}</p>
-
-        <div v-if="previewUrl || avatarUrl" class="mt-2 w-16 h-16">
-          <img :src="previewUrl || avatarUrl" alt="Avatar" class="h-24 w-24 rounded-full object-cover" />
-        </div>
-      </div>
-
-      <!-- Password -->
-      <div>
-        <label class="block text-sm font-medium mb-1">New Password</label>
-        <input
-          v-model="form.password"
-          type="password"
-          class="w-full border rounded px-4 py-2"
-        />
-        <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password[0] }}</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium mb-1">Confirm Password</label>
-        <input
-          v-model="form.password_confirmation"
-          type="password"
-          class="w-full border rounded px-4 py-2"
-        />
-      </div>
-
-      <!-- Submit -->
-      <div class="pt-4">
-        <button
-          type="submit"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded"
-          :disabled="loading"
-        >
-          <span v-if="loading">Updating...</span>
-          <span v-else>Update Profile</span>
-        </button>
-
-        <p v-if="successMessage" class="text-green-600 text-sm mt-2">{{ successMessage }}</p>
-      </div>
-    </form>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import axios from '@/axios' // ✅ Replace with your axios instance
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import axios from '@/axios'
+
+const isModalOpen = ref(false)
+const avatarFile = ref(null)
+const avatarUrl = ref(null)
+const previewUrl = ref(null)
 
 const form = ref({
   name: '',
@@ -100,12 +99,40 @@ const form = ref({
   password_confirmation: '',
 })
 
-const avatarFile = ref(null)
-const avatarUrl = ref(null)
-const previewUrl = ref(null)
 const errors = ref({})
 const successMessage = ref('')
 const loading = ref(false)
+
+const openModal = () => {
+  isModalOpen.value = true
+  document.body.style.overflow = 'hidden' // prevent scroll
+  successMessage.value = ''
+  errors.value = {}
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  document.body.style.overflow = '' // restore scroll
+  form.value.password = ''
+  form.value.password_confirmation = ''
+  previewUrl.value = null
+}
+
+
+const handleEscape = (e) => {
+  if (e.key === 'Escape' && isModalOpen.value) {
+    closeModal()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEscape)
+  fetchProfile()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleEscape)
+})
 
 const fetchProfile = async () => {
   try {
@@ -140,9 +167,7 @@ const updateProfile = async () => {
     payload.append('password', form.value.password)
     payload.append('password_confirmation', form.value.password_confirmation)
   }
-  if (avatarFile.value) {
-    payload.append('avatar', avatarFile.value)
-  }
+  if (avatarFile.value) payload.append('avatar', avatarFile.value)
 
   try {
     const response = await axios.post('/profile?_method=PUT', payload, {
@@ -154,6 +179,7 @@ const updateProfile = async () => {
     form.value.password = ''
     form.value.password_confirmation = ''
     previewUrl.value = null
+    isModalOpen.value = false
   } catch (err) {
     if (err.response && err.response.data && err.response.data.errors) {
       errors.value = err.response.data.errors
@@ -162,12 +188,4 @@ const updateProfile = async () => {
     loading.value = false
   }
 }
-
-onMounted(fetchProfile)
 </script>
-
-<style scoped>
-input[type="file"] {
-  padding: 0.5rem 0;
-}
-</style>
