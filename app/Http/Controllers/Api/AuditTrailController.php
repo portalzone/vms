@@ -9,12 +9,12 @@ use Illuminate\Support\Carbon;
 
 class AuditTrailController extends Controller
 {
-    // ✅ Get all audit logs with optional filters
     public function index(Request $request)
     {
+        $this->authorizeAccess('view');
+
         $query = Activity::with('causer')->latest();
 
-        // 🔍 Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -23,12 +23,10 @@ class AuditTrailController extends Controller
             });
         }
 
-        // 📦 Filter by module (log_name)
         if ($request->filled('log_name') && $request->log_name !== 'all') {
             $query->where('log_name', $request->log_name);
         }
 
-        // 📅 Filter by time range
         if ($request->filled('time_range')) {
             $now = now();
 
@@ -41,28 +39,26 @@ class AuditTrailController extends Controller
             };
         }
 
-        // ✅ Return paginated filtered results
         return response()->json($query->paginate(10));
     }
 
-    // 🔧 Handle custom date range filtering
     protected function applyCustomDateRange($query, Request $request): void
     {
         if ($request->filled(['start_date', 'end_date'])) {
             try {
                 $start = Carbon::parse($request->start_date)->startOfDay();
                 $end = Carbon::parse($request->end_date)->endOfDay();
-
                 $query->whereBetween('created_at', [$start, $end]);
             } catch (\Exception $e) {
-                // Optional: log or throw a validation error
+                // Optionally handle invalid dates
             }
         }
     }
 
-    // ✅ Get a specific audit log entry
     public function show($id)
     {
+        $this->authorizeAccess('view');
+
         $log = Activity::with('causer')->findOrFail($id);
 
         return response()->json([
@@ -70,5 +66,21 @@ class AuditTrailController extends Controller
             'message' => 'Audit log retrieved successfully.',
             'data' => $log,
         ]);
+    }
+
+    /**
+     * 🔐 Role-based access control
+     */
+    private function authorizeAccess(string $action): void
+    {
+        $user = auth()->user();
+
+        $roles = [
+            'view' => ['admin', 'manager'],
+        ];
+
+        if (!$user || !$user->hasAnyRole($roles[$action] ?? [])) {
+            abort(403, 'Unauthorized for this action.');
+        }
     }
 }

@@ -67,11 +67,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('trips', TripController::class);
 
     // ✅ Audit Trail Logs
-    // Route::get('/audit-trail', [AuditTrailController::class, 'index']); // ✅ NEW
      Route::get('/audit-trail', [AuditTrailController::class, 'index']);
     Route::get('/audit-trail/{id}', [AuditTrailController::class, 'show']);
+
+    // user profile
+Route::get('/profile', [UserController::class, 'profile']);
+    Route::put('/profile', [UserController::class, 'updateProfile']);
 });
-// Route::middleware(['auth:sanctum', 'role:admin|manager'])->group(function () {
-//     Route::get('/audit-trail', [AuditTrailController::class, 'index']);
-//     Route::get('/audit-trail/{id}', [AuditTrailController::class, 'show']);
-// });

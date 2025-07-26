@@ -5,6 +5,9 @@ import { useAuthStore } from '../stores/auth'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
+
 // Lazy-loaded views
 const Register = () => import('../views/Register.vue')
 const About = () => import('../views/About.vue')
@@ -80,6 +83,14 @@ const routes = [
   component: () => import('@/views/Audit/AuditTrailList.vue'),
   meta: { requiresAuth: true }
 }, 
+
+// user profile
+{
+  path: '/profile',
+  name: 'UserProfile',
+  component: () => import('@/views/Profile/UserProfile.vue'),
+  meta: { requiresAuth: true }
+},
 
   // Drivers
   {

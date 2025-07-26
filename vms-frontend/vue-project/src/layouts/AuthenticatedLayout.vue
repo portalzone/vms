@@ -22,6 +22,7 @@
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner'])" to="/maintenance" exact-active-class="active">Maintenance</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/expenses" exact-active-class="active">Expenses</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/users" exact-active-class="active">Users</RouterLink>
+        <router-link to="/profile" class="text-sm text-gray-600 hover:text-blue-500">My Profile</router-link>
         <RouterLink to="/about" exact-active-class="active">About</RouterLink>
         <RouterLink to="/support" exact-active-class="active">Support</RouterLink>
         <a href="javascript:void(0)" @click="logout">Logout</a>

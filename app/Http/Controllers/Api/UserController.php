@@ -8,6 +8,13 @@ use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+
 
 class UserController extends Controller
 {
@@ -113,19 +120,6 @@ class UserController extends Controller
         return response()->json(['message' => 'User deleted successfully']);
     }
 
-// // available for driver
-// public function availableForDrivers()
-// {
-//     $assignedUserIds = \App\Models\Driver::pluck('user_id')->toArray();
-
-//     $users = User::whereNotIn('id', $assignedUserIds)
-//                 ->select('id', 'name', 'email')
-//                 ->get();
-
-//     return response()->json($users);
-// }
-
-// user available for driver form
 
 public function usersAvailableForDriverForm(Request $request)
 {
@@ -184,7 +178,69 @@ public function usersWithDriverStatus()
     return response()->json($users);
 }
 
+// Return authenticated user's profile
+public function me(Request $request)
+{
+    return response()->json($request->user()->load('roles'));
+}
 
+ /**
+     * Return the profile of the currently authenticated user.
+     */
+/**
+     * Get the authenticated user's profile.
+     */
+    public function profile(Request $request)
+    {
+        $user = Auth::user();
+        return response()->json([
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's profile.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'password' => ['nullable', 'confirmed', Password::defaults()],
+            'avatar' => ['nullable', 'image', 'max:2048'], // Max 2MB
+        ]);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->phone = $validated['phone'] ?? null;
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully.',
+            'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+        ]);
+    }
 
     // 🔐 Role-based access checker
     private function authorizeAccess(string $action)
