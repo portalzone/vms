@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 
 class Vehicle extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'manufacturer',
@@ -17,6 +20,17 @@ class Vehicle extends Model
         'created_by',
         'updated_by'
     ];
+
+    /**
+     * Spatie activity log settings
+     */
+    public function getActivitylogOptions(): LogOptions
+{
+    return LogOptions::defaults()
+        ->logAll()
+        ->useLogName('vehicle') // change based on model
+        ->logOnlyDirty();       // logs only changed fields
+}
 
     /**
      * Relationship: One Vehicle has One Driver (inverse of Driver::vehicle())

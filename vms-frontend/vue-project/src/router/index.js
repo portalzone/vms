@@ -73,6 +73,13 @@ const routes = [
     component: Dashboard,
     meta: { requiresAuth: true },
   },
+// audit trial
+{
+  path: '/audit-trail',
+  name: 'AuditTrail',
+  component: () => import('@/views/Audit/AuditTrailList.vue'),
+  meta: { requiresAuth: true }
+}, 
 
   // Drivers
   {

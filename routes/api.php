@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\AuditTrailController; // ✅ NEW Import
 
 // 🔓 Public Routes (No Auth Required)
 Route::post('/login', [AuthController::class, 'login']);
@@ -29,12 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/roles', [RoleController::class, 'index']);
 
     // ✅ Users
-    Route::get('/users/{id}', [UserController::class, 'show']); // Custom show
+    Route::get('/users/{id}', [UserController::class, 'show']);
     Route::get('/available-users', [UserController::class, 'availableForDrivers']);
     Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus']);
-    // Route::get('/users-available-for-drivers', [UserController::class, 'usersAvailableForDriverForm']);
     Route::get('/users-available-for-drivers', [UserController::class, 'availableForDrivers']);
-
     Route::apiResource('users', UserController::class)->except(['show']);
 
     // ✅ Dashboard
@@ -43,32 +42,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/recent', [DashboardController::class, 'recentActivity']);
 
     // ✅ Vehicles
-// ✅ Custom route must come first before apiResource
-Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);
-Route::get('/vehicles-available-for-drivers', [VehicleController::class, 'availableForDrivers']);
+    Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);
+    Route::get('/vehicles-available-for-drivers', [VehicleController::class, 'availableForDrivers']);
+    Route::apiResource('vehicles', VehicleController::class);
 
-
-Route::apiResource('vehicles', VehicleController::class);
-
-Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']);
-
-
+    Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']);
 
     // ✅ Drivers
-    // Route::get('/drivers/me', [DriverController::class, 'me']);
     Route::get('/assigned-vehicles', [VehicleController::class, 'assignedVehicles']);
-
     Route::get('/vehicles/{vehicle}/driver-user-id', [DriverController::class, 'getDriverUserIdByVehicle']);
-
-    // drivers profile
     Route::get('/drivers/{id}', [DriverController::class, 'show']);
-
-    //export drivers details
     Route::get('/drivers/{id}/export-trips-excel', [DriverController::class, 'exportDriverTripsExcel']);
-
-
     Route::apiResource('drivers', DriverController::class);
-
 
     // ✅ Check-In/Out
     Route::apiResource('checkins', CheckInOutController::class);
@@ -80,4 +65,13 @@ Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']
 
     // ✅ Trip Logs
     Route::apiResource('trips', TripController::class);
+
+    // ✅ Audit Trail Logs
+    // Route::get('/audit-trail', [AuditTrailController::class, 'index']); // ✅ NEW
+     Route::get('/audit-trail', [AuditTrailController::class, 'index']);
+    Route::get('/audit-trail/{id}', [AuditTrailController::class, 'show']);
 });
+// Route::middleware(['auth:sanctum', 'role:admin|manager'])->group(function () {
+//     Route::get('/audit-trail', [AuditTrailController::class, 'index']);
+//     Route::get('/audit-trail/{id}', [AuditTrailController::class, 'show']);
+// });

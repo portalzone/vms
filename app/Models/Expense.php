@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 
 class Expense extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'vehicle_id',
@@ -18,6 +21,17 @@ class Expense extends Model
         'created_by',
         'updated_by',
     ];
+
+    /**
+     * Spatie activity log settings
+     */
+    public function getActivitylogOptions(): LogOptions
+{
+    return LogOptions::defaults()
+        ->logAll()
+        ->useLogName('expense') // change based on model
+        ->logOnlyDirty();       // logs only changed fields
+}
 
     public function vehicle()
     {

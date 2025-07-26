@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 
 class CheckInOut extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'vehicle_id',
@@ -25,6 +28,18 @@ class CheckInOut extends Model
         'checked_in_at' => 'datetime',
         'checked_out_at' => 'datetime',
     ];
+
+        /**
+     * Spatie activity log settings
+     */
+    public function getActivitylogOptions(): LogOptions
+{
+    return LogOptions::defaults()
+        ->logAll()
+        ->useLogName('check_in_out') // change based on model
+        ->logOnlyDirty();       // logs only changed fields
+}
+
 
     /**
      * Relationship: Each check-in/out belongs to a vehicle
