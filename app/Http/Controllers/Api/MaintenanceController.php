@@ -126,6 +126,7 @@ class MaintenanceController extends Controller
         $allowedRoles = $map[$action] ?? [];
 
         if (!$user || !$user->hasAnyRole($allowedRoles)) {
+             \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
             abort(403, 'Unauthorized for this action.');
         }
     }

@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TripController;
-use App\Http\Controllers\Api\AuditTrailController; // ✅ NEW Import
+use App\Http\Controllers\Api\AuditTrailController;
 
 // 🔓 Public Routes (No Auth Required)
 Route::post('/login', [AuthController::class, 'login']);
@@ -44,18 +44,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Vehicles
     Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);
     Route::get('/vehicles-available-for-drivers', [VehicleController::class, 'availableForDrivers']);
+    Route::get('/assigned-vehicles', [VehicleController::class, 'assignedVehicles']);
     Route::apiResource('vehicles', VehicleController::class);
 
-    Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']);
-
     // ✅ Drivers
-    Route::get('/assigned-vehicles', [VehicleController::class, 'assignedVehicles']);
-    Route::get('/vehicles/{vehicle}/driver-user-id', [DriverController::class, 'getDriverUserIdByVehicle']);
     Route::get('/drivers/{id}', [DriverController::class, 'show']);
     Route::get('/drivers/{id}/export-trips-excel', [DriverController::class, 'exportDriverTripsExcel']);
+    Route::get('/vehicles/{vehicle}/driver-user-id', [DriverController::class, 'getDriverUserIdByVehicle']);
+    Route::get('/driver/me', [DriverController::class, 'me']); // ✅ ADDED: Logged-in driver details
     Route::apiResource('drivers', DriverController::class);
 
     // ✅ Check-In/Out
+    Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']);
     Route::apiResource('checkins', CheckInOutController::class);
 
     // ✅ Maintenance & Expenses
@@ -67,10 +67,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('trips', TripController::class);
 
     // ✅ Audit Trail Logs
-     Route::get('/audit-trail', [AuditTrailController::class, 'index']);
+    Route::get('/audit-trail', [AuditTrailController::class, 'index']);
     Route::get('/audit-trail/{id}', [AuditTrailController::class, 'show']);
 
-    // user profile
+    // ✅ User Profile
     Route::get('/profile', [UserController::class, 'profile']);
     Route::put('/profile', [UserController::class, 'updateProfile']);
     Route::get('/profile/history', [UserController::class, 'profileHistory']);

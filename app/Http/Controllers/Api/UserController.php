@@ -120,7 +120,7 @@ public function profileHistory()
     $logs = Activity::where('log_name', 'user')
         ->where('causer_id', $user->id)
         ->orderByDesc('created_at')
-        ->paginate(1); // paginate instead of take(20)
+        ->paginate(5); // paginate instead of take(20)
 
     // Map each activity item to a structured array
     $transformed = $logs->getCollection()->map(function ($log) {
@@ -290,6 +290,7 @@ public function me(Request $request)
         $allowedRoles = $map[$action] ?? [];
 
         if (!$user->hasAnyRole($allowedRoles)) {
+             \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
             abort(403, 'Unauthorized for this action.');
         }
     }

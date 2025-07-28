@@ -1,4 +1,6 @@
 <template>
+  <ModalNotification ref="modalRef" />
+
   <div>
     <!-- Search + Add -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
@@ -12,6 +14,28 @@
         ➕ Add Vehicle
       </router-link>
     </div>
+
+    <!-- Sort Dropdown -->
+    <div class="mb-4">
+      <label for="sort" class="mr-2 font-medium">Sort by:</label>
+      <select v-model="sortBy" id="sort" class="border border-gray-300 rounded px-3 py-2">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+        <option value="manufacturer-asc">Manufacturer A–Z</option>
+        <option value="manufacturer-desc">Manufacturer Z–A</option>
+      </select>
+    </div>
+    <div class="flex flex-col md:flex-row gap-4 items-center mb-4">
+  <input
+    type="number"
+    v-model="searchId"
+    placeholder="Search Vehicle by ID"
+    class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/3"
+  />
+  <button @click="searchById(searchId)" class="btn-primary">Search by ID</button>
+</div>
+
+    <button @click="window.$toast?.showToast('Test toast!')">Test Toast</button>
 
     <!-- Table -->
     <div class="overflow-x-auto rounded shadow bg-white">
@@ -41,9 +65,9 @@
             <td class="px-4 py-2">{{ vehicle.model }}</td>
             <td class="px-4 py-2">{{ vehicle.year }}</td>
             <td class="px-4 py-2">{{ vehicle.plate_number }}</td>
-            <td class="px-4 py-2">{{ vehicle.creator?.name ?? 'N/A'  }}</td>
+            <td class="px-4 py-2">{{ vehicle.creator?.name ?? 'N/A' }}</td>
             <td class="px-4 py-2">{{ formatDate(vehicle.created_at) }}</td>
-            <td class="px-4 py-2">{{ vehicle.editor?.name ?? 'N/A'  }}</td>
+            <td class="px-4 py-2">{{ vehicle.editor?.name ?? 'N/A' }}</td>
             <td class="px-4 py-2">{{ formatDate(vehicle.updated_at) }}</td>
             <td class="px-4 py-2 text-right space-x-2">
               <button class="btn-edit" @click="edit(vehicle.id)">Edit</button>
@@ -51,7 +75,7 @@
             </td>
           </tr>
           <tr v-if="paginatedVehicles.length === 0">
-            <td colspan="6" class="text-center text-gray-500 py-4">No vehicles found.</td>
+            <td colspan="10" class="text-center text-gray-500 py-4">No vehicles found.</td>
           </tr>
         </tbody>
       </table>
@@ -59,13 +83,7 @@
 
     <!-- Pagination -->
     <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
-      <button
-        :disabled="page === 1"
-        @click="page--"
-        class="btn-pagination"
-      >
-        Prev
-      </button>
+      <button :disabled="page === 1" @click="page--" class="btn-pagination">Prev</button>
 
       <button
         v-for="p in visiblePages"
@@ -83,18 +101,10 @@
         {{ p }}
       </button>
 
-      <button
-        :disabled="page === totalPages"
-        @click="page++"
-        class="btn-pagination"
-      >
-        Next
-      </button>
+      <button :disabled="page === totalPages" @click="page++" class="btn-pagination">Next</button>
     </div>
   </div>
 </template>
-
-
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
@@ -102,15 +112,20 @@ import axios from '@/axios'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+import ModalNotification from '@/components/ModalNotification.vue' // adjust path if different
+const modalRef = ref(null)
+
+
 const router = useRouter()
 const auth = useAuthStore()
 
 const allVehicles = ref([])
 const search = ref('')
+const searchId = ref('')
+const sortBy = ref('newest')
 const page = ref(1)
-const perPage = 10
+const perPage = 20
 
-// Format timestamp
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A'
   return new Date(dateStr).toLocaleString()
@@ -127,6 +142,7 @@ const fetchVehicles = async () => {
   }
 }
 
+// Filter by search input
 const filteredVehicles = computed(() => {
   const term = search.value.toLowerCase()
   return allVehicles.value.filter(v =>
@@ -136,15 +152,34 @@ const filteredVehicles = computed(() => {
   )
 })
 
+// Sort after filtering
+const sortedVehicles = computed(() => {
+  const vehicles = [...filteredVehicles.value]
+  switch (sortBy.value) {
+    case 'newest':
+      return vehicles.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    case 'oldest':
+      return vehicles.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    case 'manufacturer-asc':
+      return vehicles.sort((a, b) => a.manufacturer?.localeCompare(b.manufacturer))
+    case 'manufacturer-desc':
+      return vehicles.sort((a, b) => b.manufacturer?.localeCompare(a.manufacturer))
+    default:
+      return vehicles
+  }
+})
+
+// Pagination
 const start = computed(() => (page.value - 1) * perPage)
 const paginatedVehicles = computed(() =>
-  filteredVehicles.value.slice(start.value, start.value + perPage)
-)
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredVehicles.value.length / perPage))
+  sortedVehicles.value.slice(start.value, start.value + perPage)
 )
 
-watch(search, () => (page.value = 1))
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(sortedVehicles.value.length / perPage))
+)
+
+watch([search, sortBy], () => (page.value = 1))
 watch(page, fetchVehicles)
 
 const visiblePages = computed(() => {
@@ -169,7 +204,42 @@ const visiblePages = computed(() => {
   return pages
 })
 
+const searchById = async (id) => {
+  if (!id) {
+    modalRef.value?.show('Please enter a vehicle ID.', 'Missing Input')
+    return
+  }
+
+  try {
+    const res = await axios.get(`/vehicles/${id}`)
+    const vehicle = res.data
+
+    const message = `
+<h2 class="font-bold text-lg mb-2">🚗 Vehicle Found</h2>
+<p>Manufacturer: ${vehicle.manufacturer}</p>
+<p>Model: ${vehicle.model}</p>
+<p>Plate Number: ${vehicle.plate_number}</p>
+<p>Year: ${vehicle.year}</p>
+<p>Created By: ${vehicle.creator?.name ?? 'N/A'}</p>
+<p>Created Time: ${formatDate(vehicle.created_at)}</p>
+<p>Last Edited By: ${vehicle.editor?.name ?? 'N/A'}</p>
+<p>Last Edited Time: ${formatDate(vehicle.updated_at)}</p>
+
+<p><a href="/vehicles/${vehicle.id}/edit" class="text-blue-500 underline mt-2 inline-block">✏️ Edit Vehicle Info</a></p>
+    `
+
+    modalRef.value?.show(message, 'Vehicle Info')
+    return vehicle
+  } catch (err) {
+    modalRef.value?.show('❌ Vehicle not found or error occurred.', 'Error')
+    console.error(err)
+    return null
+  }
+}
+
+
 const edit = (id) => router.push(`/vehicles/${id}/edit`)
+
 const remove = async (id) => {
   if (confirm('Are you sure you want to delete this vehicle?')) {
     try {

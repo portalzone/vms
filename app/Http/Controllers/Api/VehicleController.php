@@ -119,7 +119,7 @@ public function availableForDrivers(Request $request)
 
     // Get unassigned vehicles (plus the current one if editing)
     $vehicles = \App\Models\Vehicle::whereNotIn('id', $assignedVehicleIds)
-        ->select('id', 'plate_number', 'model')
+        ->select('id', 'plate_number', 'model', 'manufacturer')
         ->get();
 
     return response()->json($vehicles);
@@ -158,6 +158,7 @@ public function availableForDrivers(Request $request)
         $allowedRoles = $rolePermissions[$action] ?? [];
 
         if (!$user || !$user->hasAnyRole($allowedRoles)) {
+             \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
             abort(403, 'Unauthorized for this action.');
         }
     }

@@ -55,7 +55,7 @@
       <select v-model="form.vehicle_id" id="vehicle_id" class="w-full border rounded px-3 py-2">
         <option value="">Select Vehicle</option>
         <option v-for="vehicle in vehicles" :key="vehicle.id" :value="vehicle.id">
-          {{ vehicle.plate_number }} - {{ vehicle.manufacturer }} {{ vehicle.model }}
+          {{ vehicle.manufacturer }} {{ vehicle.model }} ({{ vehicle.plate_number }})
         </option>
       </select>
       <p v-if="errors.vehicle_id" class="text-red-600 text-sm">{{ errors.vehicle_id[0] }}</p>

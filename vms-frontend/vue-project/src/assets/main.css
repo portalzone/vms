@@ -62,6 +62,11 @@ p {
   font-size: 1rem;
   margin-bottom: 1rem;
 }
+.error-text {
+  color: #ef4444; /* Tailwind red-500 */
+  font-size: 0.875rem; /* text-sm */
+  margin-top: 0.25rem; /* mt-1 */
+}
 
 .sectiontitle {
   text-align: left;
@@ -394,26 +399,6 @@ input[type="search"] {
 /* ===========================
    📄 Modal Styles
    =========================== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 50;
-}
-
-
-.modal-content {
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  width: 100%;
-  max-width: 32rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  position: relative;
-}
 
 .modal-header {
   display: flex;

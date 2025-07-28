@@ -80,6 +80,7 @@ class AuditTrailController extends Controller
         ];
 
         if (!$user || !$user->hasAnyRole($roles[$action] ?? [])) {
+             \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
             abort(403, 'Unauthorized for this action.');
         }
     }

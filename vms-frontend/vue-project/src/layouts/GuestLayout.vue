@@ -11,11 +11,11 @@
 
       <!-- Navigation -->
       <nav :class="{ open: menuOpen }">
-        <RouterLink v-if="route.path !== '/'" to="/" exact-active-class="active">Home</RouterLink>
-        <RouterLink to="/about" exact-active-class="active">About</RouterLink>
-        <RouterLink to="/support" exact-active-class="active">Support</RouterLink>
-        <RouterLink to="/login" exact-active-class="active">Login</RouterLink>
-        <RouterLink to="/register" exact-active-class="active">Register</RouterLink>
+        <RouterLink v-if="route.path !== '/'" to="/" exact-active-class="active" @click="closeMenu">Home</RouterLink>
+        <RouterLink to="/about" exact-active-class="active" @click="closeMenu">About</RouterLink>
+        <RouterLink to="/support" exact-active-class="active" @click="closeMenu">Support</RouterLink>
+        <RouterLink to="/login" exact-active-class="active" @click="closeMenu">Login</RouterLink>
+        <RouterLink to="/register" exact-active-class="active" @click="closeMenu">Register</RouterLink>
       </nav>
     </header>
 
@@ -42,6 +42,10 @@ const route = useRoute()
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
 }
+function closeMenu() {
+  menuOpen.value = false
+}
+
 </script>
 
 <style scoped>

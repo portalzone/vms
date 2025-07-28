@@ -1,9 +1,5 @@
 <template>
   <div>
-    <div v-if="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4">
-  {{ successMessage }}
-</div>
-
     <!-- Search & Add -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
       <input
@@ -20,8 +16,22 @@
         ➕ Add Driver
       </router-link>
     </div>
+  <div>
+    <!-- Search Area -->
+    <div class="flex gap-4 mb-4">
+      <input
+        v-model="searchDriverIdInput"
+        type="number"
+        placeholder="Search Driver by ID"
+        class="border border-gray-300 rounded px-4 py-2"
+      />
+      <button @click="searchDriverById(searchDriverIdInput)" class="btn-primary">
+        Search by ID
+      </button>
+    </div>
 
-    <!-- Table -->
+    <!-- Toast Notification -->
+  </div>    <!-- Table -->
     <div class="overflow-x-auto rounded shadow bg-white">
       <table class="min-w-full table-auto text-sm">
 <thead class="bg-gray-100 text-left">
@@ -130,6 +140,7 @@
       </button>
     </div>
   </div>
+  <ModalNotification ref="modalRef" />
 </template>
 
 
@@ -138,6 +149,11 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/axios'
 import { useAuthStore } from '@/stores/auth'
+import ModalNotification from '@/components/ModalNotification.vue'
+
+
+const modalRef = ref(null) // Add this
+const searchDriverIdInput = ref('')
 
 const successMessage = ref('')
 
@@ -208,6 +224,45 @@ const visiblePages = computed(() => {
 
   return pages
 })
+
+const searchDriverById = async (id) => {
+  if (!id) {
+    modalRef.value?.show('Please enter a Driver ID.', 'Missing Input')
+    return
+  }
+
+  try {
+    const res = await axios.get(`/drivers/${id}`)
+    const driver = res.data
+    const vehicle = driver.vehicle
+
+const vehicleInfo = vehicle
+  ? `
+Vehicle Info:
+   <p>Name: ${vehicle.name}</p>
+   <p>Plate Number: ${vehicle.plate_number}</p>
+   <p><a href="/drivers/${driver.id}/edit" class="text-blue-200 underline">Edit Driver Info</a> </p>`
+  : 'Vehicle Info:\n No vehicle assigned'
+
+const message = `
+<h2 class="font-bold text-lg mb-2">✅ Driver Found</h2>
+<p>Name: ${driver.name} </p>
+<p>Email: ${driver.email} </p>
+<p>Phone: ${driver.phone_number} </p>
+<p>License: ${driver.license_number}</p>
+
+${vehicleInfo}
+`
+
+
+    modalRef.value?.show(message, 'Driver Info')
+  } catch (err) {
+    modalRef.value?.show('❌ Driver not found or error occurred.', 'Error')
+    console.error(err)
+  }
+}
+
+
 
 const edit = (id) => router.push(`/drivers/${id}/edit`)
 const remove = async (id) => {

@@ -13,14 +13,20 @@ instance.interceptors.request.use(config => {
   return config
 })
 
-// ✅ Global 401 interceptor
+// ✅ Improved 401 handling
 instance.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401) {
+    const originalRequest = err.config
+
+    // Don't redirect if the request is to the login endpoint
+    const isLoginAttempt = originalRequest?.url?.includes('/login')
+
+    if (err.response?.status === 401 && !isLoginAttempt) {
       localStorage.removeItem('token')
       window.location.href = '/'
     }
+
     return Promise.reject(err)
   }
 )
