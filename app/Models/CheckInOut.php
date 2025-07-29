@@ -57,6 +57,8 @@ class CheckInOut extends Model
         return $this->belongsTo(Driver::class)->with('user');
     }
 
+    
+
     /**
      * Relationship: User who checked the vehicle in
      */

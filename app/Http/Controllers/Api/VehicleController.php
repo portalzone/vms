@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
+use App\Models\CheckInOut;
 use Illuminate\Http\Request;
 use App\Models\Driver;
 
@@ -33,6 +34,16 @@ public function index()
         // Admins and Managers: see all vehicles
         $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])->get();
     }
+
+    return response()->json($vehicles);
+}
+
+public function vehiclesWithinPremises()
+{
+    $vehicles = CheckInOut::with('vehicle', 'driver.user')
+        ->whereNull('checked_out_at')
+        ->latest()
+        ->get();
 
     return response()->json($vehicles);
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\AuditTrailController;
+use App\Http\Controllers\Api\GateSecurityController;
 
 // 🔓 Public Routes (No Auth Required)
 Route::post('/login', [AuthController::class, 'login']);
@@ -42,11 +43,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/monthly-trends', [DashboardController::class, 'monthlyTrends']);
     Route::get('/dashboard/recent', [DashboardController::class, 'recentActivity']);
 
+    //Gate security
+    Route::get('/gate-security/stats', [GateSecurityController::class, 'stats']);
+    Route::get('/gate-security/recent-logs', [GateSecurityController::class, 'recentLogs']);
+
     // ✅ Vehicles
     Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);
     Route::get('/vehicles-available-for-drivers', [VehicleController::class, 'availableForDrivers']);
     Route::get('/assigned-vehicles', [VehicleController::class, 'assignedVehicles']);
     Route::get('/vehicles/mine', [VehicleController::class, 'myVehicles']);
+    Route::get('/vehicles/within-premises', [VehicleController::class, 'vehiclesWithinPremises']);
     Route::apiResource('vehicles', VehicleController::class);
 
     // ✅ Drivers
