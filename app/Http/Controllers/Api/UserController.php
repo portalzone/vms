@@ -26,6 +26,21 @@ class UserController extends Controller
         return User::with('roles:id,name')->select('id', 'name', 'email')->get();
     }
 
+    // vehicle owner
+// ✅ Return users with the 'vehicle_owner' role (for dropdowns, etc.)
+public function vehicleOwners()
+{
+    $this->authorizeAccess('view', 'create', 'update'); // Optional: restrict to admins/managers
+
+    $owners = User::role('vehicle_owner')
+        ->select('id', 'name', 'email', 'email') // Add email if needed in frontend dropdowns
+        ->orderBy('name')
+        ->get();
+
+    return response()->json($owners);
+}
+
+
     // ✅ Create new user with role assignment (API guard)
     public function store(Request $request)
     {

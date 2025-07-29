@@ -12,14 +12,17 @@ class Vehicle extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected $fillable = [
-        'manufacturer',
-        'model',
-        'year',
-        'plate_number',
-        'created_by',
-        'updated_by'
-    ];
+protected $fillable = [
+    'manufacturer',
+    'model',
+    'year',
+    'plate_number',
+    'ownership_type',
+    'owner_id',
+    'created_by',
+    'updated_by',
+];
+
 
     /**
      * Spatie activity log settings

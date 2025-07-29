@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/available-users', [UserController::class, 'availableForDrivers']);
     Route::get('/users-with-driver-status', [UserController::class, 'usersWithDriverStatus']);
     Route::get('/users-available-for-drivers', [UserController::class, 'availableForDrivers']);
+    Route::get('/vehicle-owners', [UserController::class, 'vehicleOwners']);
     Route::apiResource('users', UserController::class)->except(['show']);
 
     // ✅ Dashboard
@@ -45,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);
     Route::get('/vehicles-available-for-drivers', [VehicleController::class, 'availableForDrivers']);
     Route::get('/assigned-vehicles', [VehicleController::class, 'assignedVehicles']);
+    Route::get('/vehicles/mine', [VehicleController::class, 'myVehicles']);
     Route::apiResource('vehicles', VehicleController::class);
 
     // ✅ Drivers

@@ -13,11 +13,30 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 class DriverController extends Controller
 {
     // ✅ Get all drivers with user and vehicle relationships
-    public function index()
-    {
-        $this->authorizeAccess('view');
-        return Driver::with(['user', 'vehicle', 'creator', 'editor'])->get();
+public function index(Request $request)
+{
+    $this->authorizeAccess('view');
+
+    $query = Driver::with(['user', 'vehicle', 'creator', 'editor']);
+
+    // If the user is a vehicle owner, limit to their drivers
+    $user = auth()->user();
+    if ($user->hasRole('vehicle_owner')) {
+        $query->whereHas('vehicle', function ($q) use ($user) {
+            $q->where('owner_id', $user->id);
+        });
     }
+
+    // Optional: allow admin to manually filter by owner via query param
+    if ($request->has('owner_id') && $user->hasAnyRole(['admin', 'manager'])) {
+        $query->whereHas('vehicle', function ($q) use ($request) {
+            $q->where('owner_id', $request->input('owner_id'));
+        });
+    }
+
+    return response()->json($query->get());
+}
+
 
     // ✅ Store a new driver
 public function store(Request $request)
@@ -236,7 +255,7 @@ return response()->json([
         $user = auth()->user();
 
         $roles = [
-            'view'   => ['admin', 'manager',  'gate_security'],
+            'view'   => ['admin', 'manager',  'gate_security', 'vehicle_owner'],
             'create' => ['admin', 'manager'],
             'update' => ['admin', 'manager'],
             'delete' => ['admin'],

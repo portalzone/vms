@@ -19,6 +19,9 @@ return new class extends Migration
     $table->string('model');
     $table->string('manufacturer');
     $table->integer('year');
+    $table->enum('ownership_type', ['organization', 'individual'])->default('organization');
+    $table->unsignedBigInteger('owner_id')->nullable()->after('ownership_type');
+    $table->foreign('owner_id')->references('id')->on('users')->onDelete('set null');
     $table->timestamps();
 });
 

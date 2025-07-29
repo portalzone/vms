@@ -15,15 +15,13 @@
       </router-link>
     </div>
 <!-- Filter by Owner -->
-<!-- Only show ownership filter for admin and manager -->
-<div v-if="hasRole(['admin', 'manager'])" class="mb-4 flex gap-4 items-center">
-  <label class="font-medium">Filter Vehicles by Ownership Type:</label>
-
+<div class="mb-4 flex gap-4 items-center">
+  <label class="font-medium">Filter by:</label>
 
   <!-- Ownership type -->
-  <select  v-model="selectedOwnership" class="border border-gray-300 rounded px-3 py-2">
+  <select v-model="selectedOwnership" class="border border-gray-300 rounded px-3 py-2">
     <option value="">All Ownership</option>
-    <option value="individual">Vehicle Owner</option>
+    <option value="individual">Individual</option>
     <option value="organization">Organization</option>
   </select>
 
@@ -69,7 +67,7 @@
         <option value="manufacturer-desc">Manufacturer Z–A</option>
       </select>
     </div>
-    <div v-if="hasRole(['admin', 'manager'])"  class="flex flex-col md:flex-row gap-4 items-center mb-4">
+    <div class="flex flex-col md:flex-row gap-4 items-center mb-4">
   <input
     type="number"
     v-model="searchId"
@@ -78,6 +76,9 @@
   />
   <button @click="searchById(searchId)" class="btn-primary">Search by ID</button>
 </div>
+
+    <button @click="window.$toast?.showToast('Test toast!')">Test Toast</button>
+
     <!-- Table -->
     <div class="overflow-x-auto rounded shadow bg-white">
       <table class="w-full table-auto text-sm">
@@ -162,18 +163,13 @@ import { ref, computed, onMounted, watch } from 'vue'
 import axios from '@/axios'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-const auth = useAuthStore()
-
-function hasRole(allowedRoles) {
-  return allowedRoles.includes(auth.user?.role)
-}
-
 
 import ModalNotification from '@/components/ModalNotification.vue' // adjust path if different
 const modalRef = ref(null)
 
 
 const router = useRouter()
+const auth = useAuthStore()
 
 const allVehicles = ref([])
 const search = ref('')
@@ -332,7 +328,7 @@ const remove = async (id) => {
 
 const fetchVehicleOwners = async () => {
   try {
-    const res = await axios.get('/vehicle-owners')
+    const res = await axios.get('/users?role=vehicle_owner')
     vehicleOwners.value = res.data
   } catch (err) {
     console.error('Failed to fetch vehicle owners:', err)
@@ -349,12 +345,10 @@ const fetchDrivers = async () => {
 }
 
 
-
 onMounted(async () => {
-   if (hasRole(['admin', 'manager'])) {
-    await fetchVehicleOwners()
-    await fetchDrivers()}
   await fetchVehicles()
+  await fetchVehicleOwners()
+  await fetchDrivers()
 })
 
 </script>
