@@ -10,29 +10,33 @@
 
       <!-- Stats Grid -->
       <div class="stats-grid">
-        <router-link to="/vehicles" class="stat-card vehicles">
+        <router-link to="/vehicles" class="stat-card vehicles" title="View all vehicles">
           <h3 class="stat-title">🚗 Total Vehicles</h3>
           <p class="stat-value">{{ stats.vehicles ?? 0 }}</p>
         </router-link>
 
-        <router-link to="/drivers" class="stat-card drivers">
-          <h3 class="stat-title">👨‍✈️ Total Drivers</h3>
+        <router-link to="/drivers" class="stat-card drivers" title="View all drivers">
+          <h3 class="stat-title">🧑‍✈️ Total Drivers</h3>
           <p class="stat-value">{{ stats.drivers ?? 0 }}</p>
         </router-link>
 
-        <router-link to="/expenses" class="stat-card expenses">
-          <h3 class="stat-title">💸 Expenses</h3>
+        <router-link to="/expenses" class="stat-card expenses" title="View all expenses">
+          <h3 class="stat-title">💰 Total Expenses</h3>
           <p class="stat-value">₦{{ stats.expenses ?? 0 }}</p>
         </router-link>
 
-        <router-link to="/maintenance" class="stat-card maintenance">
-          <h3 class="stat-title">🚲 Maintenance Tasks</h3>
+        <router-link to="/maintenance" class="stat-card maintenance" title="View maintenance tasks">
+          <h3 class="stat-title">🔧 Maintenance Tasks</h3>
           <p class="stat-value">
             {{
               (stats.maintenances?.pending ?? 0) +
               (stats.maintenances?.in_progress ?? 0)
             }}
           </p>
+          <small class="text-xs text-gray-700 block mt-1">
+            {{ stats.maintenances?.pending ?? 0 }} pending /
+            {{ stats.maintenances?.in_progress ?? 0 }} in progress
+          </small>
         </router-link>
       </div>
 
@@ -40,17 +44,27 @@
         Stats refresh every 60 seconds.
       </p>
 
-      <!-- Trends Chart -->
+      <!-- Charts -->
       <div class="chart-wrapper">
         <TrendsChart />
       </div>
-            <div class="chart-wrapper">
+
+      <div class="chart-wrapper">
         <StatsChart :stats="stats" />
       </div>
+
+      <!-- Recent Activity Section -->
+      <div class="chart-wrapper">
+        <h3 class="text-lg font-semibold mb-2">📋 Recent Activity</h3>
+        <RecentActivity />
+      </div>
+    </div>
+
+    <div v-if="loading" class="text-center mt-6 text-sm text-gray-500">
+      ⏳ Loading stats...
     </div>
   </div>
 </template>
-
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
@@ -61,27 +75,20 @@ import StatsChart from '@/components/StatsChart.vue'
 import RecentActivity from '@/components/RecentActivity.vue'
 
 const auth = useAuthStore()
-
-const stats = ref({
-  vehicles: 0,
-  drivers: 0,
-  expenses: 0,
-  maintenances: 0,
-})
+const stats = ref({})
+const loading = ref(false)
 
 let intervalId = null
 
 const fetchStats = async () => {
+  loading.value = true
   try {
     const res = await axios.get('/dashboard/stats')
     stats.value = res.data
   } catch (error) {
     console.error('❌ Error loading dashboard stats:', error)
-    if (error.response && error.response.status === 401) {
-      console.warn('⚠️ Unauthorized access. Token may be missing or expired.')
-    } else if (error.response && error.response.status === 500) {
-      console.warn('⚠️ Server error while fetching stats.')
-    }
+  } finally {
+    loading.value = false
   }
 }
 
@@ -99,57 +106,51 @@ onBeforeUnmount(() => {
   }
 })
 </script>
+
 <style scoped>
+/* Existing styles maintained */
 .dashboard-container {
-  max-width: 1120px; /* max-w-7xl */
+  max-width: 1120px;
   margin: 0 auto;
   padding: 1rem;
 }
-
 @media (min-width: 640px) {
   .dashboard-container {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
 }
-
 @media (min-width: 1024px) {
   .dashboard-container {
     padding-left: 2rem;
     padding-right: 2rem;
   }
 }
-
 .dashboard-heading {
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
-
 .dashboard-subtitle {
   font-size: 0.875rem;
-  color: #6b7280; /* gray-500 */
+  color: #6b7280;
   margin-bottom: 1.5rem;
 }
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
   gap: 1.5rem;
 }
-
 @media (min-width: 640px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
 @media (min-width: 1024px) {
   .stats-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
-
 .stat-card {
   padding: 1rem;
   border-radius: 1rem;
@@ -158,12 +159,10 @@ onBeforeUnmount(() => {
   text-decoration: none;
   color: inherit;
 }
-
 .stat-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-4px);
 }
-
 .stat-title {
   font-size: 0.875rem;
   font-weight: 500;
@@ -172,35 +171,27 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
   margin-bottom: 0.25rem;
 }
-
 .stat-value {
   font-size: 1.5rem;
   font-weight: bold;
 }
-
-/* Gradient backgrounds */
 .stat-card.vehicles {
-  background: linear-gradient(to bottom right, #dbeafe, #bfdbfe); /* blue-100 to blue-200 */
+  background: linear-gradient(to bottom right, #dbeafe, #bfdbfe);
 }
-
 .stat-card.drivers {
-  background: linear-gradient(to bottom right, #d1fae5, #a7f3d0); /* green-100 to green-200 */
+  background: linear-gradient(to bottom right, #d1fae5, #a7f3d0);
 }
-
 .stat-card.expenses {
-  background: linear-gradient(to bottom right, #fef9c3, #fef08a); /* yellow-100 to yellow-200 */
+  background: linear-gradient(to bottom right, #fef9c3, #fef08a);
 }
-
 .stat-card.maintenance {
-  background: linear-gradient(to bottom right, #fecaca, #fca5a5); /* red-100 to red-200 */
+  background: linear-gradient(to bottom right, #fecaca, #fca5a5);
 }
-
 .refresh-note {
   font-size: 0.75rem;
-  color: #9ca3af; /* gray-400 */
+  color: #9ca3af;
   margin-top: 0.5rem;
 }
-
 .chart-wrapper {
   margin-top: 2.5rem;
 }

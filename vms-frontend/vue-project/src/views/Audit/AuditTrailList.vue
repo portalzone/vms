@@ -5,30 +5,24 @@
     <!-- Search -->
     <div class="mb-4">
 <div class="flex flex-wrap gap-3 items-center mb-4">
-    <input
-  v-model="search"
-  @input="fetchLogs"
-  type="text"
-  placeholder="Search by log name or description"
-  class="audit-search-input"
-/>
+  <input v-model="search" @input="fetchLogs" type="text" placeholder="Search..." class="audit-search-input" />
+
   <select v-model="selectedModule" class="border px-3 py-2 rounded">
     <option value="all">All Modules</option>
-    <option v-for="name in moduleOptions" :key="name" :value="name">
-      {{ name }}
-    </option>
+    <option v-for="name in moduleOptions" :key="name" :value="name">{{ name }}</option>
   </select>
 
   <select v-model="selectedTimeRange" class="border px-3 py-2 rounded">
     <option value="all">All Time</option>
     <option value="24h">Last 24 Hours</option>
-    <option value="7d">Last 7 Days</option>
-    <option value="30d">Last 30 Days</option>
-    <option value="2m">Last 2 Months</option>
-    <option value="3m">Last 3 Months</option>
-    <option value="6m">Last 6 Months</option>
-    <option value="1y">This Year</option>
-    <option value="custom">Custom Range</option>
+    ...
+  </select>
+
+  <select v-model="perPage" class="border px-3 py-2 rounded">
+    <option value="10">10 per page</option>
+    <option value="25">25 per page</option>
+    <option value="50">50 per page</option>
+    <option value="100">100 per page</option>
   </select>
 
   <div v-if="selectedTimeRange === 'custom'" class="flex gap-2">
@@ -141,6 +135,7 @@ import dayjs from 'dayjs'
 
 const logs = ref({ data: [] })
 const page = ref(1)
+const perPage = ref(10) // Default number per page
 const search = ref('')
 const selectedModule = ref('all')
 const selectedTimeRange = ref('all')
@@ -154,6 +149,7 @@ const fetchLogs = async () => {
     const { data } = await axios.get('/audit-trail', {
       params: {
         page: page.value,
+        per_page: perPage.value, // Add this line
         search: search.value,
         log_name: selectedModule.value,
         time_range: selectedTimeRange.value,
@@ -164,13 +160,13 @@ const fetchLogs = async () => {
 
     logs.value = data
 
-    // Extract module options dynamically from logs
     const modules = [...new Set(data.data.map(log => log.log_name))].filter(Boolean)
     moduleOptions.value = Array.from(new Set([...moduleOptions.value, ...modules]))
   } catch (error) {
     console.error('Failed to fetch logs:', error)
   }
 }
+
 
 const formatDate = (date) => {
   return date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—'
@@ -215,4 +211,10 @@ watch([search, selectedModule, selectedTimeRange, startDate, endDate], () => {
 })
 
 watch(page, fetchLogs)
+
+watch(perPage, () => {
+  page.value = 1 // Reset to first page
+  fetchLogs()
+})
+
 </script>

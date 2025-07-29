@@ -15,7 +15,7 @@ import axios from '@/axios'
 
 import AdminDashboard from './AdminDashboard.vue'
 import DriverDashboard from './DriverDashboard.vue'
-// import VehicleOwnerDashboard from './VehicleOwnerDashboard.vue'
+import VehicleOwnerDashboard from './VehicleOwnerDashboard.vue'
 // import GateSecurityDashboard from './GateSecurityDashboard.vue'
 import UserDashboard from './UserDashboard.vue'
 

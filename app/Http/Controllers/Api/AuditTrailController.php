@@ -9,38 +9,40 @@ use Illuminate\Support\Carbon;
 
 class AuditTrailController extends Controller
 {
-    public function index(Request $request)
-    {
-        $this->authorizeAccess('view');
+public function index(Request $request)
+{
+    $this->authorizeAccess('view');
 
-        $query = Activity::with('causer')->latest();
+    $query = Activity::with('causer')->latest();
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('log_name', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('log_name') && $request->log_name !== 'all') {
-            $query->where('log_name', $request->log_name);
-        }
-
-        if ($request->filled('time_range')) {
-            $now = now();
-
-            match ($request->time_range) {
-                '24h' => $query->where('created_at', '>=', $now->subDay()),
-                '7d'  => $query->where('created_at', '>=', $now->subDays(7)),
-                '30d' => $query->where('created_at', '>=', $now->subDays(30)),
-                'custom' => $this->applyCustomDateRange($query, $request),
-                default => null,
-            };
-        }
-
-        return response()->json($query->paginate(10));
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+              ->orWhere('log_name', 'like', "%{$search}%");
+        });
     }
+
+    if ($request->filled('log_name') && $request->log_name !== 'all') {
+        $query->where('log_name', $request->log_name);
+    }
+
+    if ($request->filled('time_range')) {
+        $now = now();
+
+        match ($request->time_range) {
+            '24h' => $query->where('created_at', '>=', $now->subDay()),
+            '7d'  => $query->where('created_at', '>=', $now->subDays(7)),
+            '30d' => $query->where('created_at', '>=', $now->subDays(30)),
+            'custom' => $this->applyCustomDateRange($query, $request),
+            default => null,
+        };
+    }
+
+    $perPage = $request->integer('per_page', 10);
+
+    return response()->json($query->paginate($perPage));
+}
 
     protected function applyCustomDateRange($query, Request $request): void
     {

@@ -89,6 +89,13 @@ public function maintenanceRecords()
     return $this->hasMany(\App\Models\Maintenance::class);
 }
 
+// vehicle owner
+
+public function owner()
+{
+    return $this->belongsTo(User::class, 'owner_id');
+}
+
 
     
     
