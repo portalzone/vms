@@ -1,0 +1,168 @@
+<template>
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">
+      {{ isEdit ? 'Edit Income' : 'Add Income' }}
+    </h2>
+
+    <form @submit.prevent="submitForm">
+      <!-- Trip Selection -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Trip (optional)</label>
+        <select v-model="form.trip_id" class="w-full border rounded px-3 py-2">
+          <option value="">-- Select Trip --</option>
+          <option v-for="trip in trips" :key="trip.id" :value="trip.id">
+            {{ trip.start_location }} ➝ {{ trip.end_location }} ({{ trip.status }})
+          </option>
+        </select>
+        <p v-if="errors.trip_id" class="text-red-600 text-sm">{{ errors.trip_id[0] }}</p>
+      </div>
+
+      <!-- Vehicle -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Vehicle</label>
+        <select v-model="form.vehicle_id" class="w-full border rounded px-3 py-2">
+          <option value="">-- Select Vehicle --</option>
+          <option v-for="vehicle in vehicles" :key="vehicle.id" :value="vehicle.id">
+            {{ vehicle.plate_number }}
+          </option>
+        </select>
+        <p v-if="errors.vehicle_id" class="text-red-600 text-sm">{{ errors.vehicle_id[0] }}</p>
+      </div>
+
+      <!-- Driver -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Driver</label>
+        <select v-model="form.driver_id" class="w-full border rounded px-3 py-2">
+          <option value="">-- Select Driver --</option>
+          <option v-for="driver in drivers" :key="driver.id" :value="driver.id">
+            {{ driver.user?.name }} ({{ driver.license_number }})
+          </option>
+        </select>
+        <p v-if="errors.driver_id" class="text-red-600 text-sm">{{ errors.driver_id[0] }}</p>
+      </div>
+
+      <!-- Source -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Source</label>
+        <input v-model="form.source" type="text" class="w-full border rounded px-3 py-2" />
+        <p v-if="errors.source" class="text-red-600 text-sm">{{ errors.source[0] }}</p>
+      </div>
+
+      <!-- Amount -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Amount</label>
+        <input v-model="form.amount" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+        <p v-if="errors.amount" class="text-red-600 text-sm">{{ errors.amount[0] }}</p>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Description</label>
+        <textarea v-model="form.description" rows="3" class="w-full border rounded px-3 py-2" />
+        <p v-if="errors.description" class="text-red-600 text-sm">{{ errors.description[0] }}</p>
+      </div>
+
+      <!-- Date -->
+      <div class="mb-4">
+        <label class="block font-medium mb-1">Date</label>
+        <input v-model="form.date" type="date" class="w-full border rounded px-3 py-2" />
+        <p v-if="errors.date" class="text-red-600 text-sm">{{ errors.date[0] }}</p>
+      </div>
+
+      <!-- Submit -->
+      <div class="mt-6">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          {{ isEdit ? 'Update' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from '@/axios'
+
+const route = useRoute()
+const router = useRouter()
+
+const isEdit = computed(() => !!route.params.id)
+const form = ref({
+  vehicle_id: '',
+  driver_id: '',
+  trip_id: '',
+  source: '',
+  amount: '',
+  description: '',
+  date: '',
+})
+const errors = ref({})
+
+const vehicles = ref([])
+const drivers = ref([])
+const trips = ref([])
+
+const fetchDropdowns = async () => {
+  try {
+    const [vehicleRes, driverRes, tripRes] = await Promise.all([
+      axios.get('/vehicles'),
+      axios.get('/drivers'),
+      axios.get('/trips/all')
+    ]);
+
+    vehicles.value = vehicleRes.data;
+    drivers.value = driverRes.data;
+    trips.value = tripRes.data;
+
+  } catch (error) {
+    console.error('Failed to fetch dropdown data:', error);
+  }
+};
+
+const fetchIncome = async () => {
+  if (!route.params.id) return; // guard clause
+
+  try {
+    const { data } = await axios.get(`/incomes/${route.params.id}`);
+    form.value = {
+      vehicle_id: data.vehicle_id,
+      driver_id: data.driver_id,
+      trip_id: data.trip_id,
+      source: data.source,
+      amount: data.amount,
+      description: data.description,
+      date: data.date,
+    };
+  } catch (err) {
+    console.error('Failed to fetch income:', err);
+  }
+};
+
+const submitForm = async () => {
+  errors.value = {}
+
+  try {
+    if (isEdit.value) {
+      await axios.put(`/incomes/${route.params.id}`, form.value)
+    } else {
+      await axios.post('/incomes', form.value)
+    }
+    router.push('/incomes')
+  } catch (err) {
+    if (err.response?.data?.errors) {
+      errors.value = err.response.data.errors
+    }
+  }
+}
+
+onMounted(async () => {
+  await fetchDropdowns();
+
+  // Only try to fetch income if we are editing and the id is valid
+  if (isEdit.value && route.params.id) {
+    await fetchIncome();
+  }
+});
+
+</script>

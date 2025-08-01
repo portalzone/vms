@@ -20,11 +20,36 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class UserController extends Controller
 {
     // ✅ Get all users with roles
-    public function index()
-    {
-        $this->authorizeAccess('view');
-        return User::with('roles:id,name')->select('id', 'name', 'email')->get();
+public function index(Request $request)
+{
+    $this->authorizeAccess('view');
+
+    $query = User::with('roles:id,name')
+        ->select('id', 'name', 'email');
+
+    // Filter by role
+    if ($request->has('role') && $request->role !== '') {
+        $query->whereHas('roles', function ($q) use ($request) {
+            $q->where('name', $request->role);
+        });
     }
+
+    // Sort: fallback to created_at desc if invalid
+    $allowedSorts = ['name', 'email', 'created_at'];
+    $sortBy = in_array($request->get('sort_by'), $allowedSorts) ? $request->get('sort_by') : 'created_at';
+    $sortDir = $request->get('sort_dir', 'desc') === 'asc' ? 'asc' : 'desc';
+    $query->orderBy($sortBy, $sortDir);
+
+    // Pagination size: 5, 10, 25, 50, 100 (default 10)
+    $perPage = in_array((int)$request->get('per_page'), [5, 10, 25, 50, 100])
+        ? (int)$request->get('per_page')
+        : 10;
+
+    return response()->json($query->paginate($perPage));
+
+}
+
+
 
     // vehicle owner
 // ✅ Return users with the 'vehicle_owner' role (for dropdowns, etc.)

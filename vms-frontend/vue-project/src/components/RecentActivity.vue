@@ -23,6 +23,9 @@
         <option value="Driver Updated">Driver Updated</option>
         <option value="Expense Created">Expense Created</option>
         <option value="Expense Updated">Expense Updated</option>
+        <option value="Income Created">Income Created</option>
+        <option value="Income Updated">Income Updated</option>
+
       </select>
 
       <input v-model="fromDate" type="date" class="border px-3 py-2 rounded" />
@@ -45,23 +48,26 @@
         <span
           class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white"
           :class="{
-            'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
-            'bg-brown-500': activity.type === 'Driver Updated' || activity.type === 'Vehicle Updated',
-            'bg-red-500': activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated',
-            'bg-yellow-500': activity.type === 'Expense Created' || activity.type === 'Expense Updated',
-            'bg-gray-500': activity.type === 'Trip',
-            'bg-green-500': activity.type === 'Driver Registered'
-          }"
+  'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
+  'bg-brown-500': activity.type === 'Driver Updated' || activity.type === 'Vehicle Updated',
+  'bg-red-500': activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated',
+  'bg-yellow-500': activity.type === 'Expense Created' || activity.type === 'Expense Updated',
+  'bg-gray-500': activity.type === 'Trip',
+  'bg-green-500': activity.type === 'Driver Registered',
+  'bg-teal-500': activity.type === 'Income Created' || activity.type === 'Income Updated',
+}"
+
         >
-          <template v-if="activity.type === 'Check-In'">🚗</template>
-          <template v-else-if="activity.type === 'Maintenance'">🛠️</template>
-          <template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
-          <template v-else-if="activity.type === 'Vehicle Updated'">🛠️</template>
-          <template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
-          <template v-else-if="activity.type === 'Driver Updated'">👤</template>
-          <template v-else-if="activity.type === 'Trip'">🧭</template>
-          <template v-else-if="activity.type === 'Expense'">💸</template>
-          <template v-else>📌</template>
+<template v-if="activity.type === 'Check-In'">🚗</template>
+<template v-else-if="activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated'">🛠️</template>
+<template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
+<template v-else-if="activity.type === 'Vehicle Updated'">🛠️</template>
+<template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
+<template v-else-if="activity.type === 'Driver Updated'">👤</template>
+<template v-else-if="activity.type === 'Trip'">🧭</template>
+<template v-else-if="activity.type === 'Expense Created' || activity.type === 'Expense Updated'">💸</template>
+<template v-else-if="activity.type === 'Income Created' || activity.type === 'Income Updated'">💰</template> <!-- ✅ NEW -->
+<template v-else>📌</template>
         </span>
 
         <!-- Details -->

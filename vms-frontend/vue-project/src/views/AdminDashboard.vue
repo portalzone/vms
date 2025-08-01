@@ -28,15 +28,42 @@
         <router-link to="/maintenance" class="stat-card maintenance" title="View maintenance tasks">
           <h3 class="stat-title">🔧 Maintenance Tasks</h3>
           <p class="stat-value">
-            {{
-              (stats.maintenances?.pending ?? 0) +
-              (stats.maintenances?.in_progress ?? 0)
-            }}
+            {{ (stats.maintenances?.pending ?? 0) + (stats.maintenances?.in_progress ?? 0) }}
           </p>
           <small class="text-xs text-gray-700 block mt-1">
             {{ stats.maintenances?.pending ?? 0 }} pending /
             {{ stats.maintenances?.in_progress ?? 0 }} in progress
           </small>
+        </router-link>
+
+        <router-link to="/vehicle-within"  class="stat-card vehicle_inside_premises">
+          <h3 class="stat-title">🏠 Vehicles Inside Premises</h3>
+          <p class="stat-value">{{ stats.vehicles_inside ?? 0 }}</p>
+        </router-link>
+
+        <div class="stat-card checkin_toady">
+          <h3 class="stat-title">📥 Check-ins Today</h3>
+          <p class="stat-value">{{ stats.check_ins_today ?? 0 }}</p>
+        </div>
+
+        <div class="stat-card checkout_today">
+          <h3 class="stat-title">📤 Check-outs Today</h3>
+          <p class="stat-value">{{ stats.check_outs_today ?? 0 }}</p>
+        </div>
+
+        <div class="stat-card active_trips">
+          <h3 class="stat-title">🚚 Active Trips</h3>
+          <p class="stat-value">{{ stats.active_trips ?? 0 }}</p>
+        </div>
+
+        <router-link to="/trips" class="stat-card active_trips">
+          <h3 class="stat-title">🚚 Total Trips</h3>
+          <p class="stat-value">{{ stats.trips ?? 0 }}</p>
+        </router-link>
+
+        <router-link to="/checkins"  class="stat-card total_checkin">
+          <h3 class="stat-title">✅ Total Check-ins</h3>
+          <p class="stat-value">{{ stats.total_check_ins ?? 0 }}</p>
         </router-link>
       </div>
 
@@ -53,7 +80,7 @@
         <StatsChart :stats="stats" />
       </div>
 
-      <!-- Recent Activity Section -->
+      <!-- Recent Activity -->
       <div class="chart-wrapper">
         <h3 class="text-lg font-semibold mb-2">📋 Recent Activity</h3>
         <RecentActivity />
@@ -107,6 +134,8 @@ onBeforeUnmount(() => {
 })
 </script>
 
+
+
 <style scoped>
 /* Existing styles maintained */
 .dashboard-container {
@@ -141,16 +170,22 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(1, 1fr);
   gap: 1.5rem;
 }
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 @media (min-width: 1024px) {
   .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 1280px) {
+  .stats-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
 .stat-card {
   padding: 1rem;
   border-radius: 1rem;
@@ -187,6 +222,24 @@ onBeforeUnmount(() => {
 .stat-card.maintenance {
   background: linear-gradient(to bottom right, #fecaca, #fca5a5);
 }
+
+/* Your original styles are preserved */
+
+.stat-card.vehicle_inside_premises {
+  background: linear-gradient(to bottom right, #e0e7ff, #c7d2fe);
+}
+.stat-card.checkin_toady {
+  background: linear-gradient(to bottom right, #fef3c7, #fde68a);
+}
+.stat-card.checkout_today {
+  background: linear-gradient(to bottom right, #fecaca, #fca5a5);
+}
+.stat-card.active_trips {
+  background: linear-gradient(to bottom right, #d1fae5, #a7f3d0);
+}
+.stat-card.total_checkin {
+  background: linear-gradient(to bottom right, #ede9fe, #ddd6fe);
+}
 .refresh-note {
   font-size: 0.75rem;
   color: #9ca3af;
@@ -195,4 +248,7 @@ onBeforeUnmount(() => {
 .chart-wrapper {
   margin-top: 2.5rem;
 }
+
+
+
 </style>

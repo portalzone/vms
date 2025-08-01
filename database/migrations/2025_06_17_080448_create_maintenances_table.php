@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->string('description');
             $table->string('status')->default('Pending'); // ✅ Add status column here
-            $table->decimal('cost', 10, 2);
+            $table->decimal('cost', 10, 2)->nullable(); // allow null
             $table->date('date');
             $table->timestamps();
         });

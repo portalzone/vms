@@ -14,7 +14,9 @@
         <RouterLink to="/" exact-active-class="active" @click="closeMenu">Home</RouterLink>
         <RouterLink to="/dashboard" exact-active-class="active" @click="closeMenu">Dashboard</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner'])" to="/vehicles" exact-active-class="active" @click="closeMenu">Vehicles</RouterLink>
+        <RouterLink v-if="hasRole(['admin', 'manager', 'gate_security'])" to="/vehicle-within" exact-active-class="active" @click="closeMenu">Vehicles Within</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner'])" to="/drivers" exact-active-class="active" @click="closeMenu">Drivers</RouterLink>
+        <RouterLink v-if="hasRole(['admin', 'manager'])" to="/incomes" exact-active-class="active" @click="closeMenu">Income</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/recent-activity" exact-active-class="active" @click="closeMenu">Recent Activity</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/audit-trail" exact-active-class="active" @click="closeMenu">Audit Trail</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'gate_security'])" to="/checkins" exact-active-class="active" @click="closeMenu">Check-Ins</RouterLink>
@@ -68,6 +70,8 @@ function closeMenu() {
 function hasRole(allowedRoles) {
   return allowedRoles.includes(props.user?.role)
 }
+
+
 </script>
 
 <style scoped>

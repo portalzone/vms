@@ -18,25 +18,40 @@ public function index()
 {
     $user = auth()->user();
 
-    // Reject unauthorized users first
-    if (!$user || !$user->hasAnyRole(['admin', 'manager', 'vehicle_owner'])) {
-        \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
+    if (!$user || !$user->hasAnyRole(['admin', 'manager', 'vehicle_owner', 'driver'])) {
+        \Log::warning("Unauthorized vehicle index access attempt by user ID {$user?->id}");
         return response()->json(['error' => 'Unauthorized.'], 403);
     }
 
-    // Vehicle owner: only see their own vehicles
+    // Vehicle Owner: only their vehicles
     if ($user->hasRole('vehicle_owner')) {
         $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])
             ->where('owner_id', $user->id)
             ->where('ownership_type', 'individual')
             ->get();
-    } else {
-        // Admins and Managers: see all vehicles
+    }
+
+    // Driver: only their assigned vehicle
+    elseif ($user->hasRole('driver')) {
+        $driver = \App\Models\Driver::where('user_id', $user->id)->first();
+
+        if (!$driver || !$driver->vehicle_id) {
+            return response()->json(['message' => 'No vehicle assigned.'], 200);
+        }
+
+        $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])
+            ->where('id', $driver->vehicle_id)
+            ->get();
+    }
+
+    // Admins and Managers: all vehicles
+    else {
         $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])->get();
     }
 
     return response()->json($vehicles);
 }
+
 
 public function vehiclesWithinPremises()
 {
@@ -249,7 +264,7 @@ public function availableForDrivers(Request $request)
         $user = auth()->user();
 
         $rolePermissions = [
-            'view'   => ['admin', 'manager', 'vehicle_owner', 'gate_security'],
+            'view'   => ['admin', 'manager', 'vehicle_owner', 'gate_security', 'driver'],
             'create' => ['admin', 'manager', 'vehicle_owner'],
             'update' => ['admin', 'manager', 'vehicle_owner'],
             'delete' => ['admin'],

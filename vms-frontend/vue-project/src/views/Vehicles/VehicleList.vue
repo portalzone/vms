@@ -180,7 +180,7 @@ const search = ref('')
 const searchId = ref('')
 const sortBy = ref('newest')
 const page = ref(1)
-const perPage = 20
+const perPage = 15
 
 const selectedOwnership = ref('')
 const selectedOwnerId = ref('')

@@ -7,9 +7,14 @@
         type="text"
         placeholder="Search by vehicle, description, or status..."
         class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
-      />         <router-link to="/maintenance/new" class="btn-primary">
-          ➕ Add New Maintenance
-        </router-link>
+      />         <router-link
+  v-if="['admin', 'manager', 'vehicle_owner', 'driver'].includes(auth.user?.role)"
+  to="/maintenance/new"
+  class="btn-primary"
+>
+  ➕ Add New Maintenance
+</router-link>
+
 
       <div class="flex gap-2 items-center">
         <select

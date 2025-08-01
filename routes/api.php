@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\GateSecurityController;
+use App\Http\Controllers\Api\IncomeController;
 
 // 🔓 Public Routes (No Auth Required)
 Route::post('/login', [AuthController::class, 'login']);
@@ -71,7 +72,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('maintenances', MaintenanceController::class);
     Route::apiResource('expenses', ExpenseController::class);
 
+    
+    // income
+    Route::apiResource('incomes', IncomeController::class);
+
     // ✅ Trip Logs
+    Route::get('/trips/all', [TripController::class, 'all']);
     Route::apiResource('trips', TripController::class);
 
     // ✅ Audit Trail Logs

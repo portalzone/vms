@@ -54,6 +54,19 @@
         <input v-model="trip.end_time" type="datetime-local" class="w-full border rounded px-3 py-2" />
         <div v-if="errors.end_time" class="text-red-600 text-sm">{{ errors.end_time[0] }}</div>
       </div>
+
+      <!-- Amount -->
+<div class="mb-4">
+  <label class="block font-medium mb-1">Amount</label>
+  <input
+    v-model="trip.amount"
+    type="number"
+    step="0.01"
+    class="w-full border rounded px-3 py-2"
+  />
+  <div v-if="errors.amount" class="text-red-600 text-sm">{{ errors.amount[0] }}</div>
+</div>
+
       <!-- Trip Status (auto-calculated) -->
 <div class="mb-4">
   <label class="block font-medium mb-1">Trip Status</label>
@@ -96,7 +109,8 @@ const trip = ref({
   start_location: '',
   end_location: '',
   start_time: '',
-  end_time: ''
+  end_time: '',
+  amount: ''
 })
 
 // Automatically compute trip status based on presence of end_time
@@ -174,10 +188,11 @@ const fetchTrip = async () => {
   try {
     const res = await axios.get(`/trips/${route.params.id}`)
     trip.value = {
-      ...res.data,
-      start_time: formatForInput(res.data.start_time),
-      end_time: formatForInput(res.data.end_time)
-    }
+  ...res.data,
+  start_time: formatForInput(res.data.start_time),
+  end_time: formatForInput(res.data.end_time),
+  amount: res.data.amount || ''
+}
     isEdit.value = true
   } catch (err) {
     console.error('Error fetching trip:', err)

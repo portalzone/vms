@@ -8,6 +8,8 @@ import Login from '../views/Login.vue'
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
+import NotAuthorized from '@/views/NotAuthorized.vue'
+
 // Lazy-loaded views
 const Register = () => import('../views/Register.vue')
 const About = () => import('../views/About.vue')
@@ -21,6 +23,11 @@ const DriverFormPage = () => import('../views/Drivers/DriverFormPage.vue')
 // Vehicle views
 const VehiclesPage = () => import('../views/Vehicles/VehiclesPage.vue')
 const VehicleFormPage = () => import('../views/Vehicles/VehicleFormPage.vue')
+
+// Income views
+const IncomeList = () => import('../views/Income/IncomeList.vue')
+const IncomeFormPage = () => import('../views/Income/IncomeFormPage.vue')
+
 
 // Check-in views
 const CheckInsPage = () => import('../views/CheckIns/CheckInsPage.vue')
@@ -81,8 +88,30 @@ const routes = [
   path: '/audit-trail',
   name: 'AuditTrail',
   component: () => import('@/views/Audit/AuditTrailList.vue'),
-  meta: { requiresAuth: true }
+  meta: { requiresAuth: true, roles: ['admin', 'manager']  }
 }, 
+// income
+{
+    path: '/incomes',
+    name: 'Incomes',
+    component: IncomeList,
+    meta: { requiresAuth: true, roles: ['admin', 'manager']  }
+  },
+  {
+    path: '/incomes/create',
+    name: 'IncomeCreate',
+    component: IncomeFormPage,
+    meta: { requiresAuth: true, roles: ['admin', 'manager']  }
+
+  },
+  {
+    path: '/incomes/:id/edit',
+    name: 'IncomeEdit',
+    component: IncomeFormPage,
+    props: true,
+        meta: { requiresAuth: true, roles: ['admin', 'manager']  }
+
+  },
 
 // user profile
 {
@@ -97,25 +126,25 @@ const routes = [
     path: '/drivers',
     name: 'Drivers',
     component: DriversPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner'] },
   },
   {
     path: '/drivers/new',
     name: 'DriverCreate',
     component: DriverFormPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager']  },
   },
   {
     path: '/drivers/:id/edit',
     name: 'DriverEdit',
     component: DriverFormPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager']  },
   },
   {
   path: '/drivers/:id',
   name: 'DriverProfile',
   component: () => import('@/views/Drivers/DriverProfilePage.vue'),
-  meta: { requiresAuth: true },
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner']  },
 },
 
   // Vehicles
@@ -123,39 +152,49 @@ const routes = [
     path: '/vehicles',
     name: 'Vehicles',
     component: VehiclesPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner']  },
   },
   {
     path: '/vehicles/new',
     name: 'VehicleCreate',
     component: VehicleFormPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner']  },
   },
   {
     path: '/vehicles/:id/edit',
     name: 'VehicleEdit',
     component: VehicleFormPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner']  },
   },
+  {
+        path: '/vehicle-within',
+        name: 'VehicleWithin',
+        component: () => import('@/views/Vehicles/VehicleWithin.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: ['gate_security', 'admin', 'manager'],
+        },
+
+      },
 
   // Check-Ins
   {
     path: '/checkins',
     name: 'CheckIns',
     component: CheckInsPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'gate_security']  },
   },
   {
     path: '/checkins/new',
     name: 'CheckInCreate',
     component: CheckInFormPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'gate_security']  },
   },
   {
     path: '/checkins/:id/edit',
     name: 'CheckInEdit',
     component: CheckInFormPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'gate_security']  },
   },
 
   // Maintenance
@@ -163,84 +202,96 @@ const routes = [
     path: '/maintenance',
     name: 'Maintenance',
     component: MaintenancePage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner', 'driver']  },
   },
   {
     path: '/maintenance/new',
     name: 'MaintenanceNew',
     component: MaintenanceFormPage,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'driver', 'vehicle_owner']  },
   },
   {
     path: '/maintenance/:id/edit',
     name: 'MaintenanceEdit',
     component: MaintenanceFormPage,
     props: true,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'driver']  },
   },
 // Expense 
  {
   path: '/expenses',
   name: 'Expenses',
   component: ExpensesPage,
-  meta: { requiresAuth: true },
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner', 'driver'] },
 },
 {
   path: '/expenses/new',
   name: 'ExpenseCreate',
   component: ExpenseFormPage,
-  meta: { requiresAuth: true },
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'driver']  },
 },
 {
   path: '/expenses/:id/edit',
   name: 'ExpenseEdit',
   component: ExpenseFormPage,
   props: true,
-  meta: { requiresAuth: true },
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'driver']  },
 },
 
 // User route
 
 {
   path: '/users',
-  component: () => import('@/views/Users/UsersPage.vue')
+  component: () => import('@/views/Users/UsersPage.vue'),
+  meta: { requiresAuth: true, roles: ['admin', 'manager'] }
 },
 {
   path: '/users/new',
-  component: () => import('@/views/Users/UserFormPage.vue')
+  component: () => import('@/views/Users/UserFormPage.vue'),
+  meta: { requiresAuth: true, roles: ['admin', 'manager'] }
 },
 {
   path: '/users/:id/edit',
-  component: () => import('@/views/Users/UserFormPage.vue')
+  component: () => import('@/views/Users/UserFormPage.vue'),
+  meta: { requiresAuth: true, roles: ['admin', 'manager'] }
 },
 
+
 // Trips
- {
-    path: '/trips',
-    name: 'Trips',
-    component: TripsPage,
-  },
-  {
-    path: '/trips/create',
-    name: 'TripCreate',
-    component: TripFormPage,
-  },
-  {
-    path: '/trips/:id/edit',
-    name: 'TripEdit',
-    component: TripFormPage,
-    props: true,
-  },
+{
+  path: '/trips',
+  name: 'Trips',
+  component: TripsPage,
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner', 'driver', 'gate_security']  }
+},
+{
+  path: '/trips/create',
+  name: 'TripCreate',
+  component: TripFormPage,
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'driver']  }
+},
+{
+  path: '/trips/:id/edit',
+  name: 'TripEdit',
+  component: TripFormPage,
+  props: true,
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'driver']  }
+},
 
 // recent activity
 {
     path: '/recent-activity',
     name: 'RecentActivity',
     component: RecentActivityPage,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['admin', 'manager']  }
   },
 
-
+//not authorized
+{
+    path: '/not-authorized',
+    name: 'NotAuthorized',
+    component: NotAuthorized
+  },
   // Fallback 404
   {
     path: '/:pathMatch(.*)*',
@@ -262,6 +313,7 @@ router.beforeEach(async (to, from, next) => {
       await auth.fetchUser()
     } catch {
       auth.logout()
+      return next('/login')
     }
   }
 
@@ -272,6 +324,11 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.guestOnly && auth.user) {
     return next('/dashboard')
   }
+
+  if (to.meta.roles && !to.meta.roles.includes(auth.user?.role)) {
+    return next({ name: 'NotAuthorized' })
+  }
+
 
   return next()
 })

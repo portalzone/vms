@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
+use App\Models\Income;
+
 
 class TripController extends Controller
 {
@@ -33,6 +35,12 @@ public function index(Request $request)
 
     return $query->orderBy('status')->latest()->paginate(10);
 }
+// ✅ Return all trips (for dropdowns etc)
+public function all()
+{
+    $trips = Trip::with(['vehicle', 'driver.user'])->latest()->get();
+    return response()->json($trips);
+}
 
 
     // ✅ Store a new trip
@@ -42,6 +50,7 @@ public function store(Request $request)
         'vehicle_id'     => ['required', Rule::exists('vehicles', 'id')],
         'start_location' => ['required', 'string'],
         'end_location'   => ['required', 'string'],
+        'amount' => ['nullable', 'numeric', 'min:0'],
         'start_time'     => ['required', 'date'],
         'end_time'       => ['nullable', 'date', 'after_or_equal:start_time'],
     ]);
@@ -60,13 +69,18 @@ public function store(Request $request)
         'vehicle_id'     => $validated['vehicle_id'],
         'start_location' => $validated['start_location'],
         'end_location'   => $validated['end_location'],
+        'amount'         => $validated['amount'] ?? null,
         'start_time'     => $startTime,
         'end_time'       => $endTime,
         'status'         => $endTime ? 'completed' : 'in_progress',
     ]);
 
-    return response()->json($trip->load(['driver.user', 'vehicle']), 201);
+$this->createIncomeForCompletedTrip($trip);
+return response()->json($trip->load(['driver.user', 'vehicle']), 201);
+
 }
+
+
 
 
 public function update(Request $request, Trip $trip)
@@ -75,6 +89,7 @@ public function update(Request $request, Trip $trip)
         'vehicle_id'     => ['required', Rule::exists('vehicles', 'id')],
         'start_location' => ['required', 'string'],
         'end_location'   => ['required', 'string'],
+        'amount' => ['nullable', 'numeric', 'min:0'],
         'start_time'     => ['required', 'date'],
         'end_time'       => ['nullable', 'date', 'after_or_equal:start_time'],
     ]);
@@ -93,13 +108,51 @@ public function update(Request $request, Trip $trip)
         'vehicle_id'     => $validated['vehicle_id'],
         'start_location' => $validated['start_location'],
         'end_location'   => $validated['end_location'],
+        'amount'         => $validated['amount'] ?? null,
         'start_time'     => $startTime,
         'end_time'       => $endTime,
         'status'         => $endTime ? 'completed' : 'in_progress',
     ]);
 
+    $this->createIncomeForCompletedTrip($trip);
+
+
     return response()->json($trip->load(['driver.user', 'vehicle']));
 }
+
+// create income for completed trip:
+private function createIncomeForCompletedTrip(Trip $trip)
+{
+    if ($trip->status !== 'completed') {
+        return;
+    }
+
+    $existingIncome = Income::where('trip_id', $trip->id)->first();
+
+    if ($existingIncome) {
+        // Update existing income
+        $existingIncome->update([
+            'amount'      => $trip->amount ?? 0,
+            'description' => "Auto-updated income for trip from {$trip->start_location} to {$trip->end_location}",
+            'vehicle_id'  => $trip->vehicle_id,
+            'driver_id'   => $trip->driver_id,
+            'date'        => now(), // or keep original date if preferred
+        ]);
+    } else {
+        // Create new income
+        Income::create([
+            'trip_id'     => $trip->id,
+            'vehicle_id'  => $trip->vehicle_id,
+            'driver_id'   => $trip->driver_id,
+            'source'      => 'Trip Completed',
+            'amount'      => $trip->amount ?? 0,
+            'description' => "Auto-generated income for trip from {$trip->start_location} to {$trip->end_location}",
+            'date'        => now(),
+        ]);
+    }
+}
+
+
 
 
     // ✅ Show a single trip

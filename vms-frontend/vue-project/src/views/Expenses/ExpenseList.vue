@@ -20,7 +20,7 @@
           <option value="30">Last 30 Days</option>
         </select>
 
-        <router-link to="/expenses/new" class="btn-primary">
+        <router-link v-if="['admin', 'manager'].includes(auth.user?.role)"  to="/expenses/new" class="btn-primary">
           ➕ Add Expense
         </router-link>
       </div>

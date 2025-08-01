@@ -17,6 +17,8 @@ class DashboardController extends Controller
 {
     public function stats()
     {
+        $today = Carbon::today();
+
         return response()->json([
             'vehicles' => Vehicle::count(),
             'drivers' => Driver::count(),
@@ -25,8 +27,13 @@ class DashboardController extends Controller
             'maintenances' => [
                 'pending'     => Maintenance::where('status', 'pending')->count(),
                 'in_progress' => Maintenance::where('status', 'in_progress')->count(),
-                'completed'   => Maintenance::where('status', 'Completed')->count(),
+                'completed'   => Maintenance::where('status', 'completed')->count(),
             ],
+            'vehicles_inside' => CheckInOut::whereNull('checked_out_at')->count(),
+            'check_ins_today' => CheckInOut::whereDate('checked_in_at', $today)->count(),
+            'check_outs_today' => CheckInOut::whereDate('checked_out_at', $today)->count(),
+            'active_trips' => Trip::whereNull('end_time')->count(),
+            'total_check_ins' => CheckInOut::count(),
         ]);
     }
 
@@ -158,6 +165,43 @@ $drivers = Driver::with(['user', 'vehicle', 'creator', 'editor'])->get()->flatMa
     return $activities;
 });
 
+$incomes = \App\Models\Income::with(['trip', 'vehicle', 'driver.user'])->get()->flatMap(function ($income) {
+    $activities = [];
+
+    $vehicle = $income->vehicle;
+    $trip = $income->trip;
+    $driver = $income->driver?->user?->name ?? 'Unknown Driver';
+
+    $vehicleInfo = $vehicle
+        ? "{$vehicle->manufacturer} {$vehicle->model} (Plate: {$vehicle->plate_number})"
+        : "Unknown Vehicle";
+
+    $tripInfo = $trip
+        ? "Trip from {$trip->start_location} to {$trip->end_location}"
+        : "Unknown Trip";
+
+    $description = $income->description ?? 'No description';
+
+    $activities[] = [
+        'type' => 'Income Created',
+        'message' => "₦" . number_format($income->amount, 2) .
+                     " income recorded for {$vehicleInfo}, driven by {$driver}. " .
+                     "{$tripInfo}. Description: \"{$description}\".",
+        'time' => $income->created_at,
+    ];
+
+    if ($income->updated_at != $income->created_at) {
+        $activities[] = [
+            'type' => 'Income Updated',
+            'message' => "Income of ₦" . number_format($income->amount, 2) .
+                         " was updated for {$vehicleInfo}, trip: {$tripInfo}. Description: \"{$description}\".",
+            'time' => $income->updated_at,
+        ];
+    }
+
+    return $activities;
+});
+
 
 
 
@@ -226,6 +270,7 @@ $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
             ->merge($drivers)
             ->merge($expenses)
             ->merge($trips)
+            ->merge($incomes)
             ->when($type, fn($items) => $items->filter(fn($item) => $item['type'] === $type))
             ->when($search, fn($items) => $items->filter(fn($item) =>
                 str_contains(strtolower($item['message']), $search)
@@ -245,7 +290,7 @@ $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
         return response()->json([
             'data' => $paginated,
             'total' => $total,
-            'current_page' => (int)$page,
+            'current]_page' => (int)$page,
             'per_page' => (int)$perPage,
             'last_page' => ceil($total / $perPage),
         ]);

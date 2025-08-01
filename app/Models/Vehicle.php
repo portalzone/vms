@@ -43,6 +43,12 @@ protected $fillable = [
         return $this->hasOne(Driver::class);
     }
 
+    public function drivers()
+{
+    return $this->hasMany(Driver::class);
+}
+
+
 public function trips()
 {
     return $this->hasMany(Trip::class);

@@ -53,6 +53,7 @@
             <th class="p-2 border">Driver</th>
             <th class="p-2 border">Vehicle</th>
             <th class="p-2 border">From</th>
+            <th class="p-2 border">Amount</th>
             <th class="p-2 border">To</th>
             <th class="p-2 border">Duration</th>
             <th class="p-2 border">Start Time</th>
@@ -69,6 +70,7 @@
               {{ trip.vehicle?.model || 'N/A' }}
               ({{ trip.vehicle?.plate_number || 'N/A' }})
             </td>
+            <td class="p-2 border">{{ trip.amount || 'Not Updated' }}</td>
             <td class="p-2 border">{{ trip.start_location }}</td>
             <td class="p-2 border">{{ trip.end_location }}</td>
             <td class="p-2 border">{{ calculateDuration(trip.start_time, trip.end_time) }}</td>
