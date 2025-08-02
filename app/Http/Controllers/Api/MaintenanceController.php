@@ -49,7 +49,7 @@ public function store(Request $request)
         'date'        => 'required|date',
     ]);
 
-    $user = auth()->user();
+    $userId = auth()->id();
 
 if (in_array($validated['status'], ['Completed']) && $user->hasAnyRole(['driver', 'vehicle_owner'])) {
     return response()->json(['error' => 'You are not authorized to mark maintenance as completed.'], 403);
@@ -178,7 +178,7 @@ if (isset($validated['status']) && $validated['status'] === 'Completed' && auth(
         $map = [
             'view'   => ['admin', 'manager', 'vehicle_owner', 'driver'],
             'create' => ['admin', 'manager', 'vehicle_owner', 'driver'],
-            'update' => ['admin', 'manager'],
+            'update' => ['admin', 'manager', 'driver'],
             'delete' => ['admin'],
         ];
 

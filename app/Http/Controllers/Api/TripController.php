@@ -17,18 +17,30 @@ class TripController extends Controller
     // ✅ List trips (Admin/Manager can see all, Driver sees only theirs)
 public function index(Request $request)
 {
+            $this->authorizeAccess('view');
+    $user = Auth::user();
     $query = Trip::with(['vehicle', 'driver.user']);
 
-    if (Auth::user()->hasRole('Driver')) {
-        $driver = Driver::where('user_id', Auth::id())->first();
+    if ($user->hasRole('driver')) {
+        $driver = Driver::where('user_id', $user->id)->first();
         if ($driver) {
             $query->where('driver_id', $driver->id);
         } else {
             return response()->json([], 200);
         }
+    } elseif ($user->hasRole('vehicle_owner')) {
+        // Assuming vehicles have user_id pointing to owner
+        $query->whereHas('vehicle', function ($q) use ($user) {
+            $q->where('owner_id', $user->id);
+        });
+    } elseif ($user->hasRole('admin') || $user->hasRole('manager')) {
+        // No filter needed
+    } else {
+        // Default: deny access
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
 
-    // Optional: Filter or sort by status (e.g., ?status=in_progress)
+    // Optional: filter by status (e.g., ?status=completed)
     if ($request->has('status')) {
         $query->where('status', $request->status);
     }
@@ -38,6 +50,7 @@ public function index(Request $request)
 // ✅ Return all trips (for dropdowns etc)
 public function all()
 {
+    $this->authorizeAccess('view');
     $trips = Trip::with(['vehicle', 'driver.user'])->latest()->get();
     return response()->json($trips);
 }
@@ -46,6 +59,7 @@ public function all()
     // ✅ Store a new trip
 public function store(Request $request)
 {
+    $this->authorizeAccess('create');
     $validated = $request->validate([
         'vehicle_id'     => ['required', Rule::exists('vehicles', 'id')],
         'start_location' => ['required', 'string'],
@@ -85,6 +99,7 @@ return response()->json($trip->load(['driver.user', 'vehicle']), 201);
 
 public function update(Request $request, Trip $trip)
 {
+    $this->authorizeAccess('update');
     $validated = $request->validate([
         'vehicle_id'     => ['required', Rule::exists('vehicles', 'id')],
         'start_location' => ['required', 'string'],
@@ -158,6 +173,7 @@ private function createIncomeForCompletedTrip(Trip $trip)
     // ✅ Show a single trip
     public function show(Trip $trip)
     {
+        $this->authorizeAccess('view');
         $trip->load(['vehicle', 'driver.user']);
         return response()->json($trip);
     }
@@ -167,7 +183,31 @@ private function createIncomeForCompletedTrip(Trip $trip)
     // ✅ Delete a trip
     public function destroy(Trip $trip)
     {
+        $this->authorizeAccess('delete');
         $trip->delete();
         return response()->json(['message' => 'Trip deleted successfully']);
+    }
+
+    
+    /**
+     * 🔐 Role-based permission checker
+     */
+    private function authorizeAccess(string $action): void
+    {
+        $user = auth()->user();
+
+        $rolePermissions = [
+            'view'   => ['admin', 'manager', 'vehicle_owner', 'driver'],
+            'create' => ['admin', 'manager', 'driver'],
+            'update' => ['admin', 'manager', 'driver'],
+            'delete' => ['admin'],
+        ];
+
+        $allowedRoles = $rolePermissions[$action] ?? [];
+
+        if (!$user || !$user->hasAnyRole($allowedRoles)) {
+             \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
+            abort(403, 'Unauthorized for this action.');
+        }
     }
 }

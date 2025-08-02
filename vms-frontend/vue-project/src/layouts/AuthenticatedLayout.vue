@@ -20,7 +20,7 @@
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/recent-activity" exact-active-class="active" @click="closeMenu">Recent Activity</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/audit-trail" exact-active-class="active" @click="closeMenu">Audit Trail</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'gate_security'])" to="/checkins" exact-active-class="active" @click="closeMenu">Check-Ins</RouterLink>
-        <RouterLink v-if="hasRole(['admin', 'manager', 'driver'])" to="/trips" exact-active-class="active" @click="closeMenu">Trips</RouterLink>
+        <RouterLink v-if="hasRole(['admin', 'manager', 'driver', 'vehicle_owner'])" to="/trips" exact-active-class="active" @click="closeMenu">Trips</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner', 'driver'])" to="/maintenance" exact-active-class="active" @click="closeMenu">Maintenance</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner', 'driver'])" to="/expenses" exact-active-class="active" @click="closeMenu">Expenses</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/users" exact-active-class="active" @click="closeMenu">Users</RouterLink>

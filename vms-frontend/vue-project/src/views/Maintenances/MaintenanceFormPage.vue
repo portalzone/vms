@@ -40,7 +40,7 @@
           <option value="Pending">Pending</option>
           <option value="in_progress">In Progress</option>
           <option
-            v-if="['admin', 'manager'].includes(userRole)"
+             v-if="hasRole(['admin', 'manager'])"
             value="Completed"
           >
             Completed
@@ -90,6 +90,13 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/axios'
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore()
+
+function hasRole(allowedRoles) {
+  return allowedRoles.includes(auth.user?.role)
+}
+
 
 const route = useRoute()
 const router = useRouter()
@@ -105,7 +112,6 @@ const form = ref({
 })
 
 const vehicles = ref([])
-const userRole = localStorage.getItem('role') || 'driver'
 
 onMounted(async () => {
   try {

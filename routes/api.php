@@ -60,7 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/drivers/{id}', [DriverController::class, 'show']);
     Route::get('/drivers/{id}/export-trips-excel', [DriverController::class, 'exportDriverTripsExcel']);
     Route::get('/vehicles/{vehicle}/driver-user-id', [DriverController::class, 'getDriverUserIdByVehicle']);
-    Route::get('/driver/me', [DriverController::class, 'me']); // ✅ ADDED: Logged-in driver details
+    Route::get('/driver/me', [DriverController::class, 'me']);
     Route::apiResource('drivers', DriverController::class);
 
     // ✅ Check-In/Out

@@ -128,6 +128,7 @@ const paginationPages = computed(() => {
         <option value="manager">Manager</option>
         <option value="driver">Driver</option>
         <option value="vehicle_owner">Vehicle Owner</option>
+        <option value="gate_security">Security Officer</option>
       </select>
 
       <select v-model="sortOption" class="px-3 py-2 border rounded-md text-sm">

@@ -153,8 +153,8 @@ public function update(Request $request, $id)
 
         $permissions = [
             'view'   => ['admin', 'manager', 'vehicle_owner', 'driver'],
-            'create' => ['admin', 'manager'],
-            'update' => ['admin', 'manager'],
+            'create' => ['admin', 'manager', 'driver'],
+            'update' => ['admin', 'manager', 'driver'],
             'delete' => ['admin'],
         ];
 

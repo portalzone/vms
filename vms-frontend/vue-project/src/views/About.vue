@@ -19,6 +19,7 @@
       <li>Check-in and Check-out Logs</li>
       <li>Trip Tracking with Location and Time</li>
       <li>Maintenance and Expense Logging</li>
+      <li>Income logs</li>
       <li>Role-Based Access Control (RBAC)</li>
       <li>Dashboard with Analytics and Trends</li>
       <li>PDF and Excel Export (Planned)</li>

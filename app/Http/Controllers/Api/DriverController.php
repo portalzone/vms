@@ -98,18 +98,18 @@ public function exportDriverTripsExcel($id)
 }
 
     // ✅ Authenticated driver's data
-    public function me()
-    {
-        $user = auth()->user();
+ public function me()
+{
+    $user = auth()->user();
+    $driver = Driver::with('vehicle')->where('user_id', $user->id)->first();
 
-        $driver = Driver::with('vehicle')->where('user_id', $user->id)->first();
-
-        if (!$driver) {
-            return response()->json(['message' => 'Driver profile not found.'], 404);
-        }
-
-        return response()->json($driver);
+    if (!$driver) {
+        return response()->json(null); // or: response()->json(['message' => 'No driver profile'], 200);
     }
+
+    return response()->json($driver);
+}
+
 
     // ✅ Get driver by vehicle ID (for TripForm.vue)
     public function getDriverUserIdByVehicle($vehicleId)

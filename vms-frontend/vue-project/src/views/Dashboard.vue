@@ -27,6 +27,8 @@ const dashboardComponent = computed(() => {
   switch (role) {
     case 'admin':
       return AdminDashboard
+    case 'manager':
+      return AdminDashboard
     case 'driver':
       return DriverDashboard
     case 'vehicle_owner':

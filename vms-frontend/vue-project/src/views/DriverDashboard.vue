@@ -9,7 +9,7 @@
         <p v-if="driver && driver.vehicle">
           {{ driver.vehicle.manufacturer }} - {{ driver.vehicle.plate_number }}
         </p>
-        <p v-else>No vehicle assigned</p>
+        <p v-else>No driver profile found. Please contact admin.</p>
       </div>
 
       <!-- Total Trips -->
@@ -58,7 +58,9 @@ onMounted(async () => {
     driver.value = data
 
     const tripRes = await axios.get('/trips')
-    const myTrips = tripRes.data.data.filter(trip => trip.driver_id === driver.value.id)
+    const trips = tripRes?.data?.data || []
+
+    const myTrips = trips.filter(trip => trip.driver_id === driver.value.id)
 
     totalTrips.value = myTrips.length
     recentTrip.value = myTrips.length > 0
@@ -68,4 +70,5 @@ onMounted(async () => {
     console.error('Error loading driver dashboard:', error)
   }
 })
+
 </script>

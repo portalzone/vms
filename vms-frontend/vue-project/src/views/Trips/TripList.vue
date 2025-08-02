@@ -8,7 +8,7 @@
         placeholder="Search by location or vehicle..."
         class="border px-3 py-2 rounded w-full md:w-64"
       />
-            <router-link
+            <router-link  v-if="hasRole(['admin', 'manager'])" 
         to="/trips/create"
         class="btn-primary"
       >
@@ -52,8 +52,8 @@
           <tr>
             <th class="p-2 border">Driver</th>
             <th class="p-2 border">Vehicle</th>
-            <th class="p-2 border">From</th>
             <th class="p-2 border">Amount</th>
+            <th class="p-2 border">From</th>
             <th class="p-2 border">To</th>
             <th class="p-2 border">Duration</th>
             <th class="p-2 border">Start Time</th>
@@ -120,6 +120,12 @@
 import { ref, onMounted, computed } from 'vue'
 import dayjs from 'dayjs'
 import axios from '@/axios'
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore()
+function hasRole(allowedRoles) {
+  return allowedRoles.includes(auth.user?.role)
+}
+
 
 const trips = ref([])
 const search = ref('')

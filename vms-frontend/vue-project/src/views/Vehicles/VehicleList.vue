@@ -354,6 +354,7 @@ onMounted(async () => {
    if (hasRole(['admin', 'manager'])) {
     await fetchVehicleOwners()
     await fetchDrivers()}
+    
   await fetchVehicles()
 })
 
