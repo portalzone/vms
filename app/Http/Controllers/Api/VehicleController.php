@@ -241,6 +241,28 @@ public function availableForDrivers(Request $request)
 }
 
 
+// Searched by plate number
+// Searched by plate number
+public function searchByPlate(Request $request)
+{
+    $this->authorizeAccess('view');
+    
+    $query = $request->get('q');
+
+    if (!$query) {
+        return response()->json([]);
+    }
+
+    // Only return vehicles with an assigned driver
+    $vehicles = Vehicle::where('plate_number', 'like', '%' . $query . '%')
+        ->whereHas('driver') // ✅ ensures vehicle has a driver assigned
+        ->with(['driver.user']) // optional: loads driver and user info
+        ->limit(10)
+        ->get();
+
+    return response()->json($vehicles);
+}
+
     
 
     // ✅ Delete a vehicle

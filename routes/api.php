@@ -54,6 +54,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assigned-vehicles', [VehicleController::class, 'assignedVehicles']);
     Route::get('/vehicles/mine', [VehicleController::class, 'myVehicles']);
     Route::get('/vehicles/within-premises', [VehicleController::class, 'vehiclesWithinPremises']);
+    Route::get('/vehicles/search-by-plate', [VehicleController::class, 'searchByPlate']);
+
     Route::apiResource('vehicles', VehicleController::class);
 
     // ✅ Drivers
@@ -65,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ✅ Check-In/Out
     Route::post('/checkins/{id}/checkout', [CheckInOutController::class, 'checkout']);
+    Route::get('/checkins/latest', [CheckInOutController::class, 'latest']);
     Route::apiResource('checkins', CheckInOutController::class);
 
     // ✅ Maintenance & Expenses

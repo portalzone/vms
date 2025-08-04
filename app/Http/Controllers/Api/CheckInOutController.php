@@ -34,6 +34,24 @@ class CheckInOutController extends Controller
 
         return response()->json($query->paginate($perPage));
     }
+public function latest(Request $request)
+{
+    $vehicleId = $request->query('vehicle_id');
+
+    if (!$vehicleId) {
+        return response()->json(['message' => 'Vehicle ID is required'], 400);
+    }
+
+    $checkIn = CheckInOut::where('vehicle_id', $vehicleId)
+        ->latest()
+        ->first();
+
+    if (!$checkIn) {
+        return response()->json(['message' => 'No check-in found'], 404);
+    }
+
+    return response()->json($checkIn);
+}
 
     // ✅ Create a new check-in record
     public function store(Request $request)
