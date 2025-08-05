@@ -2,6 +2,12 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import axios from '@/axios'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore()
+
+function hasRole(allowedRoles) {
+  return allowedRoles.includes(auth.user?.role)
+}
 
 const router = useRouter()
 const users = ref([])
@@ -124,11 +130,13 @@ const paginationPages = computed(() => {
     <div class="mb-4 flex flex-wrap items-center gap-4">
       <select v-model="roleFilter" class="px-3 py-2 border rounded-md text-sm">
         <option value="">All Roles</option>
-        <option value="admin">Admin</option>
-        <option value="manager">Manager</option>
-        <option value="driver">Driver</option>
-        <option value="vehicle_owner">Vehicle Owner</option>
-        <option value="gate_security">Security Officer</option>
+        <option v-if="hasRole(['admin'])" value="admin">Admin</option>
+        <option v-if="hasRole(['admin'])" value="manager">Manager</option>
+        <option v-if="hasRole(['admin', 'manager'])" value="driver">Driver</option>
+        <option v-if="hasRole(['admin', 'manager'])" value="vehicle_owner">Vehicle Owner</option>
+        <option value="staff">Staff</option>
+        <option value="visitor">Visitor</option>
+        <option v-if="hasRole(['admin', 'manager'])" value="gate_security">Security Officer</option>
       </select>
 
       <select v-model="sortOption" class="px-3 py-2 border rounded-md text-sm">

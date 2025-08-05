@@ -20,6 +20,8 @@ class Driver extends Model
         'sex',
         'created_by',
         'updated_by',
+        'driver_type', // ✅ Add this
+
     ];
 
     /**
@@ -38,6 +40,7 @@ class Driver extends Model
     {
         return $this->belongsTo(\App\Models\User::class);
     }
+
 
     public function vehicle()
     {
@@ -58,4 +61,5 @@ class Driver extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
 }

@@ -15,6 +15,7 @@ public function up()
         $table->id();
         $table->foreignId('driver_id')->constrained()->onDelete('cascade');
         $table->foreignId('vehicle_id')->constrained()->onDelete('cascade');
+        $table->decimal('amount', 10, 2)->nullable()->after('status');
         $table->string('start_location');
         $table->string('end_location');
         $table->timestamp('start_time');

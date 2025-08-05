@@ -8,7 +8,7 @@
         placeholder="Search by name, email, license, or vehicle..."
         class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
       />
-      <router-link v-if="hasRole(['admin', 'manager'])"
+      <router-link v-if="hasRole(['admin', 'manager', 'gate_security'])"
         to="/drivers/new"
         class="btn-primary text-center"
       >
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Filter Controls -->
-    <div v-if="hasRole(['admin', 'manager'])" class="flex flex-wrap gap-4 mb-4">
+    <div v-if="hasRole(['admin', 'manager', 'gate_security'])" class="flex flex-wrap gap-4 mb-4">
       <input
         v-model="searchDriverIdInput"
         type="number"
@@ -46,17 +46,28 @@
     class="border border-gray-300 rounded px-3 py-2"
   >
     <option value="">All Owners</option>
-    <option
-      v-for="owner in vehicleOwners"
-      :key="owner.id"
-      :value="owner.id"
-    >
-      {{ owner.name }}
-    </option>
+   <option
+  v-for="owner in vehicleOwners || []"
+  :key="owner.id"
+  :value="owner.id"
+>
+  {{ owner.name }}
+</option>
+
   </select>
 
 
 </div>
+<!-- Filter by Driver Type -->
+<div class="mb-4 flex gap-4 items-center">
+  <label class="font-medium">Driver Type:</label>
+  <select v-model="selectedDriverType" class="border border-gray-300 rounded px-3 py-2">
+    <option value="">All Driver Types</option>
+    <option value="internal">Internal (Staff + Organization)</option>
+    <option value="external">External (Visitor + Vehicle Owner)</option>
+  </select>
+</div>
+
 
     </div>
 
@@ -72,6 +83,7 @@
             <th class="px-4 py-2">Phone</th>
             <th class="px-4 py-2">Address</th>
             <th class="px-4 py-2">Sex</th>
+            <th class="px-4 py-2">Driver Type</th>
             <th class="px-4 py-2">Vehicle</th>
             <th class="px-4 py-2">Date Added</th>
             <th class="px-4 py-2">Latest Update</th>
@@ -100,6 +112,7 @@
             <td class="px-4 py-2">{{ driver.phone_number }}</td>
             <td class="px-4 py-2">{{ driver.home_address }}</td>
             <td class="px-4 py-2">{{ driver.sex }}</td>
+            <td class="px-4 py-2">{{ driver.driver_type }}</td>
             <td class="px-4 py-2">
               <div v-if="driver.vehicle">
                 <div>{{ driver.vehicle.plate_number }}</div>
@@ -179,6 +192,9 @@ const selectedOwnership = ref('')
 const selectedOwnerId = ref('')
 const selectedOrganizationId = ref('')
 
+const selectedDriverType = ref('')
+
+
 const vehicleOwners = ref([])
 const drivers = ref([]) // Your driver data
 
@@ -186,46 +202,63 @@ const drivers = ref([]) // Your driver data
 const fetchDrivers = async () => {
   try {
     let res
+
     if (hasRole(['admin', 'manager'])) {
       res = await axios.get('/drivers')
     } else if (auth.user?.role === 'vehicle_owner') {
-      // Fetch only drivers assigned to the current vehicle owner
       res = await axios.get(`/drivers?owner_id=${auth.user.id}`)
+    } else if (auth.user?.role === 'gate_security') {
+      res = await axios.get(`/drivers?created_by=${auth.user.id}`)
+    } else {
+      // fallback to empty array if role has no access
+      drivers.value = []
+      return
     }
 
-    const fetched = Array.isArray(res.data) ? res.data : res.data.data || []
+    const fetched = Array.isArray(res.data) ? res.data : res.data?.data || []
     drivers.value = fetched
   } catch (err) {
     console.error('Error fetching drivers:', err)
+    drivers.value = []
   }
 }
-
-
-
-
 
 const fetchVehicleOwners = async () => {
   try {
     const res = await axios.get('/users?role=vehicle_owner')
-    vehicleOwners.value = res.data
+    const owners = Array.isArray(res.data) ? res.data : res.data?.data || []
+    vehicleOwners.value = owners.filter(o => o && o.id)
   } catch (err) {
     console.error('Failed to fetch vehicle owners:', err)
+    vehicleOwners.value = []
   }
 }
+
 const filteredDrivers = computed(() => {
   return drivers.value.filter(driver => {
     const vehicle = driver.vehicle
+    const driverType = driver.driver_type
 
-    // No vehicle assigned → only show if no filters are applied
-    if (!vehicle) {
-      return !selectedOwnership.value && !selectedOwnerId.value && !selectedOrganizationId.value
-    }
+    const matchesOwnership =
+      !selectedOwnership.value ||
+      vehicle?.ownership_type === selectedOwnership.value
 
-    const matchesOwnership = !selectedOwnership.value || vehicle.ownership_type === selectedOwnership.value
-    const matchesOwner = !selectedOwnerId.value || vehicle.owner_id == selectedOwnerId.value
-    const matchesOrg = !selectedOrganizationId.value || vehicle.organization_id == selectedOrganizationId.value
+    const matchesOwner =
+      !selectedOwnerId.value ||
+      String(vehicle?.owner_id) === String(selectedOwnerId.value)
 
-    return matchesOwnership && matchesOwner && matchesOrg
+    const matchesOrg =
+      !selectedOrganizationId.value ||
+      vehicle?.organization_id == selectedOrganizationId.value
+
+    const matchesDriverType =
+      !selectedDriverType.value ||
+      (selectedDriverType.value === 'internal' &&
+        ['organization', 'staff'].includes(driverType)) ||
+      (selectedDriverType.value === 'external' &&
+        ['visitor', 'vehicle_owner'].includes(driverType))
+
+    return matchesOwnership && matchesOwner && matchesOrg && matchesDriverType
   })
 })
 
@@ -271,13 +304,13 @@ const searchDriverById = async (id) => {
     const driver = res.data
     const vehicle = driver.vehicle
 
-    const vehicleInfo = vehicle
-      ? `
-        <p>Plate: ${vehicle.plate_number}</p>
-        <p>Vehicle Name: ${vehicle.name}</p>
-        <a href="/drivers/${driver.id}/edit" class="text-blue-500 underline">Edit Driver</a>
-        `
-      : '<p>No vehicle assigned.</p>'
+const vehicleInfo = vehicle && typeof vehicle === 'object'
+  ? `
+    <p>Plate: ${vehicle.plate_number || 'N/A'}</p>
+    <p>Vehicle Name: ${vehicle.name || 'N/A'}</p>
+    <a href="/drivers/${driver.id}/edit" class="text-blue-500 underline">Edit Driver</a>
+    `
+  : '<p>No vehicle assigned.</p>'
 
     const message = `
       <h2 class="font-bold text-lg mb-2">✅ Driver Found</h2>
@@ -306,9 +339,26 @@ const remove = async (id) => {
   }
 }
 
-watch(search, () => {
+const organizations = ref([])
+
+const fetchOrganizations = async () => {
+  try {
+    const res = await axios.get('/organizations')
+    organizations.value = res.data
+  } catch (err) {
+    console.error('Failed to fetch organizations:', err)
+  }
+}
+
+
+// watch(search, () => {
+//   page.value = 1
+// })
+
+watch([selectedDriverType, selectedOwnership, selectedOwnerId, search], () => {
   page.value = 1
 })
+
 
 onMounted(async () => {
   if (hasRole(['admin', 'manager'])) {

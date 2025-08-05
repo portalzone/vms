@@ -19,34 +19,51 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserController extends Controller
 {
-    // ✅ Get all users with roles
+// ✅ Get all users with roles
 public function index(Request $request)
 {
     $this->authorizeAccess('view');
+    $user = auth()->user();
+    $query = User::with('roles:id,name')->select('id', 'name', 'email');
 
-    $query = User::with('roles:id,name')
-        ->select('id', 'name', 'email');
+    $allowedRoles = null;
 
-    // Filter by role
-    if ($request->has('role') && $request->role !== '') {
-        $query->whereHas('roles', function ($q) use ($request) {
-            $q->where('name', $request->role);
-        });
+    if ($user->hasRole('gate_security')) {
+        $allowedRoles = ['staff', 'visitor'];
+    } elseif ($user->hasRole('manager')) {
+        $allowedRoles = ['staff', 'visitor', 'driver', 'vehicle_owner', 'gate_security'];
     }
 
-    // Sort: fallback to created_at desc if invalid
+    if ($allowedRoles) {
+        $query->whereHas('roles', function ($q) use ($allowedRoles) {
+            $q->whereIn('name', $allowedRoles);
+        });
+
+        // 🟡 Only apply role filter if within allowed
+        if ($request->filled('role') && in_array($request->role, $allowedRoles)) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+    } else {
+        // Admin and others
+        if ($request->filled('role')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+    }
+
+    // Sorting
     $allowedSorts = ['name', 'email', 'created_at'];
     $sortBy = in_array($request->get('sort_by'), $allowedSorts) ? $request->get('sort_by') : 'created_at';
-    $sortDir = $request->get('sort_dir', 'desc') === 'asc' ? 'asc' : 'desc';
+    $sortDir = $request->get('sort_dir') === 'asc' ? 'asc' : 'desc';
     $query->orderBy($sortBy, $sortDir);
 
-    // Pagination size: 5, 10, 25, 50, 100 (default 10)
-    $perPage = in_array((int)$request->get('per_page'), [5, 10, 25, 50, 100])
-        ? (int)$request->get('per_page')
-        : 10;
+    // Pagination
+    $perPage = in_array((int)$request->get('per_page'), [5, 10, 25, 50, 100]) ? (int)$request->get('per_page') : 10;
 
     return response()->json($query->paginate($perPage));
-
 }
 
 
@@ -68,36 +85,48 @@ public function vehicleOwners()
 
     // ✅ Create new user with role assignment (API guard)
     public function store(Request $request)
-    {
-        $this->authorizeAccess('create');
+{
+    $this->authorizeAccess('create');
 
-        $validated = $request->validate([
-            'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|string|min:6',
-            'role'     => 'required|string|exists:roles,name',
-        ]);
+    $validated = $request->validate([
+        'name'     => 'required|string|max:100',
+        'email'    => 'required|email|unique:users',
+        'password' => 'required|string|min:6',
+        'role'     => 'required|string|exists:roles,name',
+    ]);
 
-        $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
+    // ⛔ Restrict based on current user's role
+    $user = auth()->user();
+    $restricted = [
+        'gate_security' => ['staff', 'visitor'],
+        'manager'       => ['staff', 'visitor', 'driver', 'vehicle_owner', 'gate_security'],
+    ];
 
-        $role = Role::where('name', $validated['role'])->where('guard_name', 'api')->first();
-        if (!$role) {
-            return response()->json([
-                'message' => 'Invalid role for API guard.'
-            ], 422);
+    foreach ($restricted as $roleName => $allowedRoles) {
+        if ($user->hasRole($roleName) && !in_array($validated['role'], $allowedRoles)) {
+            return response()->json(['message' => 'Unauthorized role assignment.'], 403);
         }
-
-        $user->assignRole($role);
-
-        return response()->json([
-            'message' => 'User created successfully',
-            'data'    => $user->load('roles:id,name'),
-        ], 201);
     }
+
+    $user = User::create([
+        'name'     => $validated['name'],
+        'email'    => $validated['email'],
+        'password' => Hash::make($validated['password']),
+    ]);
+
+    $role = Role::where('name', $validated['role'])->where('guard_name', 'api')->first();
+    if (!$role) {
+        return response()->json(['message' => 'Invalid role for API guard.'], 422);
+    }
+
+    $user->assignRole($role);
+
+    return response()->json([
+        'message' => 'User created successfully',
+        'data'    => $user->load('roles:id,name'),
+    ], 201);
+}
+
 
     // ✅ Show user with roles
     public function show($id)
@@ -109,48 +138,61 @@ public function vehicleOwners()
 
     // ✅ Update user and role (API guard)
     public function update(Request $request, $id)
-    {
-        $this->authorizeAccess('update');
+{
+    $this->authorizeAccess('update');
 
-        try {
-            $user = User::findOrFail($id);
+    try {
+        $user = User::findOrFail($id);
 
-            $validated = $request->validate([
-                'name'     => 'sometimes|string|max:100',
-                'email'    => 'sometimes|email|unique:users,email,' . $id,
-                'password' => 'nullable|string|min:6',
-                'role'     => 'sometimes|string|exists:roles,name',
-            ]);
+        $validated = $request->validate([
+            'name'     => 'sometimes|string|max:100',
+            'email'    => 'sometimes|email|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:6',
+            'role'     => 'sometimes|string|exists:roles,name',
+        ]);
 
-            if (!empty($validated['password'])) {
-                $validated['password'] = Hash::make($validated['password']);
-            } else {
-                unset($validated['password']);
-            }
-
-            $user->update($validated);
-
-            if (!empty($validated['role'])) {
-                $role = Role::where('name', $validated['role'])->where('guard_name', 'api')->first();
-                if (!$role) {
-                    return response()->json([
-                        'message' => 'Invalid role for API guard.'
-                    ], 422);
-                }
-                $user->syncRoles([$role]);
-            }
-
-            return response()->json([
-                'message' => 'User updated successfully',
-                'data'    => $user->load('roles:id,name'),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to update user',
-                'error'   => $e->getMessage(),
-            ], 500);
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
         }
+
+        // ⛔ Restrict role update based on current user
+        if (!empty($validated['role'])) {
+            $authUser = auth()->user();
+            $restricted = [
+                'gate_security' => ['staff', 'visitor'],
+                'manager'       => ['staff', 'visitor', 'driver', 'vehicle_owner', 'gate_security'],
+            ];
+
+            foreach ($restricted as $roleName => $allowedRoles) {
+                if ($authUser->hasRole($roleName) && !in_array($validated['role'], $allowedRoles)) {
+                    return response()->json(['message' => 'Unauthorized role assignment.'], 403);
+                }
+            }
+
+            $role = Role::where('name', $validated['role'])->where('guard_name', 'api')->first();
+            if (!$role) {
+                return response()->json(['message' => 'Invalid role for API guard.'], 422);
+            }
+
+            $user->syncRoles([$role]);
+        }
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'data'    => $user->load('roles:id,name'),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to update user',
+            'error'   => $e->getMessage(),
+        ], 500);
     }
+}
+
 
 public function profileHistory()
 {
@@ -321,9 +363,9 @@ public function me(Request $request)
         }
 
         $map = [
-            'view'   => ['admin', 'manager'],
-            'create' => ['admin', 'manager'],
-            'update' => ['admin'],
+            'view'   => ['admin', 'manager', 'gate_security'],
+            'create' => ['admin', 'manager', 'gate_security'],
+            'update' => ['admin', 'manager', 'gate_security'],
             'delete' => ['admin'],
         ];
 

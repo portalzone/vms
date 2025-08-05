@@ -25,7 +25,7 @@ public function index()
 
     // Vehicle Owner: only their vehicles
     if ($user->hasRole('vehicle_owner')) {
-        $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])
+        $vehicles = Vehicle::with(['driver.user', 'creator', 'editor', 'owner'])
             ->where('owner_id', $user->id)
             ->where('ownership_type', 'individual')
             ->get();
@@ -39,14 +39,14 @@ public function index()
             return response()->json(['message' => 'No vehicle assigned.'], 200);
         }
 
-        $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])
+        $vehicles = Vehicle::with(['driver.user', 'creator', 'editor', 'owner'])
             ->where('id', $driver->vehicle_id)
             ->get();
     }
 
     // Admins and Managers: all vehicles
     else {
-        $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])->get();
+        $vehicles = Vehicle::with(['driver.user', 'creator', 'editor', 'owner'])->get();
     }
 
     return response()->json($vehicles);

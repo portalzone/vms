@@ -126,13 +126,13 @@ const routes = [
     path: '/drivers',
     name: 'Drivers',
     component: DriversPage,
-    meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner'] },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner', 'gate_security'] },
   },
   {
     path: '/drivers/new',
     name: 'DriverCreate',
     component: DriverFormPage,
-    meta: { requiresAuth: true, roles: ['admin', 'manager']  },
+    meta: { requiresAuth: true, roles: ['admin', 'manager', 'gate_security']  },
   },
   {
     path: '/drivers/:id/edit',
@@ -144,7 +144,7 @@ const routes = [
   path: '/drivers/:id',
   name: 'DriverProfile',
   component: () => import('@/views/Drivers/DriverProfilePage.vue'),
-  meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner']  },
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'vehicle_owner', 'gate_security']  },
 },
 
   // Vehicles
@@ -243,17 +243,17 @@ const routes = [
 {
   path: '/users',
   component: () => import('@/views/Users/UsersPage.vue'),
-  meta: { requiresAuth: true, roles: ['admin', 'manager'] }
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'gate_security'] }
 },
 {
   path: '/users/new',
   component: () => import('@/views/Users/UserFormPage.vue'),
-  meta: { requiresAuth: true, roles: ['admin', 'manager'] }
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'gate_security'] }
 },
 {
   path: '/users/:id/edit',
   component: () => import('@/views/Users/UserFormPage.vue'),
-  meta: { requiresAuth: true, roles: ['admin', 'manager'] }
+  meta: { requiresAuth: true, roles: ['admin', 'manager', 'gate_security'] }
 },
 
 

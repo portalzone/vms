@@ -15,7 +15,7 @@
         <RouterLink to="/dashboard" exact-active-class="active" @click="closeMenu">Dashboard</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner'])" to="/vehicles" exact-active-class="active" @click="closeMenu">Vehicles</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'gate_security'])" to="/vehicle-within" exact-active-class="active" @click="closeMenu">Vehicles Within</RouterLink>
-        <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner'])" to="/drivers" exact-active-class="active" @click="closeMenu">Drivers</RouterLink>
+        <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner', 'gate_security'])" to="/drivers" exact-active-class="active" @click="closeMenu">Drivers</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/incomes" exact-active-class="active" @click="closeMenu">Income</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/recent-activity" exact-active-class="active" @click="closeMenu">Recent Activity</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/audit-trail" exact-active-class="active" @click="closeMenu">Audit Trail</RouterLink>
@@ -23,7 +23,7 @@
         <RouterLink v-if="hasRole(['admin', 'manager', 'driver', 'vehicle_owner'])" to="/trips" exact-active-class="active" @click="closeMenu">Trips</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner', 'driver'])" to="/maintenance" exact-active-class="active" @click="closeMenu">Maintenance</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner', 'driver'])" to="/expenses" exact-active-class="active" @click="closeMenu">Expenses</RouterLink>
-        <RouterLink v-if="hasRole(['admin', 'manager'])" to="/users" exact-active-class="active" @click="closeMenu">Users</RouterLink>
+        <RouterLink v-if="hasRole(['admin', 'manager', 'gate_security'])" to="/users" exact-active-class="active" @click="closeMenu">Users</RouterLink>
         <router-link to="/profile" class="text-sm text-gray-600 hover:text-blue-500" @click="closeMenu">My Profile</router-link>
         <RouterLink to="/about" exact-active-class="active" @click="closeMenu">About</RouterLink>
         <RouterLink to="/support" exact-active-class="active" @click="closeMenu">Support</RouterLink>

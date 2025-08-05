@@ -34,29 +34,29 @@
     class="border border-gray-300 rounded px-3 py-2"
   >
     <option value="">All Owners</option>
-    <option
-      v-for="owner in vehicleOwners"
-      :key="owner.id"
-      :value="owner.id"
-    >
-      {{ owner.name }}
-    </option>
+<option
+  v-for="owner in vehicleOwners"
+  :key="owner.id"
+  :value="owner.id"
+>
+  {{ owner.name }}
+</option>
+
+
   </select>
 
   <!-- Filter by Driver -->
-  <select
-    v-model="selectedDriverId"
-    class="border border-gray-300 rounded px-3 py-2"
+<select v-model="selectedDriverId" class="border border-gray-300 rounded px-3 py-2">
+  <option value="">All Drivers</option>
+  <option
+    v-for="driver in drivers"
+    :key="driver.id"
+    :value="driver.id"
   >
-    <option value="">All Drivers</option>
-    <option
-      v-for="driver in drivers"
-      :key="driver.id"
-      :value="driver.id"
-    >
-      {{ driver.user?.name || `Driver #${driver.id}` }}
-    </option>
-  </select>
+    {{ driver.user?.name ?? `Driver #${driver.id}` }} - {{ driver.license_number ?? 'No License' }}
+  </option>
+</select>
+
 </div>
 
     <!-- Sort Dropdown -->
@@ -84,11 +84,12 @@
         <thead class="bg-gray-100 text-left">
           <tr>
             <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Ownership Type</th>
+            <th class="px-4 py-2">Driver Name</th>
             <th class="px-4 py-2">Manufacturer</th>
             <th class="px-4 py-2">Model</th>
             <th class="px-4 py-2">Year</th>
             <th class="px-4 py-2">Plate No.</th>
-            <th class="px-4 py-2">Ownership</th>
             <th class="px-4 py-2">Created By</th>
             <th class="px-4 py-2">Created Time</th>
             <th class="px-4 py-2">Last Edited By</th>
@@ -103,19 +104,27 @@
             class="hover:bg-gray-50 even:bg-gray-50"
           >
             <td class="px-4 py-2">{{ start + index + 1 }}</td>
+<td class="px-4 py-2">
+  <span v-if="vehicle.ownership_type === 'individual'">
+    Vehicle Owner: {{ vehicle.owner?.name ?? `User #${vehicle.owner_id}` }}
+  </span>
+  <span v-else>
+    Organization
+  </span>
+</td>
+<td class="px-4 py-2">
+  <span v-if="vehicle.driver">
+    {{ vehicle.driver.user?.name ?? `Driver #${vehicle.driver.id}` }} - {{ vehicle.driver.license_number ?? 'No License' }}
+  </span>
+  <span v-else>
+    No Driver Assigned
+  </span>
+</td>
+
             <td class="px-4 py-2">{{ vehicle.manufacturer }}</td>
             <td class="px-4 py-2">{{ vehicle.model }}</td>
             <td class="px-4 py-2">{{ vehicle.year }}</td>
             <td class="px-4 py-2">{{ vehicle.plate_number }}</td>
-<td class="px-4 py-2">
-  <template v-if="vehicle.ownership_type === 'individual'">
-    Owner: {{ vehicle.owner?.name || `User #${vehicle.owner_id}` }}
-  </template>
-  <template v-else>
-    Organization
-  </template>
-</td>
-
             <td class="px-4 py-2">{{ vehicle.creator?.name ?? 'N/A' }}</td>
             <td class="px-4 py-2">{{ formatDate(vehicle.created_at) }}</td>
             <td class="px-4 py-2">{{ vehicle.editor?.name ?? 'N/A' }}</td>
@@ -187,7 +196,6 @@ const selectedOwnerId = ref('')
 const selectedDriverId = ref('')
 const vehicleOwners = ref([])
 const drivers = ref([])
-
 
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A'
@@ -333,25 +341,27 @@ const remove = async (id) => {
 const fetchVehicleOwners = async () => {
   try {
     const res = await axios.get('/vehicle-owners')
-    vehicleOwners.value = res.data
+    vehicleOwners.value = (res.data || []).filter(owner => owner && owner.id)
   } catch (err) {
     console.error('Failed to fetch vehicle owners:', err)
   }
 }
 
+
 const fetchDrivers = async () => {
   try {
-    const res = await axios.get('/drivers?include=user')
-    drivers.value = res.data
+    const res = await axios.get('/drivers')
+    const data = Array.isArray(res.data) ? res.data : res.data.data
+    drivers.value = (data || []).filter(driver => driver && driver.user && driver.user.name)
   } catch (err) {
-    console.error('Failed to fetch drivers:', err)
+    console.error('❌ Failed to fetch drivers:', err)
   }
 }
 
 
 
 onMounted(async () => {
-   if (hasRole(['admin', 'manager'])) {
+   if (hasRole(['admin', 'manager', 'gate_security'])) {
     await fetchVehicleOwners()
     await fetchDrivers()}
     

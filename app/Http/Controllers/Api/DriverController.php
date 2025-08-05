@@ -19,22 +19,34 @@ public function index(Request $request)
 
     $query = Driver::with(['user', 'vehicle', 'creator', 'editor']);
 
-    // If the user is a vehicle owner, limit to their drivers
-    $user = auth()->user();
-    if ($user->hasRole('vehicle_owner')) {
-        $query->whereHas('vehicle', function ($q) use ($user) {
-            $q->where('owner_id', $user->id);
-        });
-    }
-
-    // Optional: allow admin to manually filter by owner via query param
-    if ($request->has('owner_id') && $user->hasAnyRole(['admin', 'manager'])) {
+    // Apply filters from query params
+    if ($request->has('ownership_type')) {
         $query->whereHas('vehicle', function ($q) use ($request) {
-            $q->where('owner_id', $request->input('owner_id'));
+            $q->where('ownership_type', $request->ownership_type);
         });
     }
 
-    return response()->json($query->get());
+    if ($request->has('owner_id')) {
+        $query->whereHas('vehicle', function ($q) use ($request) {
+            $q->where('owner_id', $request->owner_id);
+        });
+    }
+
+    // Filter by created_by for gate security role
+    if (auth()->user()->hasRole('gate_security')) {
+        $query->where('created_by', auth()->id());
+    }
+
+    // If user is vehicle_owner, show only their drivers
+    if (auth()->user()->hasRole('vehicle_owner')) {
+        $query->whereHas('vehicle', function ($q) {
+            $q->where('owner_id', auth()->id());
+        });
+    }
+
+    $drivers = $query->latest()->paginate(10);
+
+    return response()->json($drivers);
 }
 
 
@@ -44,26 +56,36 @@ public function store(Request $request)
     $this->authorizeAccess('create');
 
     $validated = $request->validate([
-        'user_id'        => 'required|exists:users,id|unique:drivers,user_id',
-        'license_number' => 'required|string|max:50|unique:drivers',
-        'phone_number'   => 'required|string|max:20',
-        'home_address'   => 'required|string|max:255',
-        'sex'            => 'required|in:male,female,other',
-        'vehicle_id'     => 'nullable|exists:vehicles,id|unique:drivers,vehicle_id',
+        'user_id' => 'required|exists:users,id|unique:drivers,user_id',
+        'vehicle_id' => 'nullable|exists:vehicles,id',
+        'license_number' => 'required|string|max:255',
+        'phone_number' => 'required|string|max:20',
+        'sex' => 'required|in:male,female',
+        'home_address' => 'nullable|string|max:255',
+        'driver_type' => 'required|in:staff,visitor,organization,vehicle_owner',
     ]);
 
-    $user = User::findOrFail($validated['user_id']);
-    if (!$user->hasRole('driver')) {
-        $user->assignRole('driver');
+    $user = auth()->user();
+
+    // 🛡️ Gate Security can only create 'visitor' drivers
+    if ($user->hasRole('gate_security') && $validated['driver_type'] !== 'visitor') {
+        return response()->json(['message' => 'Gate Security can only create visitor drivers.'], 403);
     }
 
-    $driver = Driver::create([
-        ...$validated,
-        'created_by' => auth()->id(),
-    ]);
+    // 🚫 Other roles not allowed (except admin, manager, gate_security)
+    if (!$user->hasAnyRole(['admin', 'manager', 'gate_security'])) {
+        return response()->json(['message' => 'Unauthorized to create drivers.'], 403);
+    }
 
-    return response()->json($driver->load(['user', 'vehicle']), 201);
+    // ✅ Passed all checks — create driver
+        $validated['created_by'] = $user->id;
+    $validated['updated_by'] = $user->id;
+
+    $driver = Driver::create($validated);
+
+    return response()->json($driver, 201);
 }
+
 
 // excel export:
 public function exportDriverTripsExcel($id)
@@ -201,9 +223,18 @@ return response()->json([
     'home_address'   => 'sometimes|required|string|max:255',
     'sex'            => 'sometimes|required|in:male,female,other',
     'vehicle_id'     => 'nullable|exists:vehicles,id|unique:drivers,vehicle_id,' . $id,
+    'driver_type'    => 'sometimes|required|in:staff,visitor,organization,vehicle_owner',
     'name'           => 'sometimes|required|string|max:100',
     'email'          => 'sometimes|required|email|max:100|unique:users,email,' . $driver->user_id,
 ]);
+
+$user = auth()->user();
+
+// 🛡️ Restrict gate_security to only assign 'visitor'
+if ($user->hasRole('gate_security') && isset($validated['driver_type']) && $validated['driver_type'] !== 'visitor') {
+    return response()->json(['message' => 'Gate Security can only assign visitor driver type.'], 403);
+}
+
 
 
         // Handle potential user change
@@ -221,6 +252,7 @@ return response()->json([
         $driver->home_address   = $validated['home_address'] ?? $driver->home_address;
         $driver->sex            = $validated['sex'] ?? $driver->sex;
         $driver->vehicle_id     = $validated['vehicle_id'] ?? $driver->vehicle_id;
+        $driver->driver_type = $validated['driver_type'] ?? $driver->driver_type;
         $driver->updated_by = auth()->id();
         $driver->save();
 
@@ -256,8 +288,8 @@ return response()->json([
 
         $roles = [
             'view'   => ['admin', 'manager',  'gate_security', 'vehicle_owner'],
-            'create' => ['admin', 'manager'],
-            'update' => ['admin', 'manager'],
+            'create' => ['admin', 'manager', 'gate_security'],
+            'update' => ['admin', 'manager', 'gate_security'],
             'delete' => ['admin'],
         ];
 

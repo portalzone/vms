@@ -4,6 +4,12 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/axios'
 import UserForm from './UserForm.vue'
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore()
+
+function hasRole(allowedRoles) {
+  return allowedRoles.includes(auth.user?.role)
+}
 
 const route = useRoute()
 const router = useRouter()

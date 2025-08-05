@@ -48,6 +48,15 @@
       </select>
       <p v-if="errors.sex" class="text-red-600 text-sm">{{ errors.sex[0] }}</p>
     </div>
+    <!-- Driver type-->
+<label class="block mb-1 font-medium">Driver Type</label>
+<select v-model="form.driver_type" class="w-full border rounded px-4 py-2 mb-4" :disabled="isGateSecurity">
+  <option value="staff">Staff</option>
+  <option value="visitor">Visitor</option>
+  <option value="organization">Organization</option>
+  <option value="vehicle_owner">Vehicle Owner</option>
+</select>
+
 
     <!-- Vehicle Dropdown -->
     <div>
@@ -81,6 +90,11 @@ const props = defineProps({
 })
 
 const router = useRouter()
+
+const user = JSON.parse(localStorage.getItem('user') || '{}')
+const isGateSecurity = user?.role === 'gate_security'
+
+
 const form = ref({
   user_id: '',
   license_number: '',
@@ -88,6 +102,7 @@ const form = ref({
   home_address: '',
   sex: '',
   vehicle_id: '',
+  driver_type: 'staff', // Default
 })
 const errors = ref({})
 const users = ref([])
@@ -125,6 +140,7 @@ const loadDriver = async () => {
       home_address: d.home_address || '',
       sex: d.sex || '',
       vehicle_id: d.vehicle?.id || '',
+      driver_type: d.driver_type || 'staff',
     }
   }
 }
@@ -148,6 +164,12 @@ const handleSubmit = async () => {
     }
   }
 }
+// You can also force the driver_type value
+onMounted(() => {
+  if (!props.isEdit && isGateSecurity) {
+    form.value.driver_type = 'visitor'
+  }
+})
 
 onMounted(async () => {
   await Promise.all([loadUsers(), loadVehicles()])
