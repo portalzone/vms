@@ -102,8 +102,9 @@ const form = ref({
   home_address: '',
   sex: '',
   vehicle_id: '',
-  driver_type: 'staff', // Default
+  driver_type: '', // Default
 })
+
 const errors = ref({})
 const users = ref([])
 const vehicles = ref([])
@@ -133,17 +134,19 @@ const loadDriver = async () => {
     const res = await axios.get(`/drivers/${props.driverId}`)
     const d = res.data
 
-    form.value = {
-      user_id: d.user_id || '',
-      license_number: d.license_number || '',
-      phone_number: d.phone_number || '',
-      home_address: d.home_address || '',
-      sex: d.sex || '',
-      vehicle_id: d.vehicle?.id || '',
-      driver_type: d.driver_type || 'staff',
-    }
+    form.value.user_id = d.user_id || ''
+    form.value.license_number = d.license_number || ''
+    form.value.phone_number = d.phone_number || ''
+    form.value.home_address = d.home_address || ''
+    form.value.sex = d.sex || ''
+    form.value.vehicle_id = d.vehicle?.id || ''
+    
+    // Correct fallback
+    form.value.driver_type = d.driver_type ?? (isGateSecurity ? 'visitor' : 'staff')
   }
 }
+
+
 
 const handleSubmit = async () => {
   errors.value = {}
@@ -165,14 +168,17 @@ const handleSubmit = async () => {
   }
 }
 // You can also force the driver_type value
-onMounted(() => {
-  if (!props.isEdit && isGateSecurity) {
+onMounted(async () => {
+  await Promise.all([loadUsers(), loadVehicles()])
+  
+  if (props.isEdit) {
+    await loadDriver() // Load from DB
+  } else if (isGateSecurity) {
+    // Only set default for new driver
     form.value.driver_type = 'visitor'
+  } else {
+    form.value.driver_type = 'staff' // default for new driver
   }
 })
 
-onMounted(async () => {
-  await Promise.all([loadUsers(), loadVehicles()])
-  await loadDriver()
-})
 </script>

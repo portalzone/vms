@@ -7,265 +7,241 @@ use App\Models\Vehicle;
 use App\Models\CheckInOut;
 use Illuminate\Http\Request;
 use App\Models\Driver;
-
-
-
+use Illuminate\Support\Facades\Auth;
 
 class VehicleController extends Controller
 {
-    // ✅ List all vehicles with driver info
-public function index()
+public function index(Request $request)
 {
-    $user = auth()->user();
+    $this->authorizeAccess('view');
 
-    if (!$user || !$user->hasAnyRole(['admin', 'manager', 'vehicle_owner', 'driver'])) {
-        \Log::warning("Unauthorized vehicle index access attempt by user ID {$user?->id}");
-        return response()->json(['error' => 'Unauthorized.'], 403);
+    $query = Vehicle::with(['owner', 'creator', 'driver.user']);
+
+    // 🔍 Search by ID, manufacturer, model, or plate_number
+    if ($search = $request->input('search')) {
+        $query->where(function ($q) use ($search) {
+            $q->where('id', $search)
+              ->orWhere('manufacturer', 'like', "%{$search}%")
+              ->orWhere('model', 'like', "%{$search}%")
+              ->orWhere('plate_number', 'like', "%{$search}%");
+        });
     }
 
-    // Vehicle Owner: only their vehicles
-    if ($user->hasRole('vehicle_owner')) {
-        $vehicles = Vehicle::with(['driver.user', 'creator', 'editor', 'owner'])
-            ->where('owner_id', $user->id)
-            ->where('ownership_type', 'individual')
-            ->get();
-    }
+    // 🧩 Filter by ownership_type
+    if ($ownershipType = $request->input('ownership_type')) {
+        $query->where('ownership_type', $ownershipType);
 
-    // Driver: only their assigned vehicle
-    elseif ($user->hasRole('driver')) {
-        $driver = \App\Models\Driver::where('user_id', $user->id)->first();
-
-        if (!$driver || !$driver->vehicle_id) {
-            return response()->json(['message' => 'No vehicle assigned.'], 200);
+        // If ownership_type is 'individual', filter by individual_type
+        if ($ownershipType === 'individual') {
+            if ($individualType = $request->input('individual_type')) {
+                $query->where('individual_type', $individualType);
+            }
         }
+    }
 
-        $vehicles = Vehicle::with(['driver.user', 'creator', 'editor', 'owner'])
-            ->where('id', $driver->vehicle_id)
+    // 🧑‍✈️ Filter by driver_id
+    if ($driverId = $request->input('driver_id')) {
+        $query->whereHas('driver', function ($q) use ($driverId) {
+            $q->where('id', $driverId);
+        });
+    }
+
+    // 📌 Role-based restrictions
+    $user = auth()->user();
+    if ($user->hasRole('driver')) {
+        $query->whereHas('driver', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+    } elseif ($user->hasRole('vehicle_owner')) {
+        $query->where('owner_id', $user->id);
+    } elseif ($user->hasRole('gate_security')) {
+        // Gate security can only see visitor vehicles
+        $query->where('ownership_type', 'individual')
+              ->where('individual_type', 'visitor');
+    }
+    // Admin & Manager see all
+
+    // 🔁 Sorting
+    $sortBy = $request->input('sort_by', 'id');
+    $sortOrder = $request->input('order', 'asc');
+    $query->orderBy($sortBy, $sortOrder);
+
+    return response()->json(
+        $query->paginate($request->input('per_page', 15))
+    );
+}
+
+    public function vehiclesWithinPremises()
+    {
+        $vehicles = CheckInOut::with('vehicle', 'driver.user')
+            ->whereNull('checked_out_at')
+            ->latest()
             ->get();
+
+        return response()->json($vehicles);
     }
 
-    // Admins and Managers: all vehicles
-    else {
-        $vehicles = Vehicle::with(['driver.user', 'creator', 'editor', 'owner'])->get();
+    public function assignedVehicles()
+    {
+        $vehicles = Driver::with('vehicle')
+            ->whereNotNull('vehicle_id')
+            ->get()
+            ->pluck('vehicle')
+            ->filter()
+            ->values();
+
+        return response()->json($vehicles);
     }
 
-    return response()->json($vehicles);
-}
-
-
-public function vehiclesWithinPremises()
-{
-    $vehicles = CheckInOut::with('vehicle', 'driver.user')
-        ->whereNull('checked_out_at')
-        ->latest()
-        ->get();
-
-    return response()->json($vehicles);
-}
-
-
-public function assignedVehicles()
-{
-    $vehicles = Driver::with('vehicle')
-        ->whereNotNull('vehicle_id')
-        ->get()
-        ->pluck('vehicle')
-        ->filter()
-        ->values();
-
-    return response()->json($vehicles);
-}
-
-    // ✅ Return only vehicles that have an assigned driver (for Check-In)
     public function vehiclesWithDrivers()
     {
         $this->authorizeAccess('view');
 
         return Vehicle::whereHas('driver')->with('driver')->get();
     }
-// vehicle with drivers
+
     public function withDrivers()
-{
-    $this->authorizeAccess('view');
+    {
+        $this->authorizeAccess('view');
 
-    $vehicles = \App\Models\Vehicle::with(['driver.user'])
-        ->whereHas('driver')
-        ->get();
+        $vehicles = Vehicle::with(['driver.user'])
+            ->whereHas('driver')
+            ->get();
 
-    return response()->json($vehicles);
-}
+        return response()->json($vehicles);
+    }
 
-    // ✅ Create a new vehicle
-public function store(Request $request)
-{
-    $this->authorizeAccess('create');
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'manufacturer'     => 'required|string|max:255',
+            'model'            => 'required|string|max:255',
+            'year'             => 'required|integer|min:1900|max:' . date('Y'),
+            'plate_number'     => 'required|string|max:50|unique:vehicles',
+            'ownership_type'   => 'required|in:organization,individual',
+            'individual_type'  => 'nullable|in:staff,visitor,vehicle_owner',
+            'owner_id'         => 'nullable|exists:users,id',
+        ]);
 
-    $user = auth()->user();
+        if ($validated['ownership_type'] === 'individual') {
+            if (!isset($validated['individual_type'])) {
+                return response()->json(['error' => 'Individual type is required for individual ownership'], 422);
+            }
 
-    $validated = $request->validate([
-        'manufacturer'    => 'required|string|max:255',
-        'model'           => 'required|string|max:255',
-        'year'            => 'required|integer|min:1900|max:' . (date('Y') + 1),
-        'plate_number'    => 'required|string|max:20|unique:vehicles',
-        'ownership_type'  => 'nullable|in:organization,individual',
-        'owner_id'        => 'nullable|exists:users,id',
-    ]);
+            if ($validated['individual_type'] === 'vehicle_owner' && !$request->filled('owner_id')) {
+                return response()->json(['error' => 'Owner ID is required when individual type is vehicle_owner'], 422);
+            }
 
-    // If the user is a vehicle_owner, force ownership to them
- if ($user->hasRole('vehicle_owner')) {
-    // Force ownership to the logged-in vehicle owner
-    $validated['ownership_type'] = 'individual';
-    $validated['owner_id'] = $user->id;
-} else {
-    // For admin or manager: use submitted owner if individual is selected
-    if ($validated['ownership_type'] === 'individual') {
-        // owner_id already validated (nullable|exists)
-        if (!$validated['owner_id']) {
-            return response()->json(['error' => 'Please select a vehicle owner.'], 422);
+            if ($validated['individual_type'] !== 'vehicle_owner') {
+                $validated['owner_id'] = null; // Clear owner_id if not vehicle_owner
+            }
+        } else {
+            $validated['individual_type'] = null;
+            $validated['owner_id'] = null;
         }
-    } else {
-        // Organization vehicle – clear owner_id
-        $validated['owner_id'] = null;
-    }
-}
 
+        $validated['created_by'] = Auth::id();
 
-    $validated['created_by'] = $user->id;
-    $validated['updated_by'] = $user->id;
+        $vehicle = Vehicle::create($validated);
 
-    $vehicle = Vehicle::create($validated);
-
-    return response()->json($vehicle->load(['owner', 'creator', 'editor', 'owner']), 201);
-}
-
-public function myVehicles()
-{
-    $user = auth()->user();
-
-    // Make sure this user is a vehicle owner
-    if (!$user || !$user->hasRole('vehicle_owner')) {
-        return response()->json(['error' => 'Only vehicle owners can access this.'], 403);
+        return response()->json(['message' => 'Vehicle created successfully', 'vehicle' => $vehicle]);
     }
 
-    // Fetch vehicles owned by this user
-    $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])
-        ->where('owner_id', $user->id)
-        ->where('ownership_type', 'individual')
-        ->latest()
-        ->get();
+    public function update(Request $request, Vehicle $vehicle)
+    {
+        $validated = $request->validate([
+            'manufacturer'     => 'required|string|max:255',
+            'model'            => 'required|string|max:255',
+            'year'             => 'required|integer|min:1900|max:' . date('Y'),
+            'plate_number'     => 'required|string|max:50|unique:vehicles,plate_number,' . $vehicle->id,
+            'ownership_type'   => 'required|in:organization,individual',
+            'individual_type'  => 'nullable|in:staff,visitor,vehicle_owner',
+            'owner_id'         => 'nullable|exists:users,id',
+        ]);
 
-    return response()->json($vehicles);
-}
+        if ($validated['ownership_type'] === 'individual') {
+            if (!isset($validated['individual_type'])) {
+                return response()->json(['error' => 'Individual type is required for individual ownership'], 422);
+            }
 
+            if ($validated['individual_type'] === 'vehicle_owner' && !$request->filled('owner_id')) {
+                return response()->json(['error' => 'Owner ID is required when individual type is vehicle_owner'], 422);
+            }
 
+            if ($validated['individual_type'] !== 'vehicle_owner') {
+                $validated['owner_id'] = null;
+            }
+        } else {
+            $validated['individual_type'] = null;
+            $validated['owner_id'] = null;
+        }
 
+        $validated['updated_by'] = Auth::id();
 
-    // ✅ Show a specific vehicle with driver
+        $vehicle->update($validated);
+
+        return response()->json(['message' => 'Vehicle updated successfully', 'vehicle' => $vehicle]);
+    }
+
+    public function myVehicles()
+    {
+        $user = auth()->user();
+
+        if (!$user || !$user->hasRole('vehicle_owner')) {
+            return response()->json(['error' => 'Only vehicle owners can access this.'], 403);
+        }
+
+        $vehicles = Vehicle::with(['driver', 'creator', 'editor', 'owner'])
+            ->where('owner_id', $user->id)
+            ->where('ownership_type', 'individual')
+            ->latest()
+            ->get();
+
+        return response()->json($vehicles);
+    }
+
     public function show($id)
     {
         $this->authorizeAccess('view');
-        
+
         return Vehicle::with(['driver', 'creator', 'editor', 'owner'])->findOrFail($id);
     }
 
-    // ✅ Update a vehicle
-public function update(Request $request, $id)
-{
-    $this->authorizeAccess('update');
+    public function availableForDrivers(Request $request)
+    {
+        $assignedVehicleIds = Driver::pluck('vehicle_id')->toArray();
 
-    $vehicle = Vehicle::findOrFail($id);
-    $user = auth()->user();
-
-    $validated = $request->validate([
-        'manufacturer'    => 'sometimes|required|string|max:255',
-        'model'           => 'sometimes|required|string|max:255',
-        'year'            => 'sometimes|required|integer|min:1900|max:' . (date('Y') + 1),
-        'plate_number'    => 'sometimes|required|string|max:20|unique:vehicles,plate_number,' . $vehicle->id,
-        'ownership_type'  => 'nullable|in:organization,individual',
-        'owner_id'        => 'nullable|exists:users,id',
-    ]);
-
-    // Role-specific logic
-    if ($user->hasRole('vehicle_owner')) {
-        // Vehicle owners can only update their own vehicles
-        if ($vehicle->owner_id !== $user->id) {
-            return response()->json(['error' => 'You can only update your own vehicles.'], 403);
+        if ($request->filled('driver_id')) {
+            $currentVehicleId = Driver::where('id', $request->driver_id)->value('vehicle_id');
+            $assignedVehicleIds = array_diff($assignedVehicleIds, [$currentVehicleId]);
         }
 
-        // Force individual ownership to self
-        $validated['ownership_type'] = 'individual';
-        $validated['owner_id'] = $user->id;
-    } else {
-        // Admins/managers logic
-        if (isset($validated['ownership_type']) && $validated['ownership_type'] === 'individual') {
-            if (empty($validated['owner_id'])) {
-                return response()->json(['error' => 'Please select a vehicle owner for individual ownership.'], 422);
-            }
-        } elseif (isset($validated['ownership_type']) && $validated['ownership_type'] === 'organization') {
-            // Clear owner for organization type
-            $validated['owner_id'] = null;
+        $vehicles = Vehicle::whereNotIn('id', $assignedVehicleIds)
+            ->select('id', 'plate_number', 'model', 'manufacturer')
+            ->get();
+
+        return response()->json($vehicles);
+    }
+
+    public function searchByPlate(Request $request)
+    {
+        $this->authorizeAccess('view');
+
+        $query = $request->get('q');
+
+        if (!$query) {
+            return response()->json([]);
         }
+
+        $vehicles = Vehicle::where('plate_number', 'like', '%' . $query . '%')
+            ->whereHas('driver')
+            ->with(['driver.user'])
+            ->limit(10)
+            ->get();
+
+        return response()->json($vehicles);
     }
 
-    $validated['updated_by'] = $user->id;
-
-    $vehicle->update($validated);
-
-return response()->json([
-    'message' => 'Vehicle updated successfully.',
-    'vehicle' => $vehicle->load(['driver', 'creator', 'editor', 'owner']),
-]);
-
-}
-
-
-public function availableForDrivers(Request $request)
-{
-    // Get IDs of already assigned vehicles
-    $assignedVehicleIds = \App\Models\Driver::pluck('vehicle_id')->toArray();
-
-    if ($request->filled('driver_id')) {
-        // Get the currently assigned vehicle_id for this driver
-        $currentVehicleId = \App\Models\Driver::where('id', $request->driver_id)->value('vehicle_id');
-
-        // Remove the current vehicle from the exclusion list
-        $assignedVehicleIds = array_diff($assignedVehicleIds, [$currentVehicleId]);
-    }
-
-    // Get unassigned vehicles (plus the current one if editing)
-    $vehicles = \App\Models\Vehicle::whereNotIn('id', $assignedVehicleIds)
-        ->select('id', 'plate_number', 'model', 'manufacturer')
-        ->get();
-
-    return response()->json($vehicles);
-}
-
-
-// Searched by plate number
-// Searched by plate number
-public function searchByPlate(Request $request)
-{
-    $this->authorizeAccess('view');
-    
-    $query = $request->get('q');
-
-    if (!$query) {
-        return response()->json([]);
-    }
-
-    // Only return vehicles with an assigned driver
-    $vehicles = Vehicle::where('plate_number', 'like', '%' . $query . '%')
-        ->whereHas('driver') // ✅ ensures vehicle has a driver assigned
-        ->with(['driver.user']) // optional: loads driver and user info
-        ->limit(10)
-        ->get();
-
-    return response()->json($vehicles);
-}
-
-    
-
-    // ✅ Delete a vehicle
     public function destroy($id)
     {
         $this->authorizeAccess('delete');
@@ -276,18 +252,13 @@ public function searchByPlate(Request $request)
         return response()->json(['message' => 'Vehicle deleted']);
     }
 
-    
-
-    /**
-     * 🔐 Role-based permission checker
-     */
     private function authorizeAccess(string $action): void
     {
         $user = auth()->user();
 
         $rolePermissions = [
             'view'   => ['admin', 'manager', 'vehicle_owner', 'gate_security', 'driver'],
-            'create' => ['admin', 'manager', 'vehicle_owner'],
+            'create' => ['admin', 'manager', 'vehicle_owner', 'gate_security'],
             'update' => ['admin', 'manager', 'vehicle_owner'],
             'delete' => ['admin'],
         ];
@@ -295,7 +266,7 @@ public function searchByPlate(Request $request)
         $allowedRoles = $rolePermissions[$action] ?? [];
 
         if (!$user || !$user->hasAnyRole($allowedRoles)) {
-             \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
+            \Log::warning("Unauthorized {$action} attempt by user ID {$user?->id}");
             abort(403, 'Unauthorized for this action.');
         }
     }

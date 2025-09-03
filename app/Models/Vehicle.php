@@ -17,6 +17,7 @@ class Vehicle extends Model
         'year',
         'plate_number',
         'ownership_type',
+        'individual_type',
         'owner_id',
         'created_by',
         'updated_by',

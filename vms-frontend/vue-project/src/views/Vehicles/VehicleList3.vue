@@ -90,7 +90,7 @@
             <td class="p-2">{{ formatDate(vehicle.created_at) }}</td>
             <td class="p-2 text-right space-x-2">
               <button @click="$router.push(`/vehicles/${vehicle.id}/edit`)" class="btn-edit">Edit</button>
-              <button v-if="hasRole(['admin', 'manager'])" @click="openDeleteModal(vehicle)" class="btn-delete">Delete</button>
+              <button @click="openDeleteModal(vehicle)" class="btn-delete">Delete</button>
             </td>
           </tr>
           <tr v-if="vehicles.length === 0">
@@ -103,8 +103,17 @@
     <!-- Pagination -->
     <Pagination v-if="meta && meta.last_page > 1" :meta="meta" @page-changed="fetchVehicles" />
 
-    <!-- Programmatic Modal -->
+    <!-- Info Modal -->
     <ModalNotification ref="modalRef" />
+
+    <!-- Delete Confirmation Modal -->
+    <Modal
+      v-if="showDeleteModal"
+      :title="'Confirm Deletion'"
+      :message="`Are you sure you want to delete ${selectedVehicle?.manufacturer} - ${selectedVehicle?.plate_number}?`"
+      @close="showDeleteModal = false"
+      @confirm="deleteVehicle"
+    />
   </div>
 </template>
 
@@ -113,6 +122,7 @@ import { ref, onMounted, watch } from 'vue'
 import axios from '@/axios'
 import Pagination from '@/components/Pagination.vue'
 import ModalNotification from '@/components/ModalNotification.vue'
+import Modal from '@/components/Modal.vue' // <-- Proper confirm modal
 import { format } from 'date-fns'
 import { useAuthStore } from '@/stores/auth'
 
@@ -121,120 +131,153 @@ function hasRole(allowedRoles) {
   return allowedRoles.includes(auth.user?.role)
 }
 
+// Refs
 const modalRef = ref(null)
+const infoModalShow = ref(false)
+const infoModalTitle = ref('')
+const infoModalMessage = ref('')
+const showDeleteModal = ref(false)
+const selectedVehicle = ref(null)
+
+// Data
+const sortBy = ref('newest')
+const searchId = ref('')
 const vehicles = ref([])
 const drivers = ref([])
 const meta = ref(null)
 const search = ref('')
-const searchId = ref('')
-const filters = ref({ ownership_type: '', individual_type: '', driver_id: '' })
+const filters = ref({
+  ownership_type: '',
+  individual_type: '',
+  driver_id: '',
+})
+
+// Sorting
 const sortField = ref('id')
 const sortOrder = ref('asc')
 
 // Fetch vehicles
-function fetchVehicles(page = 1) {
-  axios.get('/vehicles', { params: {
-    search: search.value,
-    ownership_type: filters.value.ownership_type,
-    individual_type: filters.value.individual_type,
-    driver_id: filters.value.driver_id,
-    sort_by: sortField.value,
-    order: sortOrder.value,
-    page,
-  }}).then(res => {
-    vehicles.value = res.data.data
-    meta.value = res.data.meta
+function fetchVehicles(pageNumber = 1) {
+  axios
+    .get('/vehicles', {
+      params: {
+        search: search.value,
+        ownership_type: filters.value.ownership_type,
+        individual_type: filters.value.individual_type,
+        driver_id: filters.value.driver_id,
+        sort_by: sortField.value,
+        order: sortOrder.value,
+        page: pageNumber,
+      },
+    })
+    .then(res => {
+      vehicles.value = res.data.data
+      meta.value = res.data.meta
+    })
+}
+
+// Fetch drivers for dropdown
+function fetchDrivers() {
+  axios.get('/drivers').then(res => {
+    drivers.value = res.data.data
   })
 }
 
-// Fetch drivers
-function fetchDrivers() { axios.get('/drivers').then(res => drivers.value = res.data.data) }
-
-// Sorting
+// Sorting logic
 function sort(field) {
-  if (sortField.value === field) sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  else { sortField.value = field; sortOrder.value = 'asc' }
+  if (sortField.value === field) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field
+    sortOrder.value = 'asc'
+  }
   fetchVehicles()
 }
 
-// Format helpers
-const formatDate = d => format(new Date(d), 'dd MMM yyyy, hh:mm a')
-const formatIndividualType = t => ({ visitor:'Visitor', staff:'Staff', vehicle_owner:'Vehicle Owner' }[t]||t||'None')
-const formatOwnership = (ownership, type, owner) => {
-  if(ownership==='organization') return 'Organization'
-  if(ownership==='individual') return type==='vehicle_owner' && owner ? `Vehicle Owner - ${owner.name}` : `Individual - ${formatIndividualType(type)}`
+// Format ownership
+const formatIndividualType = type => {
+  if (!type) return 'None'
+  const map = {
+    visitor: 'Visitor',
+    staff: 'Staff',
+    vehicle_owner: 'Vehicle Owner',
+  }
+  return map[type] || type
+}
+const formatOwnership = (ownership, individualType, owner) => {
+  if (ownership === 'organization') return 'Organization'
+  if (ownership === 'individual') {
+    if (individualType === 'vehicle_owner' && owner) {
+      return `Vehicle Owner - ${owner.name}`
+    }
+    return `Individual - ${formatIndividualType(individualType)}`
+  }
   return 'N/A'
 }
 
-// Search by ID
-async function searchById(id) {
-  if (!id) return modalRef.value?.show('Please enter a vehicle ID.', 'Missing Input')
+// Format date
+const formatDate = dateStr => format(new Date(dateStr), 'dd MMM yyyy, hh:mm a')
+
+// Modal helpers
+function openInfoModal(message, title) {
+  infoModalMessage.value = message
+  infoModalTitle.value = title
+  infoModalShow.value = true
+  modalRef.value?.show(message, title)
+}
+
+// Search vehicle by ID
+const searchById = async id => {
+  if (!id) {
+    modalRef.value?.show('Please enter a vehicle ID.', 'Missing Input')
+    return
+  }
   try {
     const res = await axios.get(`/vehicles/${id}`)
-    const v = res.data
-    const msg = `
+    const vehicle = res.data
+    const message = `
       <h2 class="font-bold text-lg mb-2">🚗 Vehicle Found</h2>
-      <p>Manufacturer: ${v.manufacturer}</p>
-      <p>Model: ${v.model}</p>
-      <p>Plate Number: ${v.plate_number}</p>
-      <p>Year: ${v.year}</p>
-      <p>Created By: ${v.creator?.name ?? 'N/A'}</p>
-      <p>Created Time: ${formatDate(v.created_at)}</p>
-      <p>Last Edited By: ${v.editor?.name ?? 'N/A'}</p>
-      <p>Last Edited Time: ${formatDate(v.updated_at)}</p>
-      <p><a href="/vehicles/${v.id}/edit" class="text-blue-500 underline mt-2 inline-block">✏️ Edit Vehicle Info</a></p>
+      <p>Manufacturer: ${vehicle.manufacturer}</p>
+      <p>Model: ${vehicle.model}</p>
+      <p>Plate Number: ${vehicle.plate_number}</p>
+      <p>Year: ${vehicle.year}</p>
+      <p>Created By: ${vehicle.creator?.name ?? 'N/A'}</p>
+      <p>Created Time: ${formatDate(vehicle.created_at)}</p>
+      <p>Last Edited By: ${vehicle.editor?.name ?? 'N/A'}</p>
+      <p>Last Edited Time: ${formatDate(vehicle.updated_at)}</p>
+      <p><a href="/vehicles/${vehicle.id}/edit" class="text-blue-500 underline mt-2 inline-block">✏️ Edit Vehicle Info</a></p>
     `
-    modalRef.value?.show(msg, 'Vehicle Info')
+    modalRef.value?.show(message, 'Vehicle Info')
   } catch {
     modalRef.value?.show('❌ Vehicle not found or error occurred.', 'Error')
   }
 }
 
-// Delete
+// Delete modal
 function openDeleteModal(vehicle) {
-  modalRef.value?.show(
-    `Are you sure you want to delete ${vehicle.manufacturer} - ${vehicle.plate_number}?`,
-    'Confirm Deletion',
-    async () => {
-      try {
-        await axios.delete(`/vehicles/${vehicle.id}`)
-        fetchVehicles()
-        modalRef.value?.show('✅ Vehicle deleted successfully.', 'Success')
-      } catch (err) {
-        console.error(err)
-        modalRef.value?.show('❌ Failed to delete vehicle.', 'Error')
-      }
-    }
-  )
+  selectedVehicle.value = vehicle
+  showDeleteModal.value = true
 }
-const sortBy = ref('newest')
 
-// Watch sortBy changes and update sortField & sortOrder
-watch(sortBy, (value) => {
-  switch(value) {
-    case 'newest':
-      sortField.value = 'id'
-      sortOrder.value = 'desc'
-      break
-    case 'oldest':
-      sortField.value = 'id'
-      sortOrder.value = 'asc'
-      break
-    case 'manufacturer-asc':
-      sortField.value = 'manufacturer'
-      sortOrder.value = 'asc'
-      break
-    case 'manufacturer-desc':
-      sortField.value = 'manufacturer'
-      sortOrder.value = 'desc'
-      break
+async function deleteVehicle() {
+  try {
+    await axios.delete(`/vehicles/${selectedVehicle.value.id}`)
+    showDeleteModal.value = false
+    selectedVehicle.value = null
+    fetchVehicles()
+    modalRef.value?.show('✅ Vehicle deleted successfully.', 'Success')
+  } catch (err) {
+    console.error(err)
+    modalRef.value?.show('❌ Failed to delete vehicle.', 'Error')
   }
-  fetchVehicles()
-})
-
+}
 
 // Watchers
-watch([search, filters], () => fetchVehicles(), { deep: true })
+watch([search, sortBy, filters], () => fetchVehicles(), { deep: true })
 
-onMounted(() => { fetchVehicles(); fetchDrivers() })
+// Mount
+onMounted(() => {
+  fetchVehicles()
+  fetchDrivers()
+})
 </script>

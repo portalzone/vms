@@ -169,6 +169,7 @@ return response()->json([
     'email' => $driver->user->email ?? 'N/A',
     'license_number' => $driver->license_number,
     'phone_number' => $driver->phone_number,
+    'driver_type' => $driver->driver_type,
     'sex' => $driver->sex,
     'home_address' => $driver->home_address, // ✅ use correct field name
 

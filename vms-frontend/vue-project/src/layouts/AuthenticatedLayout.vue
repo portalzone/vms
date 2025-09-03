@@ -13,7 +13,7 @@
       <nav :class="{ open: menuOpen }">
         <RouterLink to="/" exact-active-class="active" @click="closeMenu">Home</RouterLink>
         <RouterLink to="/dashboard" exact-active-class="active" @click="closeMenu">Dashboard</RouterLink>
-        <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner'])" to="/vehicles" exact-active-class="active" @click="closeMenu">Vehicles</RouterLink>
+        <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner', 'gate_security'])" to="/vehicles" exact-active-class="active" @click="closeMenu">Vehicles</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'gate_security'])" to="/vehicle-within" exact-active-class="active" @click="closeMenu">Vehicles Within</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager', 'vehicle_owner', 'gate_security'])" to="/drivers" exact-active-class="active" @click="closeMenu">Drivers</RouterLink>
         <RouterLink v-if="hasRole(['admin', 'manager'])" to="/incomes" exact-active-class="active" @click="closeMenu">Income</RouterLink>

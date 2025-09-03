@@ -138,18 +138,27 @@ const selectVehicle = async (vehicle) => {
   form.value.vehicle_id = vehicle.id
   plateSearch.value = ''
   searchResults.value = []
+
   try {
     const res = await axios.get(`/checkins/latest?vehicle_id=${vehicle.id}`)
     const latest = res.data
+
     isAlreadyCheckedIn.value = latest && !latest.checked_out_at
     wasRecentlyCheckedOut.value = latest && !!latest.checked_out_at
     activeCheckInId.value = latest && !latest.checked_out_at ? latest.id : null
-  } catch {
-    isAlreadyCheckedIn.value = false
-    wasRecentlyCheckedOut.value = false
-    activeCheckInId.value = null
+  } catch (err) {
+    if (err.response?.status === 404) {
+      // No check-in found → just reset state (not really an error)
+      isAlreadyCheckedIn.value = false
+      wasRecentlyCheckedOut.value = false
+      activeCheckInId.value = null
+    } else {
+      // Actual server/network error
+      toast.error(err.response?.data?.message || 'Failed to fetch check-in status')
+    }
   }
 }
+
 
 const submitCheckin = async () => {
   loading.value = true

@@ -1,171 +1,162 @@
 <template>
-  <div class="bg-white rounded shadow p-6">
-    <form @submit.prevent="submit">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <!-- Manufacturer -->
-        <div>
-          <label class="block mb-1 font-medium text-gray-700">Manufacturer</label>
-          <input
-            v-model="vehicle.manufacturer"
-            type="text"
-            required
-            class="w-full border rounded px-3 py-2"
-            placeholder="Toyota, Ford..."
-          />
-          <p v-if="errors.manufacturer" class="text-red-600 text-sm mt-1">{{ errors.manufacturer[0] }}</p>
-        </div>
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-bold mb-4">
+      {{ isEdit ? "Edit Vehicle" : "Add Vehicle" }}
+    </h2>
 
-        <!-- Model -->
-        <div>
-          <label class="block mb-1 font-medium text-gray-700">Model</label>
-          <input
-            v-model="vehicle.model"
-            type="text"
-            required
-            class="w-full border rounded px-3 py-2"
-            placeholder="Camry, F-150..."
-          />
-          <p v-if="errors.model" class="text-red-600 text-sm mt-1">{{ errors.model[0] }}</p>
-        </div>
-
-        <!-- Year -->
-        <div>
-          <label class="block mb-1 font-medium text-gray-700">Year</label>
-          <input
-            v-model.number="vehicle.year"
-            type="number"
-            required
-            class="w-full border rounded px-3 py-2"
-            placeholder="2020"
-          />
-          <p v-if="errors.year" class="text-red-600 text-sm mt-1">{{ errors.year[0] }}</p>
-        </div>
-
-        <!-- Plate Number -->
-        <div>
-          <label class="block mb-1 font-medium text-gray-700">Plate Number</label>
-          <input
-            v-model="vehicle.plate_number"
-            type="text"
-            required
-            class="w-full border rounded px-3 py-2"
-            placeholder="ABC-123-XY"
-            @input="errors.plate_number = null"
-          />
-          <p v-if="errors.plate_number" class="text-red-600 text-sm mt-1">{{ errors.plate_number[0] }}</p>
-        </div>
-
-        <!-- Ownership Type -->
-        <div>
-          <label class="block mb-1 font-medium text-gray-700">Ownership</label>
-          <select v-model="vehicle.ownership_type" class="w-full border rounded px-3 py-2">
-            <option value="organization">Organization</option>
-            <option value="individual">Vehicle Owner</option>
-          </select>
-        </div>
-
-        <!-- Vehicle Owner selection (admin/manager only) -->
-        <div
-          v-if="vehicle.ownership_type === 'individual' && isAdminOrManager"
-        >
-          <label class="block mb-1 font-medium text-gray-700">Select Vehicle Owner</label>
-          <select v-model="vehicle.owner_id" class="w-full border rounded px-3 py-2">
-            <option value="">-- Select Owner --</option>
-            <option v-for="u in vehicleOwners" :key="u.id" :value="u.id">{{ u.name }}</option>
-          </select>
-          <p v-if="errors.owner_id" class="text-red-600 text-sm mt-1">{{ errors.owner_id[0] }}</p>
-        </div>
+    <form @submit.prevent="handleSubmit" class="space-y-4">
+      <!-- Manufacturer -->
+      <div>
+        <label class="block mb-1">Manufacturer</label>
+        <input
+          v-model="form.manufacturer"
+          type="text"
+          class="w-full border rounded p-2"
+          required
+        />
       </div>
 
-      <!-- Buttons -->
-      <div class="flex justify-end mt-6 gap-2">
-        <button type="submit" class="btn-submit">
-          {{ props.id ? 'Update' : 'Create' }}
+      <!-- Model -->
+      <div>
+        <label class="block mb-1">Model</label>
+        <input
+          v-model="form.model"
+          type="text"
+          class="w-full border rounded p-2"
+          required
+        />
+      </div>
+
+      <!-- Plate Number -->
+      <div>
+        <label class="block mb-1">Plate Number</label>
+        <input
+          v-model="form.plate_number"
+          type="text"
+          class="w-full border rounded p-2"
+          required
+        />
+      </div>
+
+      <!-- Ownership Type -->
+      <div>
+        <label class="block mb-1">Ownership Type</label>
+        <select
+          v-model="form.ownership_type"
+          class="w-full border rounded p-2"
+          required
+        >
+          <option value="">Select Ownership</option>
+          <option value="organization">Organization</option>
+          <option value="individual">Individual</option>
+        </select>
+      </div>
+
+      <!-- If Individual -->
+      <div v-if="form.ownership_type === 'individual'">
+        <label class="block mb-1">Individual Type</label>
+        <select v-model="form.individual_type" class="w-full border rounded p-2">
+          <option value="">Select Individual Type</option>
+          <option value="staff">Staff</option>
+          <option value="visitor">Visitor</option>
+          <option value="vehicle_owner">Vehicle Owner</option>
+        </select>
+      </div>
+
+      <!-- Vehicle Owner Dropdown -->
+      <div v-if="form.individual_type === 'vehicle_owner'">
+        <label class="block mb-1">Vehicle Owner</label>
+        <select v-model="form.owner_id" class="w-full border rounded p-2">
+          <option value="">Select Vehicle Owner</option>
+          <option
+            v-for="owner in vehicleOwners"
+            :key="owner.id"
+            :value="owner.id"
+          >
+            {{ owner.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Submit Button -->
+      <div>
+        <button
+          type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          {{ isEdit ? "Update" : "Create" }}
         </button>
-        <router-link to="/vehicles" class="btn-cancel">Cancel</router-link>
       </div>
     </form>
   </div>
 </template>
 
 <script setup>
-import { reactive, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from '@/axios'
-import { useAuthStore } from '@/stores/auth'
+import { ref, onMounted } from "vue"
+import { useRoute, useRouter } from "vue-router"
+import axios from "@/axios"
 
-const props = defineProps({ id: [String, Number] })
 const router = useRouter()
-const auth = useAuthStore()
+const route = useRoute()
 
-const vehicle = reactive({
-  manufacturer: '',
-  model: '',
-  year: '',
-  plate_number: '',
-  ownership_type: 'organization',
+// Form state
+const form = ref({
+  manufacturer: "",
+  model: "",
+  plate_number: "",
+  ownership_type: "",
+  individual_type: "",
   owner_id: null,
 })
 
-const errors = reactive({})
 const vehicleOwners = ref([])
-
-const isAdminOrManager = ['admin', 'manager'].includes(auth.user?.role)
+const isEdit = ref(false)
 
 const fetchVehicleOwners = async () => {
-  if (!isAdminOrManager) return
   try {
-    const res = await axios.get('/vehicle-owners')
-    vehicleOwners.value = res.data
-  } catch (error) {
-    console.error('❌ Failed to load vehicle owners:', error)
+    const res = await axios.get("/vehicle-owners")
+    // handle if API returns paginated data
+    vehicleOwners.value = res.data.data || res.data
+  } catch (err) {
+    console.error("Error fetching vehicle owners:", err)
   }
 }
 
 onMounted(async () => {
   await fetchVehicleOwners()
 
-  if (props.id) {
+  if (route.params.id) {
+    isEdit.value = true
     try {
-      const res = await axios.get(`/vehicles/${props.id}`)
-      Object.assign(vehicle, res.data)
+      const res = await axios.get(`/vehicles/${route.params.id}`)
+      form.value = res.data
     } catch (err) {
-      console.error('❌ Failed to load vehicle:', err)
-      alert('Error loading vehicle. Please try again.')
-    }
-  } else {
-    // If vehicle_owner, default ownership to individual and owner_id to self
-    if (auth.user?.role === 'vehicle_owner') {
-      vehicle.ownership_type = 'individual'
-      vehicle.owner_id = auth.user.id
+      console.error("Error loading vehicle:", err)
     }
   }
 })
 
-const submit = async () => {
-  Object.keys(errors).forEach(key => delete errors[key])
-
-  if (vehicle.ownership_type === 'organization') {
-    vehicle.owner_id = null
-  } else if (!isAdminOrManager) {
-    vehicle.owner_id = auth.user.id
-  }
-
+const handleSubmit = async () => {
   try {
-    if (props.id) {
-      await axios.put(`/vehicles/${props.id}`, vehicle)
-      window.$toast?.showToast('✅ Vehicle updated successfully!')
-    } else {
-      await axios.post('/vehicles', vehicle)
-      window.$toast?.showToast('✅ Vehicle created successfully!')
+    // Prepare payload
+    const payload = { ...form.value }
+
+    if (payload.ownership_type === "organization") {
+      payload.individual_type = null
+      payload.vehicle_owner_id = null
+    } else if (payload.individual_type !== "vehicle_owner") {
+      payload.vehicle_owner_id = null
     }
-    router.push('/vehicles')
+
+    if (isEdit.value) {
+      await axios.put(`/vehicles/${route.params.id}`, payload)
+    } else {
+      await axios.post("/vehicles", payload)
+    }
+
+    router.push("/vehicles")
   } catch (err) {
-    if (err.response?.status === 422) {
-      Object.assign(errors, err.response.data.errors)
-    } else {
-      window.$toast?.showToast('❌ Failed to save vehicle. Please try again.', 5000)
-    }
+    console.error("Error saving vehicle:", err.response?.data || err.message)
   }
 }
 </script>
