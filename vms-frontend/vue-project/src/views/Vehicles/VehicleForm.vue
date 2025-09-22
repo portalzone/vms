@@ -27,6 +27,17 @@
         />
       </div>
 
+            <!-- Model -->
+      <div>
+        <label class="block mb-1">Year</label>
+        <input
+          v-model="form.year"
+          type="text"
+          class="w-full border rounded p-2"
+          required
+        />
+      </div>
+
       <!-- Plate Number -->
       <div>
         <label class="block mb-1">Plate Number</label>
@@ -105,6 +116,7 @@ const form = ref({
   model: "",
   plate_number: "",
   ownership_type: "",
+  year: "",
   individual_type: "",
   owner_id: null,
 })

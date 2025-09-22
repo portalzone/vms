@@ -121,7 +121,9 @@ onMounted(async () => {
   userRole.value = response.data.user.role; // ✅ Correct
 
     const vRes = await axios.get('/vehicles');
-    vehicles.value = vRes.data;
+    // vehicles.value = vRes.data;
+    vehicles.value = vRes.data.data || vRes.data
+
 
     if (props.id) {
       const res = await axios.get(`/expenses/${props.id}`);

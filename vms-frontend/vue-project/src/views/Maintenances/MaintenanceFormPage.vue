@@ -15,9 +15,13 @@
           class="w-full border rounded-lg px-4 py-2"
         >
           <option value="">Select Vehicle</option>
-          <option v-for="v in vehicles" :key="v.id" :value="v.id">
-            {{ v.plate_number }} - ({{ v.manufacturer }} {{ v.model }})
-          </option>
+         <option v-for="v in vehicles" :key="v.id" :value="v.id">
+  {{ v.plate_number }} - ({{ v.manufacturer }} {{ v.model }})
+</option>
+
+
+
+
         </select>
       </div>
 
@@ -107,7 +111,7 @@ const form = ref({
   vehicle_id: '',
   description: '',
   status: 'Pending',
-  cost: 0,
+  cost: '',
   date: new Date().toISOString().slice(0, 10),
 })
 
@@ -116,7 +120,13 @@ const vehicles = ref([])
 onMounted(async () => {
   try {
     const vRes = await axios.get('/vehicles')
-    vehicles.value = vRes.data
+    // vehicles.value = vRes.data
+    // vehicles.value = vRes.data.filter(v => v && v.id)
+    vehicles.value = (vRes.data.data || []).filter(v => v && v.id)
+    
+
+
+
 
     if (isEdit && id) {
       const res = await axios.get(`/maintenances/${id}`)

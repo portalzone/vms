@@ -10,9 +10,9 @@
         <label class="block font-medium mb-1">Trip (optional)</label>
         <select v-model="form.trip_id" class="w-full border rounded px-3 py-2">
           <option value="">-- Select Trip --</option>
-          <option v-for="trip in trips" :key="trip.id" :value="trip.id">
-            {{ trip.start_location }} ➝ {{ trip.end_location }} ({{ trip.status }})
-          </option>
+          <option v-for="trip in trips" :key="trip?.id" :value="trip?.id">
+  {{ trip.start_location }} ➝ {{ trip.end_location }} ({{ trip.status }})
+</option>
         </select>
         <p v-if="errors.trip_id" class="text-red-600 text-sm">{{ errors.trip_id[0] }}</p>
       </div>
@@ -22,9 +22,9 @@
         <label class="block font-medium mb-1">Vehicle</label>
         <select v-model="form.vehicle_id" class="w-full border rounded px-3 py-2">
           <option value="">-- Select Vehicle --</option>
-          <option v-for="vehicle in vehicles" :key="vehicle.id" :value="vehicle.id">
-            {{ vehicle.plate_number }}
-          </option>
+          <option v-for="vehicle in vehicles" :key="vehicle?.id" :value="vehicle?.id">
+  {{ vehicle.plate_number }}
+</option>
         </select>
         <p v-if="errors.vehicle_id" class="text-red-600 text-sm">{{ errors.vehicle_id[0] }}</p>
       </div>
@@ -34,9 +34,9 @@
         <label class="block font-medium mb-1">Driver</label>
         <select v-model="form.driver_id" class="w-full border rounded px-3 py-2">
           <option value="">-- Select Driver --</option>
-          <option v-for="driver in drivers" :key="driver.id" :value="driver.id">
-            {{ driver.user?.name }} ({{ driver.license_number }})
-          </option>
+         <option v-for="driver in drivers" :key="driver?.id" :value="driver?.id">
+  {{ driver.user?.name || 'Unnamed' }} ({{ driver.license_number || 'No License' }})
+</option>
         </select>
         <p v-if="errors.driver_id" class="text-red-600 text-sm">{{ errors.driver_id[0] }}</p>
       </div>
@@ -108,17 +108,19 @@ const fetchDropdowns = async () => {
     const [vehicleRes, driverRes, tripRes] = await Promise.all([
       axios.get('/vehicles'),
       axios.get('/drivers'),
-      axios.get('/trips/all')
+      axios.get('/trips?per_page=all')
     ]);
 
-    vehicles.value = vehicleRes.data;
-    drivers.value = driverRes.data;
-    trips.value = tripRes.data;
+vehicles.value = (vehicleRes.data.data || []).filter(v => v && v.id)
+drivers.value  = (driverRes.data.data || []).filter(d => d && d.id)
+trips.value    = (tripRes.data.data || []).filter(t => t && t.id)
+
 
   } catch (error) {
     console.error('Failed to fetch dropdown data:', error);
   }
 };
+
 
 const fetchIncome = async () => {
   if (!route.params.id) return; // guard clause

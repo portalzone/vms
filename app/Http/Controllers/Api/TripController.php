@@ -15,9 +15,10 @@ use App\Models\Income;
 class TripController extends Controller
 {
     // ✅ List trips (Admin/Manager can see all, Driver sees only theirs)
-public function index(Request $request)
+
+    public function index(Request $request)
 {
-            $this->authorizeAccess('view');
+    $this->authorizeAccess('view');
     $user = Auth::user();
     $query = Trip::with(['vehicle', 'driver.user']);
 
@@ -36,7 +37,6 @@ public function index(Request $request)
     } elseif ($user->hasRole('admin') || $user->hasRole('manager')) {
         // No filter needed
     } else {
-        // Default: deny access
         return response()->json(['error' => 'Unauthorized'], 403);
     }
 
@@ -45,8 +45,48 @@ public function index(Request $request)
         $query->where('status', $request->status);
     }
 
-    return $query->orderBy('status')->latest()->paginate(10);
+    // ✅ Respect per_page parameter
+    $perPage = $request->input('per_page', 10);
+
+    if ($perPage === 'all') {        // Return all without pagination
+        return response()->json($query->orderBy('status')->latest()->get());
+    }
+
+    return $query->orderBy('status')->latest()->paginate((int) $perPage);
 }
+
+// public function index(Request $request)
+// {
+//             $this->authorizeAccess('view');
+//     $user = Auth::user();
+//     $query = Trip::with(['vehicle', 'driver.user']);
+
+//     if ($user->hasRole('driver')) {
+//         $driver = Driver::where('user_id', $user->id)->first();
+//         if ($driver) {
+//             $query->where('driver_id', $driver->id);
+//         } else {
+//             return response()->json([], 200);
+//         }
+//     } elseif ($user->hasRole('vehicle_owner')) {
+//         // Assuming vehicles have user_id pointing to owner
+//         $query->whereHas('vehicle', function ($q) use ($user) {
+//             $q->where('owner_id', $user->id);
+//         });
+//     } elseif ($user->hasRole('admin') || $user->hasRole('manager')) {
+//         // No filter needed
+//     } else {
+//         // Default: deny access
+//         return response()->json(['error' => 'Unauthorized'], 403);
+//     }
+
+//     // Optional: filter by status (e.g., ?status=completed)
+//     if ($request->has('status')) {
+//         $query->where('status', $request->status);
+//     }
+
+//     return $query->orderBy('status')->latest()->paginate(10);
+// }
 // ✅ Return all trips (for dropdowns etc)
 public function all()
 {
