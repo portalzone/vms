@@ -1,58 +1,74 @@
-# 1. Composer Stage (Install PHP Dependencies)
-FROM composer:2.7 as composer
-
-# Set working directory for the stage
-WORKDIR /app
-
-# Copy Composer files and install dependencies
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
 # ----------------------------------------------------------------------
-# 2. Node Stage (Install JS Dependencies and Build Frontend Assets)
-FROM node:20 as node_builder
+# STAGE 1: BUILD (For compiling Vue/Vite assets)
+# ----------------------------------------------------------------------
+FROM node:20-alpine AS frontend_builder
 
-# Set working directory for the stage
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package files and install NPM dependencies
-COPY package.json package-lock.json ./
+# Copy the package files
+# NOTE: Adjust path (e.g., vms-frontend/vue-project) if your Vue code is in a subdirectory
+COPY vms-frontend/vue-project/package.json .
+COPY vms-frontend/vue-project/package-lock.json .
+
+# Install Node dependencies
 RUN npm install
 
-# Copy source code for frontend build
-COPY . .
+# Copy the entire Vue source code
+COPY vms-frontend/vue-project/ .
 
-# Build the frontend assets for production
+# Run the production build (Vite/Rollup)
+# This generates the compiled assets (e.g., app.js, app.css) in the 'dist' folder
 RUN npm run build
+
 # ----------------------------------------------------------------------
+# STAGE 2: PRODUCTION (For running the Laravel/PHP application)
+# ----------------------------------------------------------------------
+FROM php:8.3-fpm-alpine AS final
 
-# 3. Production Stage (Final Runtime Image)
-# Use a lightweight PHP-FPM base image for the application backend
-FROM php:8.2-fpm-alpine AS production
-
-# Install essential PHP extensions and system dependencies
-# (Example extensions for a typical Laravel app)
-RUN apk update && apk add \
+# Install core PHP dependencies (e.g., GD, PDO, Zip, etc.)
+RUN apk add --no-cache \
     nginx \
-    ... \
-    && rm -rf /var/cache/apk/*
+    $PHPIZE_DEPS \
+    libzip-dev \
+    libpng-dev \
+    libxml2-dev \
+    supervisor \
+    && docker-php-ext-install pdo_mysql opcache zip gd bcmath \
+    && apk del $PHPIZE_DEPS
 
-RUN docker-php-ext-install pdo pdo_mysql opcache bcmath \
-    && docker-php-ext-enable opcache
-
-# Set working directory
+# Set the working directory to the Laravel root
 WORKDIR /var/www/html
 
-# Copy application code and vendor from the Composer stage
-COPY --from=composer /app/vendor /var/www/html/vendor
-COPY --from=composer /app /var/www/html
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy the built public assets from the Node stage
-COPY --from=node_builder /app/public/build /var/www/html/public/build
-COPY --from=node_builder /app/public/mix-manifest.json /var/www/html/public/mix-manifest.json
+# Copy only the necessary PHP files for dependency installation
+COPY composer.json composer.lock ./
 
-# Expose port (PHP-FPM typically runs on port 9000 for Nginx to communicate)
-EXPOSE 9000
+# Install Composer dependencies (only production dependencies)
+RUN composer install --no-dev --optimize-autoloader
 
-# Set entrypoint to run PHP-FPM
-CMD ["php-fpm"]
+# Copy the entire Laravel application source code
+COPY . .
+
+# Copy the NGINX configuration file
+COPY .render/nginx.conf /etc/nginx/http.d/default.conf
+
+# Copy the built Vue assets from the frontend_builder stage
+# This step is crucial! It moves the compiled assets into Laravel's public directory.
+# NOTE: Check your vite.config.js for the correct output directory (often 'build' or 'dist' within public).
+COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
+
+# Set correct permissions for storage and cache directories
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Expose port 8000 for Render
+EXPOSE 8000
+
+# The startup command is handled by the deployment script (00-laravel-deploy.sh)
+# and a combined start script to run both PHP-FPM and Nginx.
+# For Render, you typically use a run script (like a shell file)
+# but for a combined Docker container, a standard CMD is needed:
+CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
