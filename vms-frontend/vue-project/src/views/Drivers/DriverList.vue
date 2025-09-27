@@ -1,16 +1,17 @@
 <template>
   <div>
     <!-- Search & Add -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+    <div class="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
       <input
         v-model="search"
         type="text"
         placeholder="Search by name, email, license, or vehicle..."
-        class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
+        class="w-full px-4 py-2 border border-gray-300 rounded md:w-1/2"
       />
-      <router-link v-if="hasRole(['admin', 'manager', 'gate_security'])"
+      <router-link
+        v-if="hasRole(['admin', 'manager', 'gate_security'])"
         to="/drivers/new"
-        class="btn-primary text-center"
+        class="text-center btn-primary"
       >
         ➕ Add Driver
       </router-link>
@@ -22,59 +23,50 @@
         v-model="searchDriverIdInput"
         type="number"
         placeholder="Search Driver by ID"
-        class="border border-gray-300 rounded px-4 py-2"
+        class="px-4 py-2 border border-gray-300 rounded"
       />
       <button @click="searchDriverById(searchDriverIdInput)" class="btn-primary">
         Search by ID
       </button>
 
-<!-- Only show ownership filter for admin and manager -->
-<div v-if="hasRole(['admin', 'manager'])" class="mb-4 flex gap-4 items-center">
-  <label class="font-medium">Filter Drivers by Ownership Type:</label>
+      <!-- Only show ownership filter for admin and manager -->
+      <div v-if="hasRole(['admin', 'manager'])" class="flex items-center gap-4 mb-4">
+        <label class="font-medium">Filter Drivers by Ownership Type:</label>
 
-  <!-- Ownership type -->
-  <select v-model="selectedOwnership" class="border border-gray-300 rounded px-3 py-2">
-    <option value="">All Ownership</option>
-    <option value="individual">Vehicle Owner</option>
-    <option value="organization">Organization</option>
-  </select>
+        <!-- Ownership type -->
+        <select v-model="selectedOwnership" class="px-3 py-2 border border-gray-300 rounded">
+          <option value="">All Ownership</option>
+          <option value="individual">Vehicle Owner</option>
+          <option value="organization">Organization</option>
+        </select>
 
-  <!-- Vehicle owner (only for individual) -->
-  <select
-    v-if="selectedOwnership === 'individual'"
-    v-model="selectedOwnerId"
-    class="border border-gray-300 rounded px-3 py-2"
-  >
-    <option value="">All Owners</option>
-   <option
-  v-for="owner in vehicleOwners || []"
-  :key="owner.id"
-  :value="owner.id"
->
-  {{ owner.name }}
-</option>
-
-  </select>
-
-
-</div>
-<!-- Filter by Driver Type -->
-<div class="mb-4 flex gap-4 items-center">
-  <label class="font-medium">Driver Type:</label>
-  <select v-model="selectedDriverType" class="border border-gray-300 rounded px-3 py-2">
-    <option value="">All Driver Types</option>
-    <option value="internal">Internal (Staff + Organization)</option>
-    <option value="external">External (Visitor + Vehicle Owner)</option>
-  </select>
-</div>
-
-
+        <!-- Vehicle owner (only for individual) -->
+        <select
+          v-if="selectedOwnership === 'individual'"
+          v-model="selectedOwnerId"
+          class="px-3 py-2 border border-gray-300 rounded"
+        >
+          <option value="">All Owners</option>
+          <option v-for="owner in vehicleOwners || []" :key="owner.id" :value="owner.id">
+            {{ owner.name }}
+          </option>
+        </select>
+      </div>
+      <!-- Filter by Driver Type -->
+      <div class="flex items-center gap-4 mb-4">
+        <label class="font-medium">Driver Type:</label>
+        <select v-model="selectedDriverType" class="px-3 py-2 border border-gray-300 rounded">
+          <option value="">All Driver Types</option>
+          <option value="internal">Internal (Staff + Organization)</option>
+          <option value="external">External (Visitor + Vehicle Owner)</option>
+        </select>
+      </div>
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto rounded shadow bg-white">
-      <table class="min-w-full table-auto text-sm">
-        <thead class="bg-gray-100 text-left">
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="min-w-full text-sm table-auto">
+        <thead class="text-left bg-gray-100">
           <tr>
             <th class="px-4 py-2">#</th>
             <th class="px-4 py-2">User</th>
@@ -89,7 +81,7 @@
             <th class="px-4 py-2">Latest Update</th>
             <th class="px-4 py-2">Registered By</th>
             <th class="px-4 py-2">Last Edited By</th>
-            <th class="px-4 py-2 text-right">Actions</th>
+            <th v-if="hasRole(['admin', 'manager'])" class="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -125,21 +117,23 @@
             <td class="px-4 py-2">{{ formatDate(driver.created_at) }}</td>
             <td class="px-4 py-2">{{ formatDate(driver.updated_at) }}</td>
             <td class="px-4 py-2">{{ driver.creator?.name || '—' }}</td>
-            <td class="px-4 py-2">{{ driver.editor?.name || '—' }}</td>
-            <td class="px-4 py-2 text-right space-x-2">
+            <td v-if="hasRole(['admin', 'manager'])" class="px-4 py-2">
+              {{ driver.editor?.name || '—' }}
+            </td>
+            <td class="px-4 py-2 space-x-2 text-right">
               <button class="btn-edit" @click="edit(driver.id)">Edit</button>
               <button class="btn-delete" @click="remove(driver.id)">Delete</button>
             </td>
           </tr>
           <tr v-if="paginatedDrivers.length === 0">
-            <td colspan="13" class="text-center text-gray-500 py-4">No drivers found.</td>
+            <td colspan="13" class="py-4 text-center text-gray-500">No drivers found.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
+    <div class="flex flex-wrap items-center justify-center gap-2 mt-6 text-sm">
       <button :disabled="page === 1" @click="page--" class="btn-pagination">Prev</button>
 
       <button
@@ -150,8 +144,8 @@
           'btn-pagination',
           {
             'bg-blue-600 text-white': p === page,
-            'pointer-events-none text-gray-500': p === '...'
-          }
+            'pointer-events-none text-gray-500': p === '...',
+          },
         ]"
         :disabled="p === '...'"
       >
@@ -187,17 +181,15 @@ const page = ref(1)
 const perPage = 10
 const searchDriverIdInput = ref('')
 
-const selectedFilterType = ref('')
+// const selectedFilterType = ref('')
 const selectedOwnership = ref('')
 const selectedOwnerId = ref('')
 const selectedOrganizationId = ref('')
 
 const selectedDriverType = ref('')
 
-
 const vehicleOwners = ref([])
 const drivers = ref([]) // Your driver data
-
 
 const fetchDrivers = async () => {
   try {
@@ -227,7 +219,7 @@ const fetchVehicleOwners = async () => {
   try {
     const res = await axios.get('/users?role=vehicle_owner')
     const owners = Array.isArray(res.data) ? res.data : res.data?.data || []
-    vehicleOwners.value = owners.filter(o => o && o.id)
+    vehicleOwners.value = owners.filter((o) => o && o.id)
   } catch (err) {
     console.error('Failed to fetch vehicle owners:', err)
     vehicleOwners.value = []
@@ -235,41 +227,33 @@ const fetchVehicleOwners = async () => {
 }
 
 const filteredDrivers = computed(() => {
-  return drivers.value.filter(driver => {
+  return drivers.value.filter((driver) => {
     const vehicle = driver.vehicle
     const driverType = driver.driver_type
 
     const matchesOwnership =
-      !selectedOwnership.value ||
-      vehicle?.ownership_type === selectedOwnership.value
+      !selectedOwnership.value || vehicle?.ownership_type === selectedOwnership.value
 
     const matchesOwner =
-      !selectedOwnerId.value ||
-      String(vehicle?.owner_id) === String(selectedOwnerId.value)
+      !selectedOwnerId.value || String(vehicle?.owner_id) === String(selectedOwnerId.value)
 
     const matchesOrg =
-      !selectedOrganizationId.value ||
-      vehicle?.organization_id == selectedOrganizationId.value
+      !selectedOrganizationId.value || vehicle?.organization_id == selectedOrganizationId.value
 
     const matchesDriverType =
       !selectedDriverType.value ||
-      (selectedDriverType.value === 'internal' &&
-        ['organization', 'staff'].includes(driverType)) ||
-      (selectedDriverType.value === 'external' &&
-        ['visitor', 'vehicle_owner'].includes(driverType))
+      (selectedDriverType.value === 'internal' && ['organization', 'staff'].includes(driverType)) ||
+      (selectedDriverType.value === 'external' && ['visitor', 'vehicle_owner'].includes(driverType))
 
     return matchesOwnership && matchesOwner && matchesOrg && matchesDriverType
   })
 })
 
-
 const start = computed(() => (page.value - 1) * perPage)
 const paginatedDrivers = computed(() =>
-  filteredDrivers.value.slice(start.value, start.value + perPage)
+  filteredDrivers.value.slice(start.value, start.value + perPage),
 )
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredDrivers.value.length / perPage))
-)
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredDrivers.value.length / perPage)))
 const visiblePages = computed(() => {
   const total = totalPages.value
   const current = page.value
@@ -290,8 +274,7 @@ const visiblePages = computed(() => {
   return pages
 })
 
-const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleString()
+const formatDate = (dateStr) => new Date(dateStr).toLocaleString()
 
 const searchDriverById = async (id) => {
   if (!id) {
@@ -304,16 +287,17 @@ const searchDriverById = async (id) => {
     const driver = res.data
     const vehicle = driver.vehicle
 
-const vehicleInfo = vehicle && typeof vehicle === 'object'
-  ? `
+    const vehicleInfo =
+      vehicle && typeof vehicle === 'object'
+        ? `
     <p>Plate: ${vehicle.plate_number || 'N/A'}</p>
     <p>Vehicle Name: ${vehicle.name || 'N/A'}</p>
     <a href="/drivers/${driver.id}/edit" class="text-blue-500 underline">Edit Driver</a>
     `
-  : '<p>No vehicle assigned.</p>'
+        : '<p>No vehicle assigned.</p>'
 
     const message = `
-      <h2 class="font-bold text-lg mb-2">✅ Driver Found</h2>
+      <h2 class="mb-2 text-lg font-bold">✅ Driver Found</h2>
       <p>Name: ${driver.name}</p>
       <p>Email: ${driver.email}</p>
       <p>Phone: ${driver.phone_number}</p>
@@ -339,17 +323,16 @@ const remove = async (id) => {
   }
 }
 
-const organizations = ref([])
+// const organizations = ref([])
 
-const fetchOrganizations = async () => {
-  try {
-    const res = await axios.get('/organizations')
-    organizations.value = res.data
-  } catch (err) {
-    console.error('Failed to fetch organizations:', err)
-  }
-}
-
+// const fetchOrganizations = async () => {
+//   try {
+//     const res = await axios.get('/organizations')
+//     organizations.value = res.data
+//   } catch (err) {
+//     console.error('Failed to fetch organizations:', err)
+//   }
+// }
 
 // watch(search, () => {
 //   page.value = 1
@@ -359,12 +342,10 @@ watch([selectedDriverType, selectedOwnership, selectedOwnerId, search], () => {
   page.value = 1
 })
 
-
 onMounted(async () => {
   if (hasRole(['admin', 'manager'])) {
     await fetchVehicleOwners()
   }
   await fetchDrivers() // load all drivers
 })
-
 </script>

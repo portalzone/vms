@@ -20,6 +20,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class UserController extends Controller
 {
 // ✅ Get all users with roles
+
 public function index(Request $request)
 {
     $this->authorizeAccess('view');
@@ -29,29 +30,35 @@ public function index(Request $request)
     $allowedRoles = null;
 
     if ($user->hasRole('gate_security')) {
-        $allowedRoles = ['staff', 'visitor'];
-    } elseif ($user->hasRole('manager')) {
-        $allowedRoles = ['staff', 'visitor', 'driver', 'vehicle_owner', 'gate_security'];
-    }
-
-    if ($allowedRoles) {
+        $allowedRoles = ['visitor'];
         $query->whereHas('roles', function ($q) use ($allowedRoles) {
             $q->whereIn('name', $allowedRoles);
         });
+    } elseif ($user->hasRole('manager')) {
+        $allowedRoles = ['staff', 'visitor', 'driver', 'vehicle_owner', 'gate_security'];
 
-        // 🟡 Only apply role filter if within allowed
+        $query->where(function ($q) use ($allowedRoles) {
+            // ✅ Include users without roles OR with allowed roles
+            $q->whereDoesntHave('roles')
+              ->orWhereHas('roles', function ($qr) use ($allowedRoles) {
+                  $qr->whereIn('name', $allowedRoles);
+              });
+        });
+
+        // Filter by role only if in allowed set
         if ($request->filled('role') && in_array($request->role, $allowedRoles)) {
             $query->whereHas('roles', function ($q) use ($request) {
                 $q->where('name', $request->role);
             });
         }
     } else {
-        // Admin and others
+        // Admin (or unrestricted roles)
         if ($request->filled('role')) {
             $query->whereHas('roles', function ($q) use ($request) {
                 $q->where('name', $request->role);
             });
         }
+        // ✅ Admins see everyone, including no-role users (no filter applied here)
     }
 
     // Sorting
@@ -67,6 +74,53 @@ public function index(Request $request)
 }
 
 
+// public function index(Request $request)
+// {
+//     $this->authorizeAccess('view');
+//     $user = auth()->user();
+//     $query = User::with('roles:id,name')->select('id', 'name', 'email');
+
+//     $allowedRoles = null;
+
+//     if ($user->hasRole('gate_security')) {
+//         $allowedRoles = ['visitor'];
+//     } elseif ($user->hasRole('manager')) {
+//         $allowedRoles = ['staff', 'visitor', 'driver', 'vehicle_owner', 'gate_security'];
+//     }
+
+//     if ($allowedRoles) {
+//         $query->whereHas('roles', function ($q) use ($allowedRoles) {
+//             $q->whereIn('name', $allowedRoles);
+//         });
+
+//         // 🟡 Only apply role filter if within allowed
+//         if ($request->filled('role') && in_array($request->role, $allowedRoles)) {
+//             $query->whereHas('roles', function ($q) use ($request) {
+//                 $q->where('name', $request->role);
+//             });
+//         }
+//     } else {
+//         // Admin and others
+//         if ($request->filled('role')) {
+//             $query->whereHas('roles', function ($q) use ($request) {
+//                 $q->where('name', $request->role);
+//             });
+//         }
+//     }
+
+//     // Sorting
+//     $allowedSorts = ['name', 'email', 'created_at'];
+//     $sortBy = in_array($request->get('sort_by'), $allowedSorts) ? $request->get('sort_by') : 'created_at';
+//     $sortDir = $request->get('sort_dir') === 'asc' ? 'asc' : 'desc';
+//     $query->orderBy($sortBy, $sortDir);
+
+//     // Pagination
+//     $perPage = in_array((int)$request->get('per_page'), [5, 10, 25, 50, 100]) ? (int)$request->get('per_page') : 10;
+
+//     return response()->json($query->paginate($perPage));
+// }
+
+
 
     // vehicle owner
 // ✅ Return users with the 'vehicle_owner' role (for dropdowns, etc.)
@@ -75,7 +129,7 @@ public function vehicleOwners()
     $this->authorizeAccess('view', 'create', 'update'); // Optional: restrict to admins/managers
 
     $owners = User::role('vehicle_owner')
-        ->select('id', 'name', 'email', 'email') // Add email if needed in frontend dropdowns
+        ->select('id', 'name', 'email') // Add email if needed in frontend dropdowns
         ->orderBy('name')
         ->get();
 
@@ -264,10 +318,10 @@ public function availableForDrivers(Request $request)
         $assignedUserIds = array_diff($assignedUserIds, [$currentUserId]);
     }
 
-    $users = \App\Models\User::role('driver')
-        ->whereNotIn('id', $assignedUserIds)
-        ->select('id', 'name', 'email')
-        ->get();
+$users = \App\Models\User::role(['driver', 'visitor'])
+    ->whereNotIn('id', $assignedUserIds)
+    ->select('id', 'name', 'email')
+    ->get();
 
     return response()->json($users);
 }

@@ -59,5 +59,27 @@ class UserSeeder extends Seeder
             ]
         );
         $owner->assignRole('vehicle_owner');
+
+
+        // Staff
+        $owner = User::firstOrCreate(
+            ['email' => 'Peter@gmail.com'],
+            [
+                'name' => 'Staff User',
+                'password' => Hash::make('abcd1234'),
+            ]
+        );
+        $owner->assignRole('staff');
+
+
+        // Visitor
+        $owner = User::firstOrCreate(
+            ['email' => 'kelvin@gmail.com'],
+            [
+                'name' => 'Visitor User',
+                'password' => Hash::make('abcd1234'),
+            ]
+        );
+        $owner->assignRole('visitor');
     }
 }

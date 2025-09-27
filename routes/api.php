@@ -75,7 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('maintenances', MaintenanceController::class);
     Route::apiResource('expenses', ExpenseController::class);
 
-    
+
     // income
     Route::apiResource('incomes', IncomeController::class);
 

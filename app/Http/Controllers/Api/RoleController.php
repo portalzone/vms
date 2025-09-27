@@ -8,15 +8,13 @@ use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
-   // app/Http/Controllers/Api/RoleController.php
-
 
 public function index(Request $request)
 {
     $user = auth()->user();
 
     if ($user->hasRole('gate_security')) {
-        $roles = Role::whereIn('name', ['staff', 'visitor'])->where('guard_name', 'api')->get();
+        $roles = Role::whereIn('name', ['visitor'])->where('guard_name', 'api')->get();
     } elseif ($user->hasRole('manager')) {
         $roles = Role::whereIn('name', ['staff', 'visitor', 'driver', 'vehicle_owner', 'gate_security'])
             ->where('guard_name', 'api')->get();

@@ -1,43 +1,44 @@
 <template>
   <div>
     <!-- Search + Filters -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+    <div class="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
       <input
         v-model="search"
         type="text"
         placeholder="Search by vehicle, description, or amount..."
-        class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
+        class="w-full px-4 py-2 border border-gray-300 rounded md:w-1/2"
       />
 
-      <div class="flex gap-2 items-center">
-        <select
-          v-model="dateRange"
-          class="border border-gray-300 rounded px-3 py-2 text-sm"
-        >
+      <div class="flex items-center gap-2">
+        <select v-model="dateRange" class="px-3 py-2 text-sm border border-gray-300 rounded">
           <option value="all">All Time</option>
           <option value="1">Today</option>
           <option value="7">Last 7 Days</option>
           <option value="30">Last 30 Days</option>
         </select>
 
-        <router-link v-if="['admin', 'manager'].includes(auth.user?.role)"  to="/expenses/new" class="btn-primary">
+        <router-link
+          v-if="['admin', 'manager'].includes(auth.user?.role)"
+          to="/expenses/new"
+          class="btn-primary"
+        >
           ➕ Add Expense
         </router-link>
       </div>
     </div>
 
     <!-- Per Page Dropdown -->
-    <div class="flex items-center space-x-2 mb-4">
+    <div class="flex items-center mb-4 space-x-2">
       <label class="font-medium">Items per page:</label>
-      <select v-model="perPage" class="border px-3 py-1 rounded">
+      <select v-model="perPage" class="px-3 py-1 border rounded">
         <option v-for="n in [5, 10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
       </select>
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto rounded shadow bg-white">
-      <table class="w-full table-auto text-sm">
-        <thead class="bg-gray-100 text-left">
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="w-full text-sm table-auto">
+        <thead class="text-left bg-gray-100">
           <tr>
             <th class="px-4 py-2">#</th>
             <th class="px-4 py-2">Vehicle</th>
@@ -49,7 +50,7 @@
             <th class="px-4 py-2">Updated By</th>
             <th class="px-4 py-2">Created Time</th>
             <th class="px-4 py-2">Updated Time</th>
-            <th class="px-4 py-2 text-right">Actions</th>
+            <th v-if="hasRole(['admin', 'manager'])" class="px-4 py-2 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -64,33 +65,33 @@
             <td class="px-4 py-2">₦{{ e.amount?.toLocaleString() ?? '0.00' }}</td>
             <td class="px-4 py-2">{{ e.date }}</td>
             <td class="px-4 py-2">
-  <router-link
-    v-if="e.maintenance_id"
-    :to="`/maintenance/${e.maintenance_id}/edit`"
-    class="text-blue-600 hover:underline text-sm"
-  >
-    View
-  </router-link>
-  <span v-else class="text-gray-400">—</span>
-</td>
+              <router-link
+                v-if="e.maintenance_id"
+                :to="`/maintenance/${e.maintenance_id}/edit`"
+                class="text-sm text-blue-600 hover:underline"
+              >
+                View
+              </router-link>
+              <span v-else class="text-gray-400">—</span>
+            </td>
             <td class="px-4 py-2">{{ e.creator?.name ?? 'N/A' }}</td>
             <td class="px-4 py-2">{{ e.updater?.name ?? 'N/A' }}</td>
             <td class="px-4 py-2">{{ formatDate(e.created_at) }}</td>
             <td class="px-4 py-2">{{ formatDate(e.updated_at) }}</td>
-            <td class="px-4 py-2 text-right space-x-2">
+            <td v-if="hasRole(['admin', 'manager'])" class="px-4 py-2 space-x-2 text-right">
               <button class="btn-edit" @click="edit(e.id)">Edit</button>
               <button class="btn-delete" @click="remove(e.id)">Delete</button>
             </td>
           </tr>
           <tr v-if="paginatedExpenses.length === 0">
-            <td colspan="10" class="text-center text-gray-500 py-4">No expense records found.</td>
+            <td colspan="10" class="py-4 text-center text-gray-500">No expense records found.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
+    <div class="flex flex-wrap items-center justify-center gap-2 mt-6 text-sm">
       <button :disabled="page === 1" @click="page--" class="btn-pagination">Prev</button>
       <button
         v-for="p in visiblePages"
@@ -100,8 +101,8 @@
           'btn-pagination',
           {
             'bg-blue-600 text-white': p === page,
-            'pointer-events-none text-gray-500': p === '...'
-          }
+            'pointer-events-none text-gray-500': p === '...',
+          },
         ]"
         :disabled="p === '...'"
       >
@@ -120,6 +121,10 @@ import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+function hasRole(allowedRoles) {
+  return allowedRoles.includes(auth.user?.role)
+}
 
 const allExpenses = ref([])
 const search = ref('')
@@ -144,14 +149,13 @@ const filteredExpenses = computed(() => {
   const now = new Date()
   const cutoff = new Date(now.setDate(now.getDate() - days))
 
-  return allExpenses.value.filter(e => {
+  return allExpenses.value.filter((e) => {
     const matchesSearch =
       (e.description || '').toLowerCase().includes(keyword) ||
       (e.vehicle?.plate_number || '').toLowerCase().includes(keyword) ||
       String(e.amount ?? '').includes(keyword)
 
-    const matchesDate =
-      dateRange.value === 'all' || new Date(e.date) >= cutoff
+    const matchesDate = dateRange.value === 'all' || new Date(e.date) >= cutoff
 
     return matchesSearch && matchesDate
   })
@@ -159,11 +163,11 @@ const filteredExpenses = computed(() => {
 
 const start = computed(() => (page.value - 1) * perPage.value)
 const paginatedExpenses = computed(() =>
-  filteredExpenses.value.slice(start.value, start.value + perPage.value)
+  filteredExpenses.value.slice(start.value, start.value + perPage.value),
 )
 
 const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredExpenses.value.length / perPage.value))
+  Math.max(1, Math.ceil(filteredExpenses.value.length / perPage.value)),
 )
 
 const visiblePages = computed(() => {

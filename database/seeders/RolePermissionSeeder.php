@@ -57,5 +57,7 @@ class RolePermissionSeeder extends Seeder
                 'manage vehicles',
                 'manage maintenance',
             ]);
+        Role::firstOrCreate(['name' => 'visitor', 'guard_name' => 'api']);
+        Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'api']);
     }
 }

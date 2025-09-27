@@ -29,7 +29,7 @@ const loadUsers = async () => {
         sort_by: sortBy.value,
         sort_dir: sortDir.value,
         role: roleFilter.value || undefined,
-      }
+      },
     })
 
     users.value = res.data.data
@@ -121,14 +121,13 @@ const paginationPages = computed(() => {
 })
 </script>
 
-
 <template>
   <div>
-    <h2 class="text-2xl font-bold mb-4">User Management</h2>
+    <h2 class="mb-4 text-2xl font-bold">User Management</h2>
 
     <!-- Filters & Controls -->
-    <div class="mb-4 flex flex-wrap items-center gap-4">
-      <select v-model="roleFilter" class="px-3 py-2 border rounded-md text-sm">
+    <div class="flex flex-wrap items-center gap-4 mb-4">
+      <select v-model="roleFilter" class="px-3 py-2 text-sm border rounded-md">
         <option value="">All Roles</option>
         <option v-if="hasRole(['admin'])" value="admin">Admin</option>
         <option v-if="hasRole(['admin'])" value="manager">Manager</option>
@@ -139,14 +138,14 @@ const paginationPages = computed(() => {
         <option v-if="hasRole(['admin', 'manager'])" value="gate_security">Security Officer</option>
       </select>
 
-      <select v-model="sortOption" class="px-3 py-2 border rounded-md text-sm">
+      <select v-model="sortOption" class="px-3 py-2 text-sm border rounded-md">
         <option value="name_asc">A - Z</option>
         <option value="name_desc">Z - A</option>
         <option value="newest">Newest</option>
         <option value="oldest">Oldest</option>
       </select>
 
-      <select v-model="perPage" class="px-3 py-2 border rounded-md text-sm">
+      <select v-model="perPage" class="px-3 py-2 text-sm border rounded-md">
         <option :value="5">5</option>
         <option :value="10">10</option>
         <option :value="25">25</option>
@@ -158,7 +157,7 @@ const paginationPages = computed(() => {
     </div>
 
     <!-- Users Table -->
-    <table class="w-full border text-sm">
+    <table class="w-full text-sm border">
       <thead class="bg-gray-100">
         <tr>
           <th class="px-3 py-2 text-left">Name</th>
@@ -174,51 +173,43 @@ const paginationPages = computed(() => {
           <td class="px-3 py-2 capitalize">{{ user.roles?.[0]?.name || 'N/A' }}</td>
           <td class="px-3 py-2 space-x-2">
             <button class="text-blue-600 hover:underline" @click="goToEdit(user)">✏️ Edit</button>
-            <button class="text-red-600 hover:underline" @click="deleteUser(user.id)">🗑️ Delete</button>
+            <button class="text-red-600 hover:underline" @click="deleteUser(user.id)">
+              🗑️ Delete
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
 
     <!-- Pagination -->
-<!-- Pagination -->
-<div class="mt-4 flex flex-wrap items-center gap-2">
-  <button
-    class="btn-pagination"
-    :disabled="currentPage === 1"
-    @click="changePage(currentPage - 1)"
-  >
-    Prev
-  </button>
+    <!-- Pagination -->
+    <div class="flex flex-wrap items-center gap-2 mt-4">
+      <button
+        class="btn-pagination"
+        :disabled="currentPage === 1"
+        @click="changePage(currentPage - 1)"
+      >
+        Prev
+      </button>
 
-  <template v-for="(page, index) in paginationPages" :key="index">
-    <span
-      v-if="page === '...'"
-      class="btn-pagination"
-    >
-      ...
-    </span>
-    <button
-      v-else
-      @click="changePage(page)"
-      :class="[
-        'btn-pagination',
-        { 'bg-blue-600 text-white': currentPage === page }
-      ]"
-    >
-      {{ page }}
-    </button>
-  </template>
+      <template v-for="(page, index) in paginationPages" :key="index">
+        <span v-if="page === '...'" class="btn-pagination"> ... </span>
+        <button
+          v-else
+          @click="changePage(page)"
+          :class="['btn-pagination', { 'bg-blue-600 text-white': currentPage === page }]"
+        >
+          {{ page }}
+        </button>
+      </template>
 
-  <button
-    class="btn-pagination"
-    :disabled="currentPage === totalPages"
-    @click="changePage(currentPage + 1)"
-  >
-    Next
-  </button>
-</div>
-
-
+      <button
+        class="btn-pagination"
+        :disabled="currentPage === totalPages"
+        @click="changePage(currentPage + 1)"
+      >
+        Next
+      </button>
+    </div>
   </div>
 </template>
