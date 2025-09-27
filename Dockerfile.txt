@@ -3,22 +3,31 @@
 # ----------------------------------------------------------------------
 FROM node:20-alpine AS frontend_builder
 
-# Set the working directory inside the container to where the Vue project will live
-# This is crucial: the path inside the container must match where NPM expects to work.
-WORKDIR /app/vms-frontend/vue-project
+# Define the source directory on the host machine (relative to the Dockerfile)
+ARG VUE_DIR=vms-frontend/vue-project
 
-# Copy package files into the new working directory
-# NOTE: The *context* (first part) is the path on your host machine.
-# The *destination* (second part) is the path in the container.
-COPY package.json ./
-COPY package-lock.json ./
+# Set the working directory inside the container to the root of the Vue project
+# This ensures npm commands run in the correct context.
+WORKDIR /app/${VUE_DIR}
+
+# Copy package files (from host's VUE_DIR into container's WORKDIR)
+# The source path must include the subdirectory.
+COPY ${VUE_DIR}/package.json ./
+COPY ${VUE_DIR}/package-lock.json ./
 
 # Install Node dependencies
+# This runs inside /app/vms-frontend/vue-project/
 RUN npm install
 
-# Copy the entire Vue source code (including src/, public/, vite.config.js, etc.)
-COPY vms-frontend/vue-project/ ./
+# Copy the entire remaining Vue source code
+COPY ${VUE_DIR}/ ./
 
 # Run the production build (Vite/Rollup)
-# This generates the compiled assets in the expected output directory (often 'dist')
+# If this still fails after this fix, the error is likely a missing VITE environment variable or a casing issue (see note below).
 RUN npm run build
+
+# ... (inside STAGE 2: PRODUCTION)
+
+# Copy the built Vue assets from the frontend_builder stage
+# Must retrieve the assets from the WORKDIR defined in STAGE 1.
+COPY --from=frontend_builder /app/vms-frontend/vue-project/dist/ /var/www/html/public/build/
