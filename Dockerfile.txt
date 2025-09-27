@@ -1,0 +1,58 @@
+# 1. Composer Stage (Install PHP Dependencies)
+FROM composer:2.7 as composer
+
+# Set working directory for the stage
+WORKDIR /app
+
+# Copy Composer files and install dependencies
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# ----------------------------------------------------------------------
+# 2. Node Stage (Install JS Dependencies and Build Frontend Assets)
+FROM node:20 as node_builder
+
+# Set working directory for the stage
+WORKDIR /app
+
+# Copy package files and install NPM dependencies
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy source code for frontend build
+COPY . .
+
+# Build the frontend assets for production
+RUN npm run build
+# ----------------------------------------------------------------------
+
+# 3. Production Stage (Final Runtime Image)
+# Use a lightweight PHP-FPM base image for the application backend
+FROM php:8.2-fpm-alpine AS production
+
+# Install essential PHP extensions and system dependencies
+# (Example extensions for a typical Laravel app)
+RUN apk update && apk add \
+    nginx \
+    ... \
+    && rm -rf /var/cache/apk/*
+
+RUN docker-php-ext-install pdo pdo_mysql opcache bcmath \
+    && docker-php-ext-enable opcache
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy application code and vendor from the Composer stage
+COPY --from=composer /app/vendor /var/www/html/vendor
+COPY --from=composer /app /var/www/html
+
+# Copy the built public assets from the Node stage
+COPY --from=node_builder /app/public/build /var/www/html/public/build
+COPY --from=node_builder /app/public/mix-manifest.json /var/www/html/public/mix-manifest.json
+
+# Expose port (PHP-FPM typically runs on port 9000 for Nginx to communicate)
+EXPOSE 9000
+
+# Set entrypoint to run PHP-FPM
+CMD ["php-fpm"]
