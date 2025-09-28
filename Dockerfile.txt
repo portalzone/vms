@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------
 # STAGE 1: BUILD (For compiling Vue/Vite assets)
 # ----------------------------------------------------------------------
-FROM node:20-slim AS frontend_builder
+FROM node:20 AS frontend_builder
 
 WORKDIR /app
 
@@ -14,7 +14,8 @@ RUN npm install
 # Copy source code
 COPY vms-frontend/vue-project/ ./
 
-# Build the project
+# Force Rollup to use JS fallback and build the project
+ENV ROLLUP_DISABLE_NATIVE=true
 RUN npm run build
 
 # ----------------------------------------------------------------------
