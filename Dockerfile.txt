@@ -16,7 +16,7 @@ COPY vms-frontend/vue-project/ ./
 
 # Force Rollup to use JS fallback and build the project
 ENV ROLLUP_DISABLE_NATIVE=true
-RUN npm install -g rollup@3.29.4 && npm run build
+RUN npm run build
 
 # ----------------------------------------------------------------------
 # STAGE 2: PRODUCTION (For running the Laravel/PHP application)
