@@ -1,6 +1,73 @@
-FROM node:20
+# ----------------------------------------------------------------------
+# STAGE 1: BUILD (For compiling Vue/Vite assets)
+# ----------------------------------------------------------------------
+FROM node:20 AS frontend_builder
 
+# Set working directory
 WORKDIR /app
+
+# Copy package files first (for better caching)
+COPY vms-frontend/vue-project/package*.json ./
+
+# Clean install with specific npm version and flags
+RUN npm ci --only=production=false
+
+# Copy the entire Vue project source
 COPY vms-frontend/vue-project/ ./
-RUN rm -rf node_modules package-lock.json dist .vite && npm install
+
+# Clear any build artifacts and caches
+RUN rm -rf dist .vite node_modules/.cache
+
+# Reinstall to ensure clean state (in case COPY overwrote something)
+RUN npm ci
+
+# Run the build
 RUN npm run build
+
+# ----------------------------------------------------------------------
+# STAGE 2: PRODUCTION (For running the Laravel/PHP application)
+# ----------------------------------------------------------------------
+FROM php:8.3-fpm-alpine AS final
+
+# Install core PHP dependencies
+RUN apk add --no-cache \
+    nginx \
+    $PHPIZE_DEPS \
+    libzip-dev \
+    libpng-dev \
+    libxml2-dev \
+    supervisor \
+    # Install standard PHP extensions
+    && docker-php-ext-install pdo_mysql opcache zip gd bcmath \
+    && apk del $PHPIZE_DEPS
+
+# Set the working directory to the Laravel root
+WORKDIR /var/www/html
+
+# Install Composer globally
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy only the necessary PHP files for dependency installation
+COPY composer.json composer.lock ./
+
+# Install Composer dependencies (only production dependencies)
+RUN composer install --no-dev --optimize-autoloader
+
+# Copy the entire Laravel application source code
+COPY . .
+
+# Copy the NGINX configuration file
+COPY .render/nginx.conf /etc/nginx/http.d/default.conf
+
+# Copy the built Vue assets from the frontend_builder stage
+COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
+
+# Set correct permissions for storage and cache directories
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Expose port 8000 for Render
+EXPOSE 8000
+
+# Combined start command using supervisord
+CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
