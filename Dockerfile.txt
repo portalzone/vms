@@ -1,6 +1,4 @@
-COPY vms-frontend/vue-project/package*.json ./
-RUN npm install
+# Copy all source files before installing dependencies
 COPY vms-frontend/vue-project/ ./
-
 RUN rm -rf node_modules package-lock.json && npm install
 RUN npm run build
