@@ -14,6 +14,11 @@
 **/pnpm-lock.yaml
 
 # Ignore frontend/Vite build output and caches
+<<<<<<< HEAD
+=======
+vms-frontend/vue-project/.cache
+vms-frontend/vue-project/.output
+>>>>>>> 7cc979e21fbbe7813ac5d04ac9f3117fd672d574
 
 # Ignore other common build artifacts
 npm-debug.log*
