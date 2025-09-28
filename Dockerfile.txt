@@ -1,22 +1,19 @@
 # ----------------------------------------------------------------------
 # STAGE 1: BUILD (For compiling Vue/Vite assets)
 # ----------------------------------------------------------------------
-FROM node:20-alpine AS frontend_builder
+FROM node:20 AS frontend_builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files from the correct path
+# Copy package files
 COPY vms-frontend/vue-project/package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the entire Vue project source
+# Copy the Vue project source
 COPY vms-frontend/vue-project/ ./
-
-# Debug: Show what files we have
-RUN ls -la && cat package.json
 
 # Run the build
 RUN npm run build
