@@ -1,11 +1,11 @@
 # ----------------------------------------------------------------------
-# STAGE 1: BUILD (For compiling Vue/Vite assets)
+# STAGE 1: BUILD FRONTEND (Vue/Vite)
 # ----------------------------------------------------------------------
 FROM node:20 AS frontend_builder
 
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy package files for caching
 COPY vms-frontend/vue-project/package*.json ./
 
 # Install dependencies
@@ -14,18 +14,16 @@ RUN npm ci
 # Copy source code
 COPY vms-frontend/vue-project/ ./
 
-ENV ROLLUP_DISABLE_NATIVE=true
-
 # Build assets
+ENV ROLLUP_DISABLE_NATIVE=true
 RUN npm run build
 
-
 # ----------------------------------------------------------------------
-# STAGE 2: PRODUCTION (Laravel/PHP)
+# STAGE 2: PRODUCTION (Laravel + PHP-FPM + Nginx)
 # ----------------------------------------------------------------------
 FROM php:8.3-fpm-alpine AS final
 
-# Install system and PHP dependencies
+# Install system & PHP extensions
 RUN apk add --no-cache \
     nginx \
     supervisor \
@@ -44,7 +42,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy application source first (so artisan exists)
 COPY . .
 
-# Install PHP dependencies (now artisan is available)
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Copy NGINX config
@@ -53,12 +51,14 @@ COPY .render/nginx.conf /etc/nginx/http.d/default.conf
 # Copy Supervisor config
 COPY .render/supervisord.conf /etc/supervisord.conf
 
-# Copy built Vue assets from frontend build stage
+# Copy built Vue assets
 COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-EXPOSE 8000
+# Render requires binding to $PORT
+EXPOSE ${PORT}
+
 CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
