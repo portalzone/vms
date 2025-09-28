@@ -3,17 +3,20 @@
 # ----------------------------------------------------------------------
 FROM node:20-alpine AS frontend_builder
 
-# Set the working directory to a simpler path
+# Set working directory
 WORKDIR /app
 
-# Copy package files first (for better layer caching)
+# Copy package files from the correct path
 COPY vms-frontend/vue-project/package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the Vue project
+# Copy the entire Vue project source
 COPY vms-frontend/vue-project/ ./
+
+# Debug: Show what files we have
+RUN ls -la && cat package.json
 
 # Run the build
 RUN npm run build
