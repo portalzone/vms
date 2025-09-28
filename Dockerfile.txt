@@ -5,63 +5,56 @@ FROM node:20 AS frontend_builder
 
 WORKDIR /app
 
-# Copy package files first
+# Copy package files first for better caching
 COPY vms-frontend/vue-project/package*.json ./
-
-# Install all dependencies (including dev dependencies)
 RUN npm install
 
-# Copy source code
+# Copy source code and build
 COPY vms-frontend/vue-project/ ./
-
-# Force Rollup to use JS fallback and build the project
 ENV ROLLUP_DISABLE_NATIVE=true
 RUN npm run build
 
 # ----------------------------------------------------------------------
-# STAGE 2: PRODUCTION (For running the Laravel/PHP application)
+# STAGE 2: PRODUCTION (Laravel/PHP)
 # ----------------------------------------------------------------------
 FROM php:8.3-fpm-alpine AS final
 
-# Install core PHP dependencies
+# Install system and PHP dependencies
 RUN apk add --no-cache \
     nginx \
-    $PHPIZE_DEPS \
+    supervisor \
     libzip-dev \
     libpng-dev \
     libxml2-dev \
-    supervisor \
-    # Install standard PHP extensions
+    $PHPIZE_DEPS \
     && docker-php-ext-install pdo_mysql opcache zip gd bcmath \
     && apk del $PHPIZE_DEPS
 
-# Set the working directory to the Laravel root
 WORKDIR /var/www/html
 
-# Install Composer globally
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy only the necessary PHP files for dependency installation
+# Only copy composer files and install dependencies first for cache
 COPY composer.json composer.lock ./
-
-# Install Composer dependencies (only production dependencies)
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy the entire Laravel application source code
+# Copy application source (after composer for better caching)
 COPY . .
 
-# Copy the NGINX configuration file
+# Copy NGINX config
 COPY .render/nginx.conf /etc/nginx/http.d/default.conf
 
-# Copy the built Vue assets from the frontend_builder stage
+# Copy Supervisor config (fix: this was missing)
+COPY .render/supervisord.conf /etc/supervisord.conf
+
+# Copy built Vue assets
 COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
 
-# Set correct permissions for storage and cache directories
+# Correct permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose port 8000 for Render
 EXPOSE 8000
 
-# Combined start command using supervisord
 CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
