@@ -1,7 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@stores/auth.js'
+// import { useAuthStore } from '@/stores/auth'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'
 import GuestLayout from '@/layouts/GuestLayout.vue'
 import axios from '@/axios'
@@ -28,9 +29,13 @@ onMounted(async () => {
 
 const logout = async () => {
   try {
-    await axios.post('/logout', {}, {
-      headers: { Authorization: `Bearer ${auth.token}` }
-    })
+    await axios.post(
+      '/logout',
+      {},
+      {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      },
+    )
     window.$toast?.showToast('Logged out successfully')
   } catch (error) {
     console.warn('Logout failed:', error)
@@ -41,7 +46,6 @@ const logout = async () => {
   }
 }
 </script>
-
 
 <template>
   <div v-if="loading" class="p-6 text-gray-700">Loading...</div>
@@ -61,4 +65,3 @@ const logout = async () => {
 
 <!-- Leave this empty to avoid local scoping issues -->
 <style scoped></style>
-

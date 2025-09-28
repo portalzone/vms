@@ -8,7 +8,7 @@ import Login from '../views/Login.vue'
 // import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
-import NotAuthorized from '@/views/NotAuthorized.vue'
+import NotAuthorized from '../views/NotAuthorized.vue'
 
 // Lazy-loaded views
 const Register = () => import('../views/Register.vue')
@@ -41,11 +41,11 @@ const ExpensesPage = () => import('../views/Expenses/ExpensesPage.vue')
 const ExpenseFormPage = () => import('../views/Expenses/ExpenseFormPage.vue')
 
 // recent activity
-import RecentActivityPage from '@/views/RecentActivityPage.vue'
+import RecentActivityPage from '../views/RecentActivityPage.vue'
 
 // trip view
-import TripsPage from '@/views/Trips/TripsPage.vue'
-import TripFormPage from '@/views/Trips/TripFormPage.vue'
+import TripsPage from '../views/Trips/TripsPage.vue'
+import TripFormPage from '../views/Trips/TripFormPage.vue'
 
 const routes = [
   {
@@ -74,7 +74,7 @@ const routes = [
   {
     path: '/support',
     name: 'Support',
-    component: () => import('@/views/Support.vue'),
+    component: () => import('../views/Support.vue'),
     meta: { title: 'Support - Vehicle Management System' },
   },
   {

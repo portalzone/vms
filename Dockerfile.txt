@@ -5,14 +5,63 @@ FROM node:20 AS frontend_builder
 
 WORKDIR /app
 
-# Copy package files first
+# Copy package files first for better caching
 COPY vms-frontend/vue-project/package*.json ./
 
-# Install all dependencies (including dev dependencies)
-RUN npm ci
+RUN npm cache clean --force
+
+RUN rm -rf node_modules package-lock.json && npm install
 
 # Copy source code
 COPY vms-frontend/vue-project/ ./
 
-# Build the project
+# Debug step: verify entry file exists
+RUN ls -l src && cat src/main.js
+
+ENV ROLLUP_DISABLE_NATIVE=true
 RUN npm run build
+
+# ----------------------------------------------------------------------
+# STAGE 2: PRODUCTION (Laravel/PHP)
+# ----------------------------------------------------------------------
+FROM php:8.3-fpm-alpine AS final
+
+# Install system and PHP dependencies
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    libzip-dev \
+    libpng-dev \
+    libxml2-dev \
+    $PHPIZE_DEPS \
+    && docker-php-ext-install pdo_mysql opcache zip gd bcmath \
+    && apk del $PHPIZE_DEPS
+
+WORKDIR /var/www/html
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Only copy composer files and install dependencies first for cache
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader
+
+# Copy application source (after composer for better caching)
+COPY . .
+
+# Copy NGINX config
+COPY .render/nginx.conf /etc/nginx/http.d/default.conf
+
+# Copy Supervisor config
+COPY .render/supervisord.conf /etc/supervisord.conf
+
+# Copy built Vue assets
+COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
+
+# Correct permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+EXPOSE 8000
+
+CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
