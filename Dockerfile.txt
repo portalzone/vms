@@ -1,3 +1,4 @@
-COPY vms-frontend/vue-project/ ./
+COPY vms-frontend/vue-project/package*.json ./
 RUN npm install
+COPY vms-frontend/vue-project/ ./
 RUN npm run build
