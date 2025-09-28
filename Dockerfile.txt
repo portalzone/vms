@@ -8,31 +8,18 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY vms-frontend/vue-project/package*.json ./
 
-<<<<<<< HEAD
-RUN npm cache clean --force
-
-RUN rm -rf node_modules package-lock.json && npm install
-=======
 # Install dependencies
 RUN npm ci
->>>>>>> 7cc979e21fbbe7813ac5d04ac9f3117fd672d574
 
 # Copy source code
 COPY vms-frontend/vue-project/ ./
 
-<<<<<<< HEAD
-# Debug step: verify entry file exists
-RUN ls -l src && cat src/main.js
-
-ENV ROLLUP_DISABLE_NATIVE=true
-=======
 # Debug: verify entry file exists
 RUN ls -l src && cat src/main.js
 
 ENV ROLLUP_DISABLE_NATIVE=true
 
 # Build assets
->>>>>>> 7cc979e21fbbe7813ac5d04ac9f3117fd672d574
 RUN npm run build
 
 # ----------------------------------------------------------------------
@@ -56,7 +43,7 @@ WORKDIR /var/www/html
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Only copy composer files and install dependencies first for cache
+# Copy composer files and install dependencies first for cache
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader
 
@@ -69,20 +56,12 @@ COPY .render/nginx.conf /etc/nginx/http.d/default.conf
 # Copy Supervisor config
 COPY .render/supervisord.conf /etc/supervisord.conf
 
-<<<<<<< HEAD
-# Copy built Vue assets
-COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
-
-# Correct permissions
-=======
 # Copy built Vue assets from frontend build stage
 COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
 
 # Set permissions
->>>>>>> 7cc979e21fbbe7813ac5d04ac9f3117fd672d574
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 8000
-
 CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
