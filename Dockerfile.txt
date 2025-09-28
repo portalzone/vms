@@ -8,17 +8,18 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY vms-frontend/vue-project/package*.json ./
 
-RUN npm cache clean --force
-
-RUN rm -rf node_modules package-lock.json && npm install
+# Install dependencies
+RUN npm ci
 
 # Copy source code
 COPY vms-frontend/vue-project/ ./
 
-# Debug step: verify entry file exists
+# Debug: verify entry file exists
 RUN ls -l src && cat src/main.js
 
 ENV ROLLUP_DISABLE_NATIVE=true
+
+# Build assets
 RUN npm run build
 
 # ----------------------------------------------------------------------
@@ -55,10 +56,10 @@ COPY .render/nginx.conf /etc/nginx/http.d/default.conf
 # Copy Supervisor config
 COPY .render/supervisord.conf /etc/supervisord.conf
 
-# Copy built Vue assets
+# Copy built Vue assets from frontend build stage
 COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
 
-# Correct permissions
+# Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
