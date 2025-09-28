@@ -12,8 +12,12 @@ RUN npm cache clean --force
 
 RUN rm -rf node_modules package-lock.json && npm install
 
-# Copy source code and build
+# Copy source code
 COPY vms-frontend/vue-project/ ./
+
+# Debug step: verify entry file exists
+RUN ls -l src && cat src/main.js
+
 ENV ROLLUP_DISABLE_NATIVE=true
 RUN npm run build
 
@@ -48,7 +52,7 @@ COPY . .
 # Copy NGINX config
 COPY .render/nginx.conf /etc/nginx/http.d/default.conf
 
-# Copy Supervisor config (fix: this was missing)
+# Copy Supervisor config
 COPY .render/supervisord.conf /etc/supervisord.conf
 
 # Copy built Vue assets
