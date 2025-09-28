@@ -1,15 +1,26 @@
-# Ignore Git history
+# Ignore Git history and config
 .git
+.gitignore
 
-# Ignore Laravel dependencies
+# Ignore Laravel dependencies and environment
 /vendor
 .env
+.env.*    # Covers .env.testing, .env.prod, etc
 
 # Ignore Node dependencies and build artifacts
-# 1. Ignore ALL node_modules (we install them fresh in Docker)
 **/node_modules
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
 
-# 2. CRITICAL: Ignore the built frontend output.
-# If 'vms-frontend/vue-project/dist' exists locally, Docker can detect it,
-# leading to the circular dependency error when you copy the parent directory.
+# Ignore frontend/Vite build output and caches
 vms-frontend/vue-project/dist
+vms-frontend/vue-project/.vite
+vms-frontend/vue-project/.cache
+vms-frontend/vue-project/.output
+
+# Ignore other common build artifacts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
