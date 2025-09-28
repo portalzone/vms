@@ -3,25 +3,18 @@
 # ----------------------------------------------------------------------
 FROM node:20 AS frontend_builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files first (for better caching)
+# Copy package files first
 COPY vms-frontend/vue-project/package*.json ./
 
-# Clean install with specific npm version and flags
-RUN npm ci --only=production=false
-
-# Copy the entire Vue project source
-COPY vms-frontend/vue-project/ ./
-
-# Clear any build artifacts and caches
-RUN rm -rf dist .vite node_modules/.cache
-
-# Reinstall to ensure clean state (in case COPY overwrote something)
+# Install all dependencies (including dev dependencies)
 RUN npm ci
 
-# Run the build
+# Copy source code
+COPY vms-frontend/vue-project/ ./
+
+# Build the project
 RUN npm run build
 
 # ----------------------------------------------------------------------
