@@ -1,0 +1,15 @@
+# Ignore Git history
+.git
+
+# Ignore Laravel dependencies
+/vendor
+.env
+
+# Ignore Node dependencies and build artifacts
+# 1. Ignore ALL node_modules (we install them fresh in Docker)
+**/node_modules
+
+# 2. CRITICAL: Ignore the built frontend output.
+# If 'vms-frontend/vue-project/dist' exists locally, Docker can detect it,
+# leading to the circular dependency error when you copy the parent directory.
+vms-frontend/vue-project/dist
