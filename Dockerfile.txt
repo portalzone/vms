@@ -14,13 +14,11 @@ RUN npm ci
 # Copy source code
 COPY vms-frontend/vue-project/ ./
 
-# Debug: verify entry file exists
-RUN ls -l src && cat src/main.js
-
 ENV ROLLUP_DISABLE_NATIVE=true
 
 # Build assets
 RUN npm run build
+
 
 # ----------------------------------------------------------------------
 # STAGE 2: PRODUCTION (Laravel/PHP)
@@ -43,12 +41,11 @@ WORKDIR /var/www/html
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy composer files and install dependencies first for cache
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader
-
-# Copy application source (after composer for better caching)
+# Copy application source first (so artisan exists)
 COPY . .
+
+# Install PHP dependencies (now artisan is available)
+RUN composer install --no-dev --optimize-autoloader
 
 # Copy NGINX config
 COPY .render/nginx.conf /etc/nginx/http.d/default.conf
