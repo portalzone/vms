@@ -11,16 +11,29 @@
 
       <!-- Navigation -->
       <nav :class="{ open: menuOpen }">
-        <RouterLink v-if="route.path !== '/'" to="/" exact-active-class="active" @click="closeMenu">Home</RouterLink>
+        <RouterLink v-if="route.path !== '/'" to="/" exact-active-class="active" @click="closeMenu"
+          >Home</RouterLink
+        >
         <RouterLink to="/about" exact-active-class="active" @click="closeMenu">About</RouterLink>
-        <RouterLink to="/support" exact-active-class="active" @click="closeMenu">Support</RouterLink>
+        <RouterLink to="/support" exact-active-class="active" @click="closeMenu"
+          >Support</RouterLink
+        >
         <RouterLink to="/login" exact-active-class="active" @click="closeMenu">Login</RouterLink>
-        <RouterLink to="/register" exact-active-class="active" @click="closeMenu">Register</RouterLink>
+        <RouterLink to="/register" exact-active-class="active" @click="closeMenu"
+          >Register</RouterLink
+        >
       </nav>
     </header>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <!-- <main class="main-content">
+      <slot />
+    </main> -->
+
+    <main
+      class="main-content"
+      :class="{ 'auth-page': route.path === '/login' || route.path === '/register' }"
+    >
       <slot />
     </main>
 
@@ -45,7 +58,6 @@ function toggleMenu() {
 function closeMenu() {
   menuOpen.value = false
 }
-
 </script>
 
 <style scoped>
@@ -103,15 +115,20 @@ nav a.active {
   text-decoration: underline;
 }
 
-/* Main content */
 .main-content {
   flex: 1;
   width: 100%;
-  padding: 1.5rem;
   background-color: #f9fafb;
   box-sizing: border-box;
 }
 
+/* Add this new class */
+.main-content.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+}
 /* Footer */
 .footer {
   background-color: #1f2937;

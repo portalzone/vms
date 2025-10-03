@@ -34,7 +34,6 @@ const loadUser = async () => {
   }
 }
 
-
 const handleSaved = () => {
   router.push('/users')
 }
@@ -46,8 +45,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <h2 class="text-2xl font-bold mb-4">
+  <div class="auth-card">
+    <h2 class="mb-4 text-2xl font-bold">
       {{ route.params.id === 'new' ? 'Create User' : 'Edit User' }}
     </h2>
     <UserForm :user="user" :roles="roles" @saved="handleSaved" />

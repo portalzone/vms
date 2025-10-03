@@ -1,35 +1,35 @@
 <template>
-  <div class="mt-10">
-    <h3 class="text-lg font-bold mb-4">Recent Activity</h3>
-
+  <div>
     <!-- Filters -->
-    <div class="flex flex-wrap gap-4 mb-6 items-end">
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search..."
-        class="border px-3 py-2 rounded w-full md:w-1/4"
-      />
+    <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search..."
+          class="px-3 py-2 border rounded"
+        />
 
-      <select v-model="type" class="border px-3 py-2 rounded w-full md:w-1/5">
-        <option value="">All Types</option>
-        <option value="Check-In">Check-In</option>
-        <option value="Maintenance Created">Maintenance Created</option>
-        <option value="Maintenance Updated">Maintenance Updated</option>
-        <option value="Trip">Trip</option>
-        <option value="Vehicle Registered">Vehicle Registered</option>
-        <option value="Vehicle Updated">Vehicle Updated</option>
-        <option value="Driver Registered">Driver Registered</option>
-        <option value="Driver Updated">Driver Updated</option>
-        <option value="Expense Created">Expense Created</option>
-        <option value="Expense Updated">Expense Updated</option>
-        <option value="Income Created">Income Created</option>
-        <option value="Income Updated">Income Updated</option>
-
-      </select>
-
-      <input v-model="fromDate" type="date" class="border px-3 py-2 rounded" />
-      <input v-model="toDate" type="date" class="border px-3 py-2 rounded" />
+        <select v-model="type" class="px-3 py-2 border rounded">
+          <option value="">All Types</option>
+          <option value="Check-In">Check-In</option>
+          <option value="Maintenance Created">Maintenance Created</option>
+          <option value="Maintenance Updated">Maintenance Updated</option>
+          <option value="Trip">Trip</option>
+          <option value="Vehicle Registered">Vehicle Registered</option>
+          <option value="Vehicle Updated">Vehicle Updated</option>
+          <option value="Driver Registered">Driver Registered</option>
+          <option value="Driver Updated">Driver Updated</option>
+          <option value="Expense Created">Expense Created</option>
+          <option value="Expense Updated">Expense Updated</option>
+          <option value="Income Created">Income Created</option>
+          <option value="Income Updated">Income Updated</option>
+        </select>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <input v-model="fromDate" type="date" class="px-3 py-2 border rounded" />
+        <input v-model="toDate" type="date" class="px-3 py-2 border rounded" />
+      </div>
     </div>
 
     <!-- Activity List -->
@@ -40,43 +40,57 @@
         class="flex items-start gap-4 p-4 bg-white rounded shadow"
       >
         <!-- Serial Number -->
-        <div class="font-semibold w-6 text-right">
+        <div class="w-6 font-semibold text-right">
           {{ (currentPage - 1) * perPage + index + 1 }}.
         </div>
 
         <!-- Icon -->
         <span
-          class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white"
+          class="inline-flex items-center justify-center w-8 h-8 text-white rounded-full"
           :class="{
-  'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
-  'bg-brown-500': activity.type === 'Driver Updated' || activity.type === 'Vehicle Updated',
-  'bg-red-500': activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated',
-  'bg-yellow-500': activity.type === 'Expense Created' || activity.type === 'Expense Updated',
-  'bg-gray-500': activity.type === 'Trip',
-  'bg-green-500': activity.type === 'Driver Registered',
-  'bg-teal-500': activity.type === 'Income Created' || activity.type === 'Income Updated',
-}"
-
+            'bg-blue-500': activity.type === 'Check-In' || activity.type === 'Vehicle Registered',
+            'bg-brown-500':
+              activity.type === 'Driver Updated' || activity.type === 'Vehicle Updated',
+            'bg-red-500':
+              activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated',
+            'bg-yellow-500':
+              activity.type === 'Expense Created' || activity.type === 'Expense Updated',
+            'bg-gray-500': activity.type === 'Trip',
+            'bg-green-500': activity.type === 'Driver Registered',
+            'bg-teal-500': activity.type === 'Income Created' || activity.type === 'Income Updated',
+          }"
         >
-<template v-if="activity.type === 'Check-In'">🚗</template>
-<template v-else-if="activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated'">🛠️</template>
-<template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
-<template v-else-if="activity.type === 'Vehicle Updated'">🛠️</template>
-<template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
-<template v-else-if="activity.type === 'Driver Updated'">👤</template>
-<template v-else-if="activity.type === 'Trip'">🧭</template>
-<template v-else-if="activity.type === 'Expense Created' || activity.type === 'Expense Updated'">💸</template>
-<template v-else-if="activity.type === 'Income Created' || activity.type === 'Income Updated'">💰</template> <!-- ✅ NEW -->
-<template v-else>📌</template>
+          <template v-if="activity.type === 'Check-In'">🚗</template>
+          <template
+            v-else-if="
+              activity.type === 'Maintenance Created' || activity.type === 'Maintenance Updated'
+            "
+            >🛠️</template
+          >
+          <template v-else-if="activity.type === 'Vehicle Registered'">🚙</template>
+          <template v-else-if="activity.type === 'Vehicle Updated'">🛠️</template>
+          <template v-else-if="activity.type === 'Driver Registered'">👨‍✈️</template>
+          <template v-else-if="activity.type === 'Driver Updated'">👤</template>
+          <template v-else-if="activity.type === 'Trip'">🧭</template>
+          <template
+            v-else-if="activity.type === 'Expense Created' || activity.type === 'Expense Updated'"
+            >💸</template
+          >
+          <template
+            v-else-if="activity.type === 'Income Created' || activity.type === 'Income Updated'"
+            >💰</template
+          >
+          <!-- ✅ NEW -->
+          <template v-else>📌</template>
         </span>
 
         <!-- Details -->
-        <div>
-          <p class="text-sm text-gray-800 leading-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <p class="text-sm leading-5 text-gray-800">
             <span class="font-semibold">{{ activity.type }}:</span>
             {{ activity.message }}
           </p>
-          <p class="text-xs text-gray-500 mt-1">
+          <p class="mt-1 text-xs text-gray-500">
             {{ new Date(activity.time).toLocaleString() }}
           </p>
           <hr />
@@ -85,12 +99,8 @@
     </ul>
 
     <!-- Pagination Controls -->
-    <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
-      <button
-        :disabled="currentPage === 1"
-        @click="currentPage--"
-        class="btn-pagination"
-      >
+    <div class="flex flex-wrap items-center justify-center gap-2 mt-6 text-sm">
+      <button :disabled="currentPage === 1" @click="currentPage--" class="btn-pagination">
         Prev
       </button>
 
@@ -102,19 +112,15 @@
           'btn-pagination',
           {
             'bg-blue-600 text-white': p === currentPage,
-            'pointer-events-none text-gray-500': p === '...'
-          }
+            'pointer-events-none text-gray-500': p === '...',
+          },
         ]"
         :disabled="p === '...'"
       >
         {{ p }}
       </button>
 
-      <button
-        :disabled="currentPage === totalPages"
-        @click="currentPage++"
-        class="btn-pagination"
-      >
+      <button :disabled="currentPage === totalPages" @click="currentPage++" class="btn-pagination">
         Next
       </button>
     </div>
@@ -145,8 +151,8 @@ const fetchActivities = async () => {
         search: search.value,
         type: type.value,
         from: fromDate.value,
-        to: toDate.value
-      }
+        to: toDate.value,
+      },
     })
     activities.value = res.data.data
     totalPages.value = res.data.last_page

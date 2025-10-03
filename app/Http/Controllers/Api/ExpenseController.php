@@ -52,10 +52,19 @@ class ExpenseController extends Controller
         $expense = Expense::create($validated);
 
         // 🔁 Auto-complete maintenance if linked
+        // if (!empty($validated['maintenance_id'])) {
+        //     Maintenance::where('id', $validated['maintenance_id'])
+        //         ->update(['status' => 'Completed']);
+        // }
+
         if (!empty($validated['maintenance_id'])) {
-            Maintenance::where('id', $validated['maintenance_id'])
-                ->update(['status' => 'Completed']);
-        }
+    Maintenance::where('id', $validated['maintenance_id'])
+        ->update([
+            'status' => 'Completed',
+            'cost'   => $validated['amount'] ?? 0, // update cost
+        ]);
+}
+
 
         return response()->json(
             $expense->load(['vehicle', 'maintenance', 'creator', 'updater']),

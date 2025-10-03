@@ -1,6 +1,6 @@
 <template>
   <div class="trends-chart-container">
-    <h3 class="text-lg font-bold mb-4">Monthly Trends</h3>
+    <h3 class="mb-4 text-lg font-bold">Monthly Trends</h3>
     <Line v-if="chartData.datasets.length" :data="chartData" :options="chartOptions" />
     <p v-else class="text-sm text-gray-500">No trend data available.</p>
   </div>
@@ -39,10 +39,10 @@ const chartOptions = {
     y: {
       beginAtZero: true,
       ticks: {
-        precision: 0
-      }
-    }
-  }
+        precision: 0,
+      },
+    },
+  },
 }
 
 onMounted(async () => {
@@ -52,11 +52,11 @@ onMounted(async () => {
     // console.log('📊 Monthly Trend Data:', data)
 
     chartData.value = {
-      labels: data.map(entry => entry.month),
+      labels: data.map((entry) => entry.month),
       datasets: [
         {
           label: 'Maintenance Costs (₦)',
-          data: data.map(entry => entry.maintenances),
+          data: data.map((entry) => entry.maintenances),
           borderColor: '#3b82f6',
           backgroundColor: '#3b82f660',
           tension: 0.4,
@@ -64,13 +64,21 @@ onMounted(async () => {
         },
         {
           label: 'Expenses (₦)',
-          data: data.map(entry => entry.expenses),
+          data: data.map((entry) => entry.expenses),
           borderColor: '#10b981',
           backgroundColor: '#10b98160',
           tension: 0.4,
           fill: false,
         },
-      ]
+        {
+          label: 'Income (₦)',
+          data: data.map((entry) => entry.incomes),
+          borderColor: '#ef4444',
+          backgroundColor: '#ef444460',
+          tension: 0.4,
+          fill: false,
+        },
+      ],
     }
   } catch (error) {
     console.warn('Skipping trends fetch (unauthorized or error)', error)

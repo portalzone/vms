@@ -1,77 +1,74 @@
 <template>
-  <div class="space-y-6">
+  <div>
     <!-- Filters -->
-    <div class="flex flex-wrap gap-4">
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search by ID, manufacturer, model, plate..."
-        class="w-full px-4 py-2 border rounded md:w-1/3"
-      />
+    <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search by ID, manufacturer, model, plate..."
+          class="px-4 py-2 border rounded"
+        />
+        <router-link
+          v-if="hasRole(['admin', 'manager', 'gate_security'])"
+          to="/vehicles/new"
+          class="text-center btn-primary"
+          >➕ Add Vehicle</router-link
+        >
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <select
+          v-if="hasRole(['admin', 'manager'])"
+          v-model="filters.ownership_type"
+          class="px-4 py-2 border rounded"
+        >
+          <option value="">All Ownership Types</option>
+          <option value="individual">Individual</option>
+          <option value="organization">Organization</option>
+        </select>
 
-      <select
-        v-if="hasRole(['admin', 'manager'])"
-        v-model="filters.ownership_type"
-        class="px-4 py-2 border rounded"
-      >
-        <option value="">All Ownership Types</option>
-        <option value="individual">Individual</option>
-        <option value="organization">Organization</option>
-      </select>
+        <select
+          v-if="filters.ownership_type === 'individual'"
+          v-model="filters.individual_type"
+          class="px-4 py-2 border rounded"
+        >
+          <option value="">All Individual Types</option>
+          <option value="staff">Staff</option>
+          <option value="visitor">Visitor</option>
+          <option value="vehicle_owner">Vehicle Owner</option>
+        </select>
 
-      <select
-        v-if="filters.ownership_type === 'individual'"
-        v-model="filters.individual_type"
-        class="px-4 py-2 border rounded"
-      >
-        <option value="">All Individual Types</option>
-        <option value="staff">Staff</option>
-        <option value="visitor">Visitor</option>
-        <option value="vehicle_owner">Vehicle Owner</option>
-      </select>
-
-      <select
-        v-if="hasRole(['admin', 'manager'])"
-        v-model="filters.driver_id"
-        class="px-4 py-2 border rounded"
-      >
-        <option value="">All Drivers</option>
-        <option v-for="driver in drivers" :key="driver.id" :value="driver.id">
-          {{ driver.user?.name || driver.name }}
-        </option>
-      </select>
-
-      <router-link
-        v-if="hasRole(['admin', 'manager', 'gate_security'])"
-        to="/vehicles/new"
-        class="text-center btn-primary"
-        >➕ Add Vehicle</router-link
-      >
-    </div>
-
-    <!-- Sort Dropdown -->
-    <div class="mb-4">
-      <label for="sort" class="mr-2 font-medium">Sort by:</label>
-      <select v-model="sortBy" id="sort" class="px-3 py-2 border border-gray-300 rounded">
-        <option value="newest">Newest</option>
-        <option value="oldest">Oldest</option>
-        <option value="manufacturer-asc">Manufacturer A–Z</option>
-        <option value="manufacturer-desc">Manufacturer Z–A</option>
-      </select>
-    </div>
-
-    <!-- Search by ID -->
-    <div
-      v-if="hasRole(['admin', 'manager'])"
-      class="flex flex-col items-center gap-4 mb-4 md:flex-row"
-    >
-      <input
-        type="number"
-        v-model="searchId"
-        placeholder="Search Vehicle by ID"
-        class="w-full px-4 py-2 border border-gray-300 rounded md:w-1/3"
-      />
-      <button @click="searchById(searchId)" class="btn-primary">Search by ID</button>
+        <select
+          v-if="hasRole(['admin', 'manager'])"
+          v-model="filters.driver_id"
+          class="px-4 py-2 border rounded"
+        >
+          <option value="">All Drivers</option>
+          <option v-for="driver in drivers" :key="driver.id" :value="driver.id">
+            {{ driver.user?.name || driver.name }}
+          </option>
+        </select>
+      </div>
+      <!-- Search by ID -->
+      <div v-if="hasRole(['admin', 'manager'])" class="flex flex-wrap items-center gap-2">
+        <input
+          type="number"
+          v-model="searchId"
+          placeholder="Search Vehicle by ID"
+          class="px-4 py-2 border border-gray-300 rounded"
+        />
+        <button @click="searchById(searchId)" class="btn-primary">Search by ID</button>
+      </div>
+      <!-- Sort Dropdown -->
+      <div class="mb-4">
+        <label for="sort" class="inline mr-2 font-medium">Sort by:</label>
+        <select v-model="sortBy" id="sort" class="px-3 py-2 border border-gray-300 rounded">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="manufacturer-asc">Manufacturer A–Z</option>
+          <option value="manufacturer-desc">Manufacturer Z–A</option>
+        </select>
+      </div>
     </div>
 
     <!-- Vehicles Table -->

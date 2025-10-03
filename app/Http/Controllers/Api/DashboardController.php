@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Vehicle;
 use App\Models\Driver;
+use App\Models\Income;
 use App\Models\Expense;
 use App\Models\Maintenance;
 use App\Models\CheckInOut;
@@ -23,6 +24,7 @@ class DashboardController extends Controller
             'vehicles' => Vehicle::count(),
             'drivers' => Driver::count(),
             'expenses' => Expense::sum('amount'),
+            'incomes' => Income::sum('amount'),
             'trips' => Trip::count(),
             'maintenances' => [
                 'pending'     => Maintenance::where('status', 'pending')->count(),
@@ -254,10 +256,10 @@ $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
         'message' => 'Trip from ' . $t->start_location . ' to ' . $t->end_location .
                      ' by ' . ($t->driver?->user?->name ?? 'Unknown Driver') .
                      ' using ' . ($t->vehicle?->manufacturer ?? 'Unknown Manufacturer') . ' ' .
-                     ($t->vehicle?->model ?? 'Unknown Model') . 
+                     ($t->vehicle?->model ?? 'Unknown Model') .
                      ' (' . ($t->vehicle?->plate_number ?? 'Unknown Plate Number') . ') ' .
-                     'started at ' . $startTime->format('M j, Y g:i A') . 
-                     ' and ended at ' . $endTime->format('M j, Y g:i A') . 
+                     'started at ' . $startTime->format('M j, Y g:i A') .
+                     ' and ended at ' . $endTime->format('M j, Y g:i A') .
                      ', duration: ' . $durationString,
         'time' => $t->created_at,
     ];
@@ -311,7 +313,8 @@ $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
             $drivers = DB::table('drivers')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->count();
                         $expenses = DB::table('expenses')->whereMonth('date', $month->month)->whereYear('date', $month->year)->sum('amount');
             $maintenances = DB::table('maintenances')->whereMonth('date', $month->month)->whereYear('date', $month->year)->sum('cost');
-            // $expenses = DB::table('expenses')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->sum('amount');
+            $incomes = DB::table('incomes')->whereMonth('date', $month->month)->whereYear('date', $month->year)->sum('amount');
+            $expenses = DB::table('expenses')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->sum('amount');
             // $maintenances = DB::table('maintenances')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->sum('cost');
             $trips = DB::table('trips')->whereMonth('created_at', $month->month)->whereYear('created_at', $month->year)->count();
 
@@ -320,6 +323,7 @@ $trips = Trip::with(['vehicle', 'driver.user'])->get()->map(function ($t) {
                 'vehicles' => $vehicles,
                 'drivers' => $drivers,
                 'expenses' => (float) $expenses,
+                'incomes' => (float) $incomes,
                 'maintenances' => (float) $maintenances,
                 'trips' => $trips,
             ];

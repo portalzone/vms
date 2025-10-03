@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
     //Gate security
     Route::get('/gate-security/stats', [GateSecurityController::class, 'stats']);
     Route::get('/gate-security/recent-logs', [GateSecurityController::class, 'recentLogs']);
+    Route::get('/gate-security/alerts', [GateSecurityController::class, 'alerts']);
+    // Route::get('/vehicles/within-premises', [GateSecurityController::class, 'vehiclesWithinPremises']);
 
     // ✅ Vehicles
     Route::get('/vehicles/with-drivers', [VehicleController::class, 'withDrivers']);

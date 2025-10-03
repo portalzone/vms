@@ -1,12 +1,8 @@
 <template>
   <div v-if="auth.user">
     <div class="dashboard-container">
-      <h2 class="dashboard-heading">
-        Welcome {{ auth.user.role }}: {{ auth.user.name }}
-      </h2>
-      <p class="dashboard-subtitle">
-        Here is your dashboard overview:
-      </p>
+      <h2 class="dashboard-heading">Welcome {{ auth.user.role }}: {{ auth.user.name }}</h2>
+      <p class="dashboard-subtitle">Here is your dashboard overview:</p>
 
       <!-- Stats Grid -->
       <div class="stats-grid">
@@ -25,18 +21,23 @@
           <p class="stat-value">₦{{ stats.expenses ?? 0 }}</p>
         </router-link>
 
+        <router-link to="/expenses" class="stat-card income" title="View all expenses">
+          <h3 class="stat-title">💰 Total Income</h3>
+          <p class="stat-value">₦{{ stats.incomes ?? 0 }}</p>
+        </router-link>
+
         <router-link to="/maintenance" class="stat-card maintenance" title="View maintenance tasks">
           <h3 class="stat-title">🔧 Maintenance Tasks</h3>
           <p class="stat-value">
             {{ (stats.maintenances?.pending ?? 0) + (stats.maintenances?.in_progress ?? 0) }}
           </p>
-          <small class="text-xs text-gray-700 block mt-1">
+          <small class="block mt-1 text-xs text-gray-700">
             {{ stats.maintenances?.pending ?? 0 }} pending /
             {{ stats.maintenances?.in_progress ?? 0 }} in progress
           </small>
         </router-link>
 
-        <router-link to="/vehicle-within"  class="stat-card vehicle_inside_premises">
+        <router-link to="/vehicle-within" class="stat-card vehicle_inside_premises">
           <h3 class="stat-title">🏠 Vehicles Inside Premises</h3>
           <p class="stat-value">{{ stats.vehicles_inside ?? 0 }}</p>
         </router-link>
@@ -61,15 +62,13 @@
           <p class="stat-value">{{ stats.trips ?? 0 }}</p>
         </router-link>
 
-        <router-link to="/checkins"  class="stat-card total_checkin">
+        <router-link to="/checkins" class="stat-card total_checkin">
           <h3 class="stat-title">✅ Total Check-ins</h3>
           <p class="stat-value">{{ stats.total_check_ins ?? 0 }}</p>
         </router-link>
       </div>
 
-      <p class="refresh-note">
-        Stats refresh every 60 seconds.
-      </p>
+      <p class="refresh-note">Stats refresh every 60 seconds.</p>
 
       <!-- Charts -->
       <div class="chart-wrapper">
@@ -82,14 +81,12 @@
 
       <!-- Recent Activity -->
       <div class="chart-wrapper">
-        <h3 class="text-lg font-semibold mb-2">📋 Recent Activity</h3>
+        <h3 class="mb-2 text-lg font-semibold">📋 Recent Activity</h3>
         <RecentActivity />
       </div>
     </div>
 
-    <div v-if="loading" class="text-center mt-6 text-sm text-gray-500">
-      ⏳ Loading stats...
-    </div>
+    <div v-if="loading" class="mt-6 text-sm text-center text-gray-500">⏳ Loading stats...</div>
   </div>
 </template>
 
@@ -133,8 +130,6 @@ onBeforeUnmount(() => {
   }
 })
 </script>
-
-
 
 <style scoped>
 /* Existing styles maintained */
@@ -237,6 +232,10 @@ onBeforeUnmount(() => {
 .stat-card.active_trips {
   background: linear-gradient(to bottom right, #d1fae5, #a7f3d0);
 }
+
+.stat-card.income {
+  background: linear-gradient(to bottom right, #d1fae5, #0e6c40);
+}
 .stat-card.total_checkin {
   background: linear-gradient(to bottom right, #ede9fe, #ddd6fe);
 }
@@ -248,7 +247,4 @@ onBeforeUnmount(() => {
 .chart-wrapper {
   margin-top: 2.5rem;
 }
-
-
-
 </style>

@@ -1,42 +1,40 @@
 <template>
-  <div class="login max-w-md mx-auto mt-10">
-    <h2 class="text-2xl font-bold mb-4">Login</h2>
+  <div class="auth-card">
+    <h2 class="mb-4 text-2xl font-bold text-center">Login</h2>
 
-    <!-- Error Message -->
-    <div v-if="error" class="error-text">
+    <div v-if="error" class="mb-4 text-center text-red-600 error-text">
       {{ error }}
     </div>
 
     <form @submit.prevent="login">
-      <div class="mb-4">
-        <label>Email:</label>
+      <div class="mb-6">
+        <label class="block mb-2 text-gray-700">Email:</label>
         <input
           v-model="email"
           type="email"
-          class="border border-gray-300 rounded px-3 py-2 w-full"
+          class="w-full px-4 py-2 border border-gray-300 rounded"
           required
         />
       </div>
 
-      <div class="mb-4">
-        <label>Password:</label>
+      <div class="mb-6">
+        <label class="block mb-2 text-gray-700">Password:</label>
         <input
           v-model="password"
           type="password"
-          class="border border-gray-300 rounded px-3 py-2 w-full"
+          class="w-full px-4 py-2 border border-gray-300 rounded"
           required
         />
       </div>
-
-<button
-  type="submit"
-  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
-  :disabled="loading"
->
-  <span v-if="loading">Logging in...</span>
-  <span v-else>Login</span>
-</button>
-
+      <br />
+      <button
+        type="submit"
+        class="w-full px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+        :disabled="loading"
+      >
+        <span v-if="loading">Logging in...</span>
+        <span v-else>Login</span>
+      </button>
     </form>
   </div>
 </template>
@@ -62,7 +60,7 @@ const login = async () => {
   try {
     const response = await axios.post('/login', {
       email: email.value,
-      password: password.value
+      password: password.value,
     })
 
     const token = response.data.token
@@ -75,5 +73,5 @@ const login = async () => {
     loading.value = false
   }
 }
-
 </script>
+<style scoped></style>

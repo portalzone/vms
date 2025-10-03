@@ -1,18 +1,20 @@
 <template>
   <div class="p-4">
     <!-- Filters -->
-    <div class="flex flex-col items-center justify-between gap-4 mb-4 md:flex-row">
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search by location or vehicle..."
-        class="w-full px-3 py-2 border rounded md:w-64"
-      />
-      <router-link v-if="hasRole(['admin', 'manager'])" to="/trips/create" class="btn-primary">
-        + New Trip
-      </router-link>
+    <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search by location or vehicle..."
+          class="px-3 py-2 border rounded"
+        />
+        <router-link v-if="hasRole(['admin', 'manager'])" to="/trips/create" class="btn-primary">
+          + New Trip
+        </router-link>
+      </div>
 
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <select v-model="selectedRange" class="px-2 py-1 border rounded">
           <option value="all">All Time</option>
           <option value="24h">Last 24 Hours</option>
@@ -26,12 +28,13 @@
           Sort: {{ sortOrder === 'asc' ? 'Oldest First' : 'Newest First' }}
         </button>
       </div>
-
-      <select v-model="selectedStatus" class="px-2 py-1 border rounded">
-        <option value="all">All Statuses</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-      </select>
+      <div class="flex flex-wrap items-center gap-2">
+        <select v-model="selectedStatus" class="px-2 py-1 border rounded">
+          <option value="all">All Statuses</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
     </div>
 
     <!-- Table -->

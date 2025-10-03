@@ -64,6 +64,7 @@ if (in_array($validated['status'], ['Completed']) && $user->hasAnyRole(['driver'
         'date'        => $validated['date'],
         'created_by'  => $userId,
         'updated_by'  => $userId,
+        'cost'        => $validated['cost'] ?? 0,
     ];
 
     // Only set cost if status is Completed

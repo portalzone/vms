@@ -5,7 +5,7 @@ import axios from '@/axios'
 
 const props = defineProps({
   user: Object,
-  roles: Array
+  roles: Array,
 })
 
 const emit = defineEmits(['saved'])
@@ -14,20 +14,24 @@ const form = ref({
   name: '',
   email: '',
   password: '',
-  role: ''
+  role: '',
 })
 
 const errors = ref({})
 
 // Prefill when editing
-watch(() => props.user, (user) => {
-  form.value = {
-    name: user?.name || '',
-    email: user?.email || '',
-    password: '',
-    role: user?.roles?.[0]?.name || ''
-  }
-}, { immediate: true })
+watch(
+  () => props.user,
+  (user) => {
+    form.value = {
+      name: user?.name || '',
+      email: user?.email || '',
+      password: '',
+      role: user?.roles?.[0]?.name || '',
+    }
+  },
+  { immediate: true },
+)
 
 const capitalize = (str) => str?.charAt(0).toUpperCase() + str.slice(1)
 
@@ -51,38 +55,43 @@ const submit = async () => {
 </script>
 
 <template>
-  <form @submit.prevent="submit" class="bg-white p-4 border rounded shadow">
+  <form @submit.prevent="submit">
     <div class="mb-3">
       <label>Name</label>
-      <input v-model="form.name" type="text" class="w-full border p-2 rounded" required />
-      <p v-if="errors.name" class="text-red-600 text-xs">{{ errors.name[0] }}</p>
+      <input v-model="form.name" type="text" class="w-full p-2 border rounded" required />
+      <p v-if="errors.name" class="text-xs text-red-600">{{ errors.name[0] }}</p>
     </div>
 
     <div class="mb-3">
       <label>Email</label>
-      <input v-model="form.email" type="email" class="w-full border p-2 rounded" required />
-      <p v-if="errors.email" class="text-red-600 text-xs">{{ errors.email[0] }}</p>
+      <input v-model="form.email" type="email" class="w-full p-2 border rounded" required />
+      <p v-if="errors.email" class="text-xs text-red-600">{{ errors.email[0] }}</p>
     </div>
 
     <div class="mb-3">
       <label>Password</label>
-      <input v-model="form.password" type="password" class="w-full border p-2 rounded" :required="!props.user?.id" />
-      <p v-if="errors.password" class="text-red-600 text-xs">{{ errors.password[0] }}</p>
+      <input
+        v-model="form.password"
+        type="password"
+        class="w-full p-2 border rounded"
+        :required="!props.user?.id"
+      />
+      <p v-if="errors.password" class="text-xs text-red-600">{{ errors.password[0] }}</p>
     </div>
 
     <div class="mb-3">
       <label>Role</label>
-      <select v-model="form.role" class="w-full border p-2 rounded" required>
+      <select v-model="form.role" class="w-full p-2 border rounded" required>
         <option disabled value="">Select Role</option>
         <option v-for="role in roles" :key="role.id" :value="role.name">
           {{ capitalize(role.name) }}
         </option>
       </select>
-      <p v-if="errors.role" class="text-red-600 text-xs">{{ errors.role[0] }}</p>
+      <p v-if="errors.role" class="text-xs text-red-600">{{ errors.role[0] }}</p>
     </div>
 
     <div class="flex justify-end">
-      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">
+      <button type="submit" class="px-4 py-2 text-white bg-green-600 rounded">
         {{ props.user?.id ? 'Update' : 'Create' }}
       </button>
     </div>

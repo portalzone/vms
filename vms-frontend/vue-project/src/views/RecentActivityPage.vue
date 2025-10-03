@@ -1,6 +1,6 @@
 <template>
-  <div class="max-w-4xl mx-auto mt-10">
-    <h2 class="text-2xl font-bold mb-6">📋 Recent Activity</h2>
+  <div>
+    <h2 class="mb-6 text-2xl font-bold">📋 Recent Activity</h2>
     <RecentActivity />
   </div>
 </template>

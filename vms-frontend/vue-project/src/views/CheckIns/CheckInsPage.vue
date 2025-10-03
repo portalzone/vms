@@ -1,70 +1,74 @@
 <template>
   <div>
     <!-- Search + Add -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search by vehicle or driver..."
-        class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/2"
-      />
-      <router-link to="/checkins/new" class="btn-primary text-center">
-        ➕ New Check-In
-      </router-link>
+    <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search by vehicle or driver..."
+          class="px-4 py-2 border border-gray-300 rounded"
+        />
+        <router-link to="/checkins/new" class="text-center btn-primary">
+          ➕ New Check-In
+        </router-link>
+      </div>
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto rounded shadow bg-white">
-      <table class="w-full table-auto text-sm">
-        <thead class="bg-gray-100 text-left">
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="w-full text-sm table-auto">
+        <thead class="text-left bg-gray-100">
           <tr>
-  <th class="px-4 py-2">#</th>
-  <th class="px-4 py-2">Vehicle</th>
-  <th class="px-4 py-2">Driver</th>
-  <th class="px-4 py-2">Checked In</th>
-  <th class="px-4 py-2">Checked Out</th>
-  <th class="px-4 py-2">Checked In By</th>
-  <th class="px-4 py-2">Checked Out By</th>
-  <th class="px-4 py-2 text-right">Actions</th>
-</tr>
-
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Vehicle</th>
+            <th class="px-4 py-2">Driver</th>
+            <th class="px-4 py-2">Checked In</th>
+            <th class="px-4 py-2">Checked Out</th>
+            <th class="px-4 py-2">Checked In By</th>
+            <th class="px-4 py-2">Checked Out By</th>
+            <th>Status</th>
+            <th class="px-4 py-2 text-right">Actions</th>
+          </tr>
         </thead>
         <tbody>
-<tr
-  v-for="(check, index) in checkIns"
-  :key="check.id"
-  class="hover:bg-gray-50 even:bg-gray-50"
->
-  <td class="px-4 py-2">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
-  <td class="px-4 py-2">{{ check.vehicle?.plate_number || '—' }}</td>
-  <td class="px-4 py-2">{{ check.driver?.user?.name || '—' }}</td>
-  <td class="px-4 py-2">{{ formatDate(check.checked_in_at) || '—' }}</td>
-  <td class="px-4 py-2">{{ formatDate(check.checked_out_at) || '—' }}</td>
-  <td class="px-4 py-2">{{ check.checked_in_by_user?.name || '—' }}</td>
-  <td class="px-4 py-2">{{ check.checked_out_by_user?.name || '—' }}</td>
-  <td class="px-4 py-2 text-right">
-    <button
-      v-if="!check.checked_out_at"
-      class="text-blue-600 hover:underline"
-      @click="checkout(check.id)"
-    >
-      Checkout
-    </button>
-    <span v-else class="text-gray-400">—</span>
-  </td>
-</tr>
-
+          <tr
+            v-for="(check, index) in checkIns"
+            :key="check.id"
+            class="hover:bg-gray-50 even:bg-gray-50"
+          >
+            <td class="px-4 py-2">{{ (meta.current_page - 1) * meta.per_page + index + 1 }}</td>
+            <td class="px-4 py-2">{{ check.vehicle?.plate_number || '—' }}</td>
+            <td class="px-4 py-2">{{ check.driver?.user?.name || '—' }}</td>
+            <td class="px-4 py-2">{{ formatDate(check.checked_in_at) || '—' }}</td>
+            <td class="px-4 py-2">{{ formatDate(check.checked_out_at) || '—' }}</td>
+            <td class="px-4 py-2">{{ check.checked_in_by_user?.name || '—' }}</td>
+            <td class="px-4 py-2">{{ check.checked_out_by_user?.name || '—' }}</td>
+            <td>
+              <span
+                :class="check.checked_out_at ? 'status-badge status-out' : 'status-badge status-in'"
+              >
+                {{ check.checked_out_at ? 'OUT' : 'IN' }}
+              </span>
+            </td>
+            <td class="px-4 py-2 text-right">
+              <button
+                v-if="!check.checked_out_at"
+                class="text-blue-600 hover:underline"
+                @click="checkout(check.id)"
+              >
+                Checkout
+              </button>
+              <span v-else class="text-gray-400">—</span>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="mt-6 flex justify-center items-center gap-2 flex-wrap text-sm">
-      <button
-        :disabled="meta.current_page === 1"
-        @click="page--"
-        class="btn-pagination"
-      >
+    <div class="flex flex-wrap items-center justify-center gap-2 mt-6 text-sm">
+      <button :disabled="meta.current_page === 1" @click="page--" class="btn-pagination">
         Prev
       </button>
 
@@ -76,8 +80,8 @@
           'btn-pagination',
           {
             'bg-blue-600 text-white': p === meta.current_page,
-            'pointer-events-none text-gray-500': p === '...'
-          }
+            'pointer-events-none text-gray-500': p === '...',
+          },
         ]"
         :disabled="p === '...'"
       >
@@ -106,7 +110,7 @@ const meta = ref({
   current_page: 1,
   last_page: 1,
   per_page: 10,
-  total: 0
+  total: 0,
 })
 
 // Format timestamp
@@ -182,3 +186,22 @@ const visiblePages = computed(() => {
 watch([search, page], fetchCheckIns)
 onMounted(fetchCheckIns)
 </script>
+<style scoped>
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.status-in {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.status-out {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+</style>

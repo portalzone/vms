@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl p-6 mx-auto bg-white rounded shadow">
+  <div class="auth-card">
     <h2 class="mb-4 text-xl font-bold">
       {{ isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}
     </h2>

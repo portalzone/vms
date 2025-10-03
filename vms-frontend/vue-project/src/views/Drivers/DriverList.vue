@@ -1,36 +1,40 @@
 <template>
   <div>
-    <!-- Search & Add -->
-    <div class="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search by name, email, license, or vehicle..."
-        class="w-full px-4 py-2 border border-gray-300 rounded md:w-1/2"
-      />
-      <router-link
+    <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search by name, email, license, or vehicle..."
+          class="px-3 py-2 border rounded"
+        />
+        <router-link
+          v-if="hasRole(['admin', 'manager', 'gate_security'])"
+          to="/drivers/new"
+          class="text-center btn-primary"
+        >
+          ➕ Add New Driver
+        </router-link>
+      </div>
+
+      <!-- Filter Controls -->
+      <div
         v-if="hasRole(['admin', 'manager', 'gate_security'])"
-        to="/drivers/new"
-        class="text-center btn-primary"
+        class="flex flex-wrap items-center gap-2"
       >
-        ➕ Add Driver
-      </router-link>
-    </div>
-
-    <!-- Filter Controls -->
-    <div v-if="hasRole(['admin', 'manager', 'gate_security'])" class="flex flex-wrap gap-4 mb-4">
-      <input
-        v-model="searchDriverIdInput"
-        type="number"
-        placeholder="Search Driver by ID"
-        class="px-4 py-2 border border-gray-300 rounded"
-      />
-      <button @click="searchDriverById(searchDriverIdInput)" class="btn-primary">
-        Search by ID
-      </button>
-
+        <input
+          v-model="searchDriverIdInput"
+          type="number"
+          placeholder="Search Driver by ID"
+          class="px-4 py-2 border border-gray-300 rounded"
+        />
+        <button @click="searchDriverById(searchDriverIdInput)" class="btn-primary">
+          Search by ID
+        </button>
+      </div>
       <!-- Only show ownership filter for admin and manager -->
-      <div v-if="hasRole(['admin', 'manager'])" class="flex items-center gap-4 mb-4">
+
+      <div v-if="hasRole(['admin', 'manager'])" class="flex flex-wrap items-center gap-2">
         <label class="font-medium">Filter Drivers by Ownership Type:</label>
 
         <!-- Ownership type -->
@@ -53,7 +57,7 @@
         </select>
       </div>
       <!-- Filter by Driver Type -->
-      <div class="flex items-center gap-4 mb-4">
+      <div class="flex flex-wrap items-center gap-2">
         <label class="font-medium">Driver Type:</label>
         <select v-model="selectedDriverType" class="px-3 py-2 border border-gray-300 rounded">
           <option value="">All Driver Types</option>

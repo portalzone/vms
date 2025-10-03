@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <h2 class="text-xl font-bold mb-4">{{ isEdit ? 'Edit Driver' : 'Add Driver' }}</h2>
+  <div class="auth-card">
+    <!-- <h2 class="mb-4 text-xl font-bold">{{ isEdit ? 'Edit Driver' : 'Add Driver' }}</h2> -->
     <DriverForm :driver-id="driverId" :is-edit="isEdit" />
   </div>
 </template>

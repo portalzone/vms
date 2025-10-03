@@ -1,21 +1,14 @@
 <template>
   <div>
     <!-- Search + Filters -->
-    <div class="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search by vehicle, description, or amount..."
-        class="w-full px-4 py-2 border border-gray-300 rounded md:w-1/2"
-      />
-
-      <div class="flex items-center gap-2">
-        <select v-model="dateRange" class="px-3 py-2 text-sm border border-gray-300 rounded">
-          <option value="all">All Time</option>
-          <option value="1">Today</option>
-          <option value="7">Last 7 Days</option>
-          <option value="30">Last 30 Days</option>
-        </select>
+    <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search by vehicle, description, or amount..."
+          class="px-4 py-2 border border-gray-300 rounded"
+        />
 
         <router-link
           v-if="['admin', 'manager'].includes(auth.user?.role)"
@@ -25,15 +18,23 @@
           ➕ Add Expense
         </router-link>
       </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <select v-model="dateRange" class="px-3 py-2 text-sm border border-gray-300 rounded">
+          <option value="all">All Time</option>
+          <option value="1">Today</option>
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+        </select>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="font-medium">Items per page:</label>
+        <select v-model="perPage" class="px-3 py-1 border rounded">
+          <option v-for="n in [5, 10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
+        </select>
+      </div>
     </div>
 
     <!-- Per Page Dropdown -->
-    <div class="flex items-center mb-4 space-x-2">
-      <label class="font-medium">Items per page:</label>
-      <select v-model="perPage" class="px-3 py-1 border rounded">
-        <option v-for="n in [5, 10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
-      </select>
-    </div>
 
     <!-- Table -->
     <div class="overflow-x-auto bg-white rounded shadow">

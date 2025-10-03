@@ -71,11 +71,24 @@ public function index(Request $request)
     );
 }
 
-    public function vehiclesWithinPremises()
+    // public function vehiclesWithinPremises()
+    // {
+    //     $vehicles = CheckInOut::with('vehicle', 'driver.user')
+    //         ->whereNull('checked_out_at')
+    //         ->latest()
+    //         ->get();
+
+    //     return response()->json($vehicles);
+    // }
+        public function vehiclesWithinPremises()
     {
-        $vehicles = CheckInOut::with('vehicle', 'driver.user')
+        $vehicles = CheckInOut::with([
+                'vehicle:id,manufacturer,model,plate_number',
+                'driver.user:id,name'
+            ])
+            ->whereNotNull('checked_in_at')
             ->whereNull('checked_out_at')
-            ->latest()
+            ->orderBy('checked_in_at', 'desc')
             ->get();
 
         return response()->json($vehicles);
@@ -199,6 +212,8 @@ public function index(Request $request)
 
         return response()->json($vehicles);
     }
+
+
 
     public function show($id)
     {
