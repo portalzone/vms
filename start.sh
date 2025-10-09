@@ -7,8 +7,8 @@ sleep 10
 echo "Running migrations..."
 php artisan migrate --force
 
-echo "Seeding database..."
-php artisan db:seed --force || echo "Seeders already run"
+echo "Seeding..."
+php artisan db:seed --force
 
-echo "Starting services..."
+echo "Starting supervisord"
 supervisord -c /etc/supervisord.conf
