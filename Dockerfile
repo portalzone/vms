@@ -1,5 +1,5 @@
 # Stage 1: Build Vue frontend
-FROM node:20 AS frontend_builder
+FROM node:22 AS frontend_builder
 
 WORKDIR /app
 
@@ -14,7 +14,15 @@ RUN npm run build
 FROM php:8.3-fpm-alpine AS final
 
 RUN apk add --no-cache \
-    nginx supervisor libzip-dev libpng-dev libxml2-dev $PHPIZE_DEPS \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    libzip-dev \
+    libxml2-dev \
+    $PHPIZE_DEPS \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
     && docker-php-ext-install pdo_mysql opcache zip gd bcmath \
     && apk del $PHPIZE_DEPS
 
