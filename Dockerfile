@@ -11,7 +11,7 @@ RUN npm run build
 
 
 # Stage 2: Build Laravel backend with PHP-FPM and Nginx
-FROM php:8.3-fpm-alpine AS final
+FROM php:8.3-fpm-alpine
 
 RUN apk add --no-cache \
     freetype-dev \
@@ -20,11 +20,12 @@ RUN apk add --no-cache \
     libzip-dev \
     libxml2-dev \
     $PHPIZE_DEPS \
-    && docker-php-ext-configure gd \
-        --with-freetype \
-        --with-jpeg \
-    && docker-php-ext-install pdo_mysql opcache zip gd bcmath \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql gd zip bcmath \
     && apk del $PHPIZE_DEPS
+
+# Continue your setup...
+
 
 RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /var/run
 
