@@ -19,11 +19,13 @@ RUN apk add --no-cache \
     libpng-dev \
     libzip-dev \
     libxml2-dev \
-    $PHPIZE_DEPS \
+    supervisor \
     nginx \
+    $PHPIZE_DEPS \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql gd zip bcmath \
     && apk del $PHPIZE_DEPS
+
 
 RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /var/run
 
