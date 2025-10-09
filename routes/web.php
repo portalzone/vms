@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 
 Route::get('/{any}', function () {
-    $indexPath = public_path('/vms-frontend/vue-project/index.html');
+    $indexPath = public_path('index.html');  // Adjust this path properly
     if (File::exists($indexPath)) {
         return Response::file($indexPath);
     }
