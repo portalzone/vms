@@ -1,53 +1,69 @@
 # Stage 1: Build Vue frontend
-FROM node:22 AS frontend_builder
+FROM node:22-alpine AS frontend-builder
 
-WORKDIR /app
-
+WORKDIR /frontend
 COPY vms-frontend/vue-project/package*.json ./
-RUN npm ci
-
-COPY vms-frontend/vue-project/ ./
+RUN npm install
+COPY vms-frontend/vue-project/ .
 RUN npm run build
 
+# Stage 2: Build PHP backend
+FROM php:8.3-cli
 
-# Stage 2: Build Laravel backend with PHP-FPM and Nginx
-FROM php:8.3-fpm-alpine
-
-RUN apk add --no-cache \
-    freetype-dev \
-    libjpeg-turbo-dev \
+# Install system dependencies including MySQL client
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
     libpng-dev \
-    libzip-dev \
+    libonig-dev \
     libxml2-dev \
-    supervisor \
-    nginx \
-    $PHPIZE_DEPS \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql gd zip bcmath \
-    && apk del $PHPIZE_DEPS
+    zip \
+    unzip \
+    default-mysql-client \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-
-RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /var/run
-
-WORKDIR /var/www/html
-
+# Get Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Since Laravel backend is in root, copy everything from root
+# Set working directory
+WORKDIR /app
+
+# Copy backend files from root (Laravel app)
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-COPY .render/nginx.conf /etc/nginx/http.d/default.conf
-COPY .render/supervisord.conf /etc/supervisord.conf
+# Copy built frontend
+COPY --from=frontend-builder /frontend/dist ./public
 
-COPY --from=frontend_builder /app/dist/ /var/www/html/public/build/
+# Set permissions
+RUN chmod -R 775 storage bootstrap/cache
 
-RUN chown -R www-data:www-data storage bootstrap/cache public \
-    && chmod -R 775 storage bootstrap/cache
+# Create start.sh script to run migrations and serve app
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "==> Waiting for database connection..."\n\
+sleep 10\n\
+echo "==> Running database migrations..."\n\
+php artisan migrate --force\n\
+echo "==> Clearing caches..."\n\
+php artisan config:clear\n\
+php artisan cache:clear\n\
+php artisan route:clear\n\
+php artisan view:clear\n\
+echo "==> Seeding all database seeders..."\n\
+php artisan db:seed --force || echo "Seeders already run"\n\
+echo "==> Optimizing application..."\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan view:cache\n\
+echo "==> Starting server on port ${PORT:-8080}..."\n\
+php artisan serve --host=0.0.0.0 --port=${PORT:-8080}\n\
+' > /start.sh && chmod +x /start.sh
 
-RUN nginx -t
+EXPOSE 8080
 
-EXPOSE 8000
-
-CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
+CMD ["/start.sh"]
