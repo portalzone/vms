@@ -1,22 +1,22 @@
-# Git
+# Git files
 .git
 .gitignore
 
-# Laravel dependencies & env
+# Laravel dependencies & environment files
 /vendor
 .env
 .env.*
 
-# Node dependencies & build artifacts
+# Node dependencies and lock files
 **/node_modules
 **/yarn.lock
 **/pnpm-lock.yaml
 
-# Frontend build cache
+# Frontend build cache/artifacts
 vms-frontend/vue-project/.cache
 vms-frontend/vue-project/.output
 
-# Misc
+# Miscellaneous
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
