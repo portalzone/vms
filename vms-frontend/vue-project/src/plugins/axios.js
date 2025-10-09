@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Set base URL to your Laravel backend (adjust if needed)
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // Change if backend is hosted elsewhere
+  baseURL: 'https://vms-production-6ebc.up.railway.app/api', // Change if backend is hosted elsewhere
   withCredentials: true,
 })
 
