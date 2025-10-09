@@ -24,16 +24,15 @@ RUN apk add --no-cache \
     && docker-php-ext-install pdo_mysql gd zip bcmath \
     && apk del $PHPIZE_DEPS
 
-# Continue your setup...
-
-
 RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /var/run
 
 WORKDIR /var/www/html
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY backend/ ./
+# Since Laravel backend is in root, copy everything from root
+COPY . .
+
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 COPY .render/nginx.conf /etc/nginx/http.d/default.conf
