@@ -2,7 +2,7 @@
 import axios from 'axios'
 
 const instance = axios.create({
-  baseURL: 'https://munext-production.up.railway.app/api',
+  baseURL: 'http://localhost:8000/api',
 })
 
 instance.interceptors.request.use((config) => {
