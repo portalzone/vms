@@ -7,10 +7,11 @@ RUN npm install
 COPY vms-frontend/vue-project/ .
 RUN npm run build
 
+
 # Stage 2: Build PHP backend
 FROM php:8.3-cli
 
-# Install system dependencies including MySQL client
+# Install system dependencies including MySQL client and PHP extensions including zip and gd
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -20,7 +21,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     default-mysql-client \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    libzip-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
