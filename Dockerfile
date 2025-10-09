@@ -25,13 +25,6 @@ RUN apk add --no-cache \
     && docker-php-ext-install pdo_mysql gd zip bcmath \
     && apk del $PHPIZE_DEPS
 
-# other setup ...
-
-RUN nginx -t
-
-# continue with your exposure and CMD
-
-
 RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /var/run
 
 WORKDIR /var/www/html
@@ -52,7 +45,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache public \
     && chmod -R 775 storage bootstrap/cache
 
 RUN nginx -t
--
+
 EXPOSE 8000
 
 CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
