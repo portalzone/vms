@@ -20,9 +20,17 @@ RUN apk add --no-cache \
     libzip-dev \
     libxml2-dev \
     $PHPIZE_DEPS \
+    nginx \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql gd zip bcmath \
     && apk del $PHPIZE_DEPS
+
+# other setup ...
+
+RUN nginx -t
+
+# continue with your exposure and CMD
+
 
 RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /var/run
 
@@ -44,7 +52,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache public \
     && chmod -R 775 storage bootstrap/cache
 
 RUN nginx -t
-
+-
 EXPOSE 8000
 
 CMD ["/bin/sh", "-c", "supervisord -c /etc/supervisord.conf"]
