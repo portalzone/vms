@@ -41,6 +41,7 @@ public function store(Request $request)
 {
             $this->authorizeAccess('create');
 
+
     $validated = $request->validate([
         'vehicle_id'  => 'required|exists:vehicles,id',
         'description' => 'required|string',
@@ -50,8 +51,10 @@ public function store(Request $request)
     ]);
 
     $userId = auth()->id();
+        $user = auth()->user();
+        // $userId = auth()->user();
 
-if (in_array($validated['status'], ['Completed']) && $user->hasAnyRole(['driver', 'vehicle_owner'])) {
+if (in_array($validated['status'], ['Completed']) && $user->hasRole(['driver', 'vehicle_owner'])) {
     return response()->json(['error' => 'You are not authorized to mark maintenance as completed.'], 403);
 }
 
