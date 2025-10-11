@@ -1,13 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Route;
 
+// API routes are in routes/api.php
+
+// SPA fallback - serves Vue app for all non-API routes
 Route::get('/{any}', function () {
-    $indexPath = public_path('index.html');
-    if (File::exists($indexPath)) {
-        return Response::file($indexPath);
-    }
-    abort(404);
+    return file_get_contents(public_path('index.html'));
 })->where('any', '^(?!api).*$');
-

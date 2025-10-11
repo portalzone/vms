@@ -17,10 +17,20 @@ export default defineConfig({
     },
   },
 
+  // CRITICAL: Build configuration for Laravel integration
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
     rollupOptions: {
-      input: 'src/main.js', // ✅ entry point
+      input: './index.html', // Changed from src/main.js
+      output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
+      },
     },
-    base: '/',
   },
+
+  base: '/', // Ensures assets load from root
 })
