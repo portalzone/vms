@@ -2,8 +2,8 @@
 import axios from 'axios'
 
 const instance = axios.create({
-  // baseURL: 'https://vms-production-6ebc.up.railway.app/api',
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'https://vms-production-6ebc.up.railway.app/api',
+  // baseURL: 'http://localhost:8000/api',
 })
 
 instance.interceptors.request.use((config) => {
