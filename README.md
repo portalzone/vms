@@ -1,62 +1,154 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Vehicle Management System — Backend API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A REST API built with Laravel 11 that handles everything a vehicle management operation needs day-to-day: tracking vehicles, assigning drivers, logging gate check-ins and check-outs, recording maintenance work, managing trip logs, and keeping a full audit trail of who did what and when.
 
-## About Laravel
+The frontend is a separate Vue 3 app living inside `vms-frontend/vue-project/`. This README covers the backend only.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## What it does
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The system is built around a few core ideas:
 
-## Learning Laravel
+- **Vehicles** can belong to the organisation or to individuals (staff, visitors, or registered vehicle owners).
+- **Drivers** are user accounts with a driver profile attached, assigned to one vehicle at a time.
+- **Gate security** logs when vehicles enter and leave the premises through check-in/check-out records.
+- **Maintenance** records are automatically linked to an expense entry so costs stay consistent.
+- **Trips** track where a vehicle went, who drove it, and what it earned.
+- **Audit trail** — every meaningful change to every record is logged automatically via Spatie Activity Log.
+- **Roles and permissions** control what each type of user can see and do (admin, manager, driver, gate_security, vehicle_owner, staff, visitor).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Tech stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Layer | Choice |
+|---|---|
+| Framework | Laravel 11 |
+| Auth | Laravel Sanctum (token-based) |
+| Roles & permissions | Spatie laravel-permission |
+| Activity logging | Spatie laravel-activitylog |
+| Excel export | Maatwebsite Excel + PhpSpreadsheet |
+| PDF generation | barryvdh/laravel-dompdf |
+| Database | SQLite (local / testing), MySQL (production) |
+| Deployment | Docker + Render (nginx + supervisord) |
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Getting started locally
 
-### Premium Partners
+### Requirements
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- PHP 8.2+
+- Composer
+- Node.js 18+ and npm (for the frontend; not needed if you only run the API)
 
-## Contributing
+### Installation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+# 1. Clone the repo
+git clone <repo-url>
+cd vms-main
 
-## Code of Conduct
+# 2. Install PHP dependencies
+composer install
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# 3. Copy and fill in your environment file
+cp .env.example .env
 
-## Security Vulnerabilities
+# 4. Generate the application key
+php artisan key:generate
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# 5. Run migrations and seed the database
+php artisan migrate --seed
 
-## License
+# 6. Start the dev server
+php artisan serve
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# vms
+The API will be available at `http://localhost:8000/api`.
+
+### Default seeded accounts
+
+These are created by the `UserSeeder` when you run `--seed`. All passwords are `abcd1234`.
+
+| Role | Email |
+|---|---|
+| admin | muojekevictor@gmail.com |
+| manager | faith@gmail.com |
+| driver | john@gmail.com |
+| gate_security | mary@gmail.com |
+| vehicle_owner | samuel@gmail.com |
+| staff | Peter@gmail.com |
+| visitor | kelvin@gmail.com |
+
+---
+
+## Environment variables
+
+See `.env.example` for the full list with descriptions. The ones you'll almost always need to change:
+
+```dotenv
+APP_URL=http://localhost:8000
+DB_CONNECTION=sqlite           # change to mysql for production
+SANCTUM_STATEFUL_DOMAINS=localhost:5173   # your frontend origin
+```
+
+---
+
+## Roles and what they can do
+
+| Role | Can do |
+|---|---|
+| `admin` | Everything — full access to all resources and destructive actions |
+| `manager` | Everything except deleting users and system-level config |
+| `driver` | View their own vehicle and check-in/out records |
+| `gate_security` | Create and close check-in/out records, view visitor vehicles |
+| `vehicle_owner` | View and manage their own registered vehicles and maintenance records |
+| `staff` / `visitor` | Limited read access depending on context |
+
+---
+
+## Project structure
+
+```
+app/
+  Http/
+    Controllers/Api/   — one controller per resource
+    Middleware/        — RoleMiddleware, Authenticate
+  Models/              — Vehicle, Driver, Trip, CheckInOut, Maintenance, Expense, Income, User
+  Services/            — MaintenanceService (wraps maintenance + expense creation in a transaction)
+
+database/
+  migrations/          — all schema migrations
+  seeders/             — RolePermissionSeeder, UserSeeder
+
+routes/
+  api.php              — all API routes
+
+tests/
+  Feature/             — HTTP-level tests per controller
+  Unit/                — model and service-level tests
+```
+
+---
+
+## Running tests
+
+```bash
+php artisan test
+```
+
+Tests use an in-memory SQLite database so nothing in your local `.env` gets touched.
+
+---
+
+## Deployment
+
+The project ships with a `Dockerfile` and Render-specific config under `.render/`. See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full walkthrough.
+
+---
+
+## API reference
+
+See [API_REFERENCE.md](./API_REFERENCE.md) for every endpoint, its required fields, and example responses.
