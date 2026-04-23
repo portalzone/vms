@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\TripController;
 use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\GateSecurityController;
 use App\Http\Controllers\Api\IncomeController;
+use App\Http\Controllers\Api\MLController;
 
 // 🔓 Public Routes (No Auth Required)
 Route::post('/login', [AuthController::class, 'login']);
@@ -93,4 +94,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [UserController::class, 'profile']);
     Route::put('/profile', [UserController::class, 'updateProfile']);
     Route::get('/profile/history', [UserController::class, 'profileHistory']);
+
+    // ✅ ML / AI Insights
+    Route::prefix('ml')->group(function () {
+        // Fleet-wide (admin / manager)
+        Route::get('/dashboard',           [MLController::class, 'dashboard']);
+        Route::get('/health/fleet',        [MLController::class, 'fleetHealth']);
+        Route::get('/anomalies/fleet',     [MLController::class, 'fleetAnomalies']);
+        Route::get('/driver/scores/all',   [MLController::class, 'allDriverScores']);
+        Route::get('/forecast/fleet',      [MLController::class, 'fleetForecast']);
+
+        // Per-vehicle
+        Route::get('/maintenance/predict/{vehicleId}', [MLController::class, 'predictMaintenance']);
+        Route::get('/health/{vehicleId}',              [MLController::class, 'vehicleHealth']);
+        Route::get('/anomalies/{vehicleId}',           [MLController::class, 'vehicleAnomalies']);
+        Route::get('/forecast/{vehicleId}',            [MLController::class, 'vehicleForecast']);
+
+        // Per-driver
+        Route::get('/driver/{driverId}/score',         [MLController::class, 'driverScore']);
+    });
 });
