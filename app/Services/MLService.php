@@ -223,6 +223,8 @@ class MLService
                 'mean'         => null,
                 'std_dev'      => null,
                 'total_count'  => $expenses->count(),
+                'anomaly_count'=> 0,
+                'threshold'    => $threshold,
                 'message'      => 'Not enough data for anomaly detection (minimum 3 records required).',
             ];
         }
