@@ -58,6 +58,14 @@
           >Audit Trail</RouterLink
         >
         <RouterLink
+          v-if="hasRole(['admin', 'manager'])"
+          to="/ml-insights"
+          exact-active-class="active"
+          @click="closeMenu"
+          style="color: #a78bfa; font-weight: 600;"
+          >🤖 ML Insights</RouterLink
+        >
+        <RouterLink
           v-if="hasRole(['admin', 'manager', 'gate_security'])"
           to="/checkins"
           exact-active-class="active"
@@ -142,7 +150,8 @@ function closeMenu() {
 }
 
 function hasRole(allowedRoles) {
-  return allowedRoles.includes(props.user?.role)
+  const role = auth.user?.role || props.user?.role
+  return allowedRoles.includes(role)
 }
 </script>
 
