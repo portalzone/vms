@@ -13,6 +13,7 @@
         <RouterLink to="/maintenances" class="nav-link" active-class="active">Maintenances</RouterLink>
         <RouterLink to="/expenses" class="nav-link" active-class="active">Expenses</RouterLink>
         <RouterLink to="/users" class="nav-link" active-class="active">Users</RouterLink>
+        <RouterLink to="/ml-insights" class="nav-link ml-link" active-class="active">🤖 ML Insights</RouterLink>
         <button @click="logout" class="w-full text-left text-red-600 hover:text-red-800 mt-4">
           Logout
         </button>
@@ -60,5 +61,13 @@ const logout = async () => {
   background-color: #e5e7eb; /* bg-gray-200 */
   color: #111827; /* text-gray-900 */
   font-weight: 600;
+}
+.ml-link {
+  background: linear-gradient(to right, #ede9fe, #ddd6fe);
+  color: #5b21b6;
+  font-weight: 600;
+}
+.ml-link:hover {
+  background: linear-gradient(to right, #ddd6fe, #c4b5fd);
 }
 </style>

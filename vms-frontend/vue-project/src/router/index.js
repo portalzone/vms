@@ -379,6 +379,18 @@ const routes = [
     },
   },
 
+  // ML Insights
+  {
+    path: '/ml-insights',
+    name: 'MLInsights',
+    component: () => import('../views/MLDashboard.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'ML Insights - Vehicle Management System',
+      roles: ['admin', 'manager'],
+    },
+  },
+
   // recent activity
   {
     path: '/recent-activity',
