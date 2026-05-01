@@ -160,4 +160,5 @@ php artisan test
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Hostinger deployment walkthrough |
 | [CHANGELOG.md](./CHANGELOG.md) | Release history |
 | [ML_INTERVIEW_PREP.md](./ML_INTERVIEW_PREP.md) | ML algorithms explained in depth |
+| [COMPONENTS.md](./COMPONENTS.md) | Every Vue component — props, events, and purpose |
 | [CLAUDE.md](./CLAUDE.md) | AI assistant project context |
