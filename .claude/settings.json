@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm /Users/portalzone/Herd/vms/Dockerfile /Users/portalzone/Herd/vms/start.sh)",
+      "Bash(rm -rf /Users/portalzone/Herd/vms/.render)"
+    ]
+  }
+}
