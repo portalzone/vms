@@ -1,22 +1,24 @@
-# Vehicle Management System — Backend API
+# Vehicle Management System (VMS)
 
-A REST API built with Laravel 11 that handles everything a vehicle management operation needs day-to-day: tracking vehicles, assigning drivers, logging gate check-ins and check-outs, recording maintenance work, managing trip logs, and keeping a full audit trail of who did what and when.
+A full-stack fleet management platform with role-based access control, real-time gate
+security logging, and an embedded Machine Learning engine for predictive analytics.
 
-The frontend is a separate Vue 3 app living inside `vms-frontend/vue-project/`. This README covers the backend only.
+**Live URL:** https://vms.basepan.com  
+**Stack:** Laravel 12 (PHP 8.2) API · Vue 3 + Tailwind frontend · Hostinger hosting
 
 ---
 
 ## What it does
 
-The system is built around a few core ideas:
-
-- **Vehicles** can belong to the organisation or to individuals (staff, visitors, or registered vehicle owners).
-- **Drivers** are user accounts with a driver profile attached, assigned to one vehicle at a time.
-- **Gate security** logs when vehicles enter and leave the premises through check-in/check-out records.
-- **Maintenance** records are automatically linked to an expense entry so costs stay consistent.
-- **Trips** track where a vehicle went, who drove it, and what it earned.
-- **Audit trail** — every meaningful change to every record is logged automatically via Spatie Activity Log.
-- **Roles and permissions** control what each type of user can see and do (admin, manager, driver, gate_security, vehicle_owner, staff, visitor).
+- **Vehicles** — CRUD with ownership type tracking (organisation vs individual: staff / visitor / vehicle_owner)
+- **Drivers** — Driver profiles linked to user accounts and vehicles
+- **Gate security** — Check-in / check-out logging with duplicate prevention
+- **Maintenance** — Records that auto-create a linked expense in a single transaction
+- **Expenses & Income** — Full revenue and cost ledger linked to trips and vehicles
+- **Trips** — Start/end location, times, status, and earnings per trip
+- **Audit trail** — Every change to every record logged automatically via Spatie Activity Log
+- **Roles and permissions** — admin, manager, driver, gate_security, vehicle_owner
+- **ML Insights** — Five live machine learning algorithms (see below)
 
 ---
 
@@ -24,14 +26,35 @@ The system is built around a few core ideas:
 
 | Layer | Choice |
 |---|---|
-| Framework | Laravel 11 |
+| Framework | Laravel 12 (PHP 8.2) |
 | Auth | Laravel Sanctum (token-based) |
-| Roles & permissions | Spatie laravel-permission |
-| Activity logging | Spatie laravel-activitylog |
+| Roles & permissions | spatie/laravel-permission |
+| Activity logging | spatie/laravel-activitylog |
 | Excel export | Maatwebsite Excel + PhpSpreadsheet |
 | PDF generation | barryvdh/laravel-dompdf |
+| Frontend | Vue 3 + Vite + Tailwind CSS |
 | Database | SQLite (local / testing), MySQL (production) |
-| Deployment | Docker + Render (nginx + supervisord) |
+| Hosting | Hostinger shared hosting (LAMP stack) |
+| Python ML service | FastAPI + scikit-learn + statsmodels (optional, separate service) |
+
+---
+
+## Machine Learning Engine
+
+The ML engine lives in `app/Services/MLService.php` — pure PHP, no external libraries,
+deployable on standard Hostinger shared hosting.
+
+| # | Algorithm | Endpoint |
+|---|---|---|
+| 1 | Predictive Maintenance (mean-interval regression) | `GET /api/ml/maintenance/predict/{vehicleId}` |
+| 2 | Fleet Health Score (weighted composite 0–100) | `GET /api/ml/health/{vehicleId}` |
+| 3 | Expense Anomaly Detection (z-score) | `GET /api/ml/anomalies/{vehicleId}` |
+| 4 | Driver Performance Score (multi-factor) | `GET /api/ml/driver/{driverId}/score` |
+| 5 | Cost Forecast (EWMA over 6 months) | `GET /api/ml/forecast/{vehicleId}` |
+
+Fleet-wide dashboard: `GET /api/ml/dashboard` (admin / manager only)
+
+A Python alternative using scikit-learn, statsmodels, and FastAPI lives in `vms-ml-service/`.
 
 ---
 
@@ -39,38 +62,42 @@ The system is built around a few core ideas:
 
 ### Requirements
 
-- PHP 8.2+
-- Composer
-- Node.js 18+ and npm (for the frontend; not needed if you only run the API)
-
-### Installation
+- PHP 8.2+, Composer
+- Node.js 18+, npm
+- Laravel Herd (recommended) or `php artisan serve`
 
 ```bash
-# 1. Clone the repo
-git clone <repo-url>
-cd vms-main
+# Clone
+git clone https://github.com/portalzone/vms.git
+cd vms
 
-# 2. Install PHP dependencies
+# Backend
 composer install
-
-# 3. Copy and fill in your environment file
 cp .env.example .env
-
-# 4. Generate the application key
 php artisan key:generate
-
-# 5. Run migrations and seed the database
 php artisan migrate --seed
+php artisan serve          # → http://localhost:8000/api
 
-# 6. Start the dev server
-php artisan serve
+# Frontend
+cd vms-frontend/vue-project
+npm install
+npm run dev                # → http://localhost:5173
 ```
 
-The API will be available at `http://localhost:8000/api`.
+### Python ML service (optional)
 
-### Default seeded accounts
+```bash
+cd vms-ml-service
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env       # fill in DB credentials
+uvicorn main:app --reload --port 8001
+# Docs → http://localhost:8001/docs
+```
 
-These are created by the `UserSeeder` when you run `--seed`. All passwords are `abcd1234`.
+---
+
+## Default seeded accounts (password: `abcd1234`)
 
 | Role | Email |
 |---|---|
@@ -79,33 +106,18 @@ These are created by the `UserSeeder` when you run `--seed`. All passwords are `
 | driver | john@gmail.com |
 | gate_security | mary@gmail.com |
 | vehicle_owner | samuel@gmail.com |
-| staff | Peter@gmail.com |
-| visitor | kelvin@gmail.com |
 
 ---
 
-## Environment variables
+## Roles
 
-See `.env.example` for the full list with descriptions. The ones you'll almost always need to change:
-
-```dotenv
-APP_URL=http://localhost:8000
-DB_CONNECTION=sqlite           # change to mysql for production
-SANCTUM_STATEFUL_DOMAINS=localhost:5173   # your frontend origin
-```
-
----
-
-## Roles and what they can do
-
-| Role | Can do |
+| Role | Access |
 |---|---|
-| `admin` | Everything — full access to all resources and destructive actions |
-| `manager` | Everything except deleting users and system-level config |
-| `driver` | View their own vehicle and check-in/out records |
-| `gate_security` | Create and close check-in/out records, view visitor vehicles |
-| `vehicle_owner` | View and manage their own registered vehicles and maintenance records |
-| `staff` / `visitor` | Limited read access depending on context |
+| `admin` | Full access including ML fleet-wide endpoints |
+| `manager` | Same as admin except user deletion |
+| `driver` | Own vehicle, trips, maintenance |
+| `gate_security` | Check-ins, visitor vehicles |
+| `vehicle_owner` | Own vehicles and maintenance |
 
 ---
 
@@ -113,22 +125,20 @@ SANCTUM_STATEFUL_DOMAINS=localhost:5173   # your frontend origin
 
 ```
 app/
-  Http/
-    Controllers/Api/   — one controller per resource
-    Middleware/        — RoleMiddleware, Authenticate
-  Models/              — Vehicle, Driver, Trip, CheckInOut, Maintenance, Expense, Income, User
-  Services/            — MaintenanceService (wraps maintenance + expense creation in a transaction)
+  Http/Controllers/Api/   ← one controller per resource + MLController
+  Models/                 ← Vehicle, Driver, Trip, Maintenance, Expense, Income, User
+  Services/
+    MaintenanceService.php
+    MLService.php         ← 5 ML algorithms
 
-database/
-  migrations/          — all schema migrations
-  seeders/             — RolePermissionSeeder, UserSeeder
+routes/api.php            ← all routes including /api/ml/*
 
-routes/
-  api.php              — all API routes
+vms-frontend/vue-project/ ← Vue 3 SPA
+  src/views/MLDashboard.vue
 
-tests/
-  Feature/             — HTTP-level tests per controller
-  Unit/                — model and service-level tests
+vms-ml-service/           ← Python FastAPI ML microservice
+  main.py
+  services/ml_service.py
 ```
 
 ---
@@ -139,16 +149,15 @@ tests/
 php artisan test
 ```
 
-Tests use an in-memory SQLite database so nothing in your local `.env` gets touched.
-
 ---
 
-## Deployment
+## Documentation
 
-The project ships with a `Dockerfile` and Render-specific config under `.render/`. See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full walkthrough.
-
----
-
-## API reference
-
-See [API_REFERENCE.md](./API_REFERENCE.md) for every endpoint, its required fields, and example responses.
+| File | Contents |
+|---|---|
+| [API_REFERENCE.md](./API_REFERENCE.md) | Every endpoint with request/response examples |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design and decisions |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Hostinger deployment walkthrough |
+| [CHANGELOG.md](./CHANGELOG.md) | Release history |
+| [ML_INTERVIEW_PREP.md](./ML_INTERVIEW_PREP.md) | ML algorithms explained in depth |
+| [CLAUDE.md](./CLAUDE.md) | AI assistant project context |

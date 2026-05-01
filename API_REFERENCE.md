@@ -1,6 +1,7 @@
 # API Reference
 
-Base URL: `http://localhost:8000/api`
+**Production Base URL:** `https://vms.basepan.com/api`  
+**Local Base URL:** `http://localhost:8000/api`
 
 All protected endpoints require a bearer token in the `Authorization` header:
 
@@ -778,3 +779,186 @@ Common status codes used throughout the API:
 | `404` | Resource not found |
 | `422` | Validation failed or business rule violated |
 | `500` | Server error |
+
+---
+
+## ML Insights
+
+All ML endpoints sit under `/api/ml/` and require `auth:sanctum`.  
+Fleet-wide endpoints (`/fleet`, `/dashboard`, `/scores/all`) require the `admin` or `manager` role.  
+Per-vehicle and per-driver endpoints are scoped — owners and drivers can only access their own assets.
+
+---
+
+### GET /ml/dashboard
+
+Returns all five ML model outputs in a single call.  
+**Role:** admin, manager
+
+**Response `200`**
+```json
+{
+  "fleet_health":    { "fleet_count": 2, "average_health": 93.8, "vehicles": [...] },
+  "fleet_forecast":  { "forecast_month": "May 2026", "total_fleet_forecast": 0.00, "vehicles": [...] },
+  "fleet_anomalies": { "total_anomalies": 0, "vehicles": [...] },
+  "driver_scores":   { "total_drivers": 1, "average_score": 100, "drivers": [...] },
+  "generated_at":    "2026-04-23T23:00:24Z"
+}
+```
+
+---
+
+### GET /ml/maintenance/predict/{vehicleId}
+
+Predicts the next maintenance date for a vehicle using mean-interval regression.
+
+**Response `200`**
+```json
+{
+  "predicted_date":    "2026-06-15",
+  "days_until":        52,
+  "confidence":        0.87,
+  "avg_interval_days": 44.0,
+  "std_dev_days":      6.2,
+  "last_maintenance":  "2026-04-24",
+  "history_count":     5,
+  "risk_level":        "Low",
+  "message":           "Next maintenance predicted in 52 day(s) with 87% confidence."
+}
+```
+
+`risk_level` values: `Low` (>30 days) · `Medium` (≤30) · `High` (≤7) · `Critical` (overdue) · `Unknown` (insufficient data)
+
+---
+
+### GET /ml/health/{vehicleId}
+
+Returns the composite health score for one vehicle.
+
+**Response `200`**
+```json
+{
+  "health_score": 100.0,
+  "grade": "A – Excellent",
+  "breakdown": {
+    "maintenance_health": 100.0,
+    "trip_completion":    100.0,
+    "cost_efficiency":    100.0,
+    "availability":       100.0
+  },
+  "stats": {
+    "total_maintenance":    3,
+    "completed_maintenance":3,
+    "total_trips":          5,
+    "completed_trips":      5,
+    "total_income":         75000.00,
+    "total_expense":        0.00,
+    "pending_maintenance":  0
+  }
+}
+```
+
+### GET /ml/health/fleet
+
+Returns health scores for all vehicles, ranked best to worst. **Role:** admin, manager
+
+---
+
+### GET /ml/anomalies/{vehicleId}?threshold=2.0
+
+Detects anomalous expenses using z-score analysis.  
+`threshold` — z-score cutoff (default 2.0 = 95th percentile).
+
+**Response `200`**
+```json
+{
+  "anomalies": [
+    {
+      "id": 12,
+      "date": "2026-03-10",
+      "amount": 85000.00,
+      "description": "Engine overhaul",
+      "z_score": 3.41,
+      "severity": "High",
+      "is_anomaly": true
+    }
+  ],
+  "normal":        [...],
+  "mean":          9200.00,
+  "std_dev":       4100.00,
+  "anomaly_count": 1,
+  "total_count":   14,
+  "threshold":     2.0,
+  "message":       "1 anomalous expense(s) detected."
+}
+```
+
+`severity` values: `Normal` · `Medium` (z 2–3) · `High` (z 3–4) · `Critical` (z ≥ 4)
+
+### GET /ml/anomalies/fleet
+
+Fleet-wide anomaly report. **Role:** admin, manager
+
+---
+
+### GET /ml/driver/{driverId}/score
+
+Returns the performance score for one driver.
+
+**Response `200`**
+```json
+{
+  "driver_id":         1,
+  "driver_name":       "Driver User",
+  "performance_score": 100.0,
+  "grade":             "A – Outstanding",
+  "breakdown": {
+    "trip_completion_rate": 100.0,
+    "revenue_score":        100.0,
+    "safety_score":         100.0
+  },
+  "stats": {
+    "total_trips":         1,
+    "completed_trips":     1,
+    "incident_free_trips": 1,
+    "income_per_trip":     75000.00,
+    "fleet_avg_income":    75000.00
+  }
+}
+```
+
+### GET /ml/driver/scores/all
+
+Ranked performance scores for all drivers. **Role:** admin, manager
+
+---
+
+### GET /ml/forecast/{vehicleId}
+
+Forecasts next month's expenses using Exponentially Weighted Moving Average (EWMA).
+
+**Response `200`**
+```json
+{
+  "vehicle_id":      1,
+  "forecast_month":  "May 2026",
+  "forecasted_cost": 12400.00,
+  "trend":           "Increasing",
+  "alert_level":     "Normal",
+  "history": [
+    { "month": "Nov 2025", "amount": 0.00 },
+    { "month": "Dec 2025", "amount": 8000.00 },
+    { "month": "Jan 2026", "amount": 9500.00 },
+    { "month": "Feb 2026", "amount": 11000.00 },
+    { "month": "Mar 2026", "amount": 13000.00 },
+    { "month": "Apr 2026", "amount": 15000.00 }
+  ],
+  "method": "Exponentially Weighted Moving Average (EWMA)"
+}
+```
+
+`alert_level` values: `Normal` · `Medium — forecast is 20%+ above last month` · `High — forecast is 50%+ above last month`
+
+### GET /ml/forecast/fleet
+
+Fleet-wide cost forecast. **Role:** admin, manager
