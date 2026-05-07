@@ -155,10 +155,8 @@ php artisan test
 
 | File | Contents |
 |---|---|
-| [VMS_TECH_EXPLAINED.md](./VMS_TECH_EXPLAINED.md) | Deep-dive learning guide: Laravel, Vue, Sanctum, Spatie, Models, Controllers |
 | [API_REFERENCE.md](./API_REFERENCE.md) | Every endpoint with request/response examples |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design and decisions |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Hostinger deployment walkthrough |
 | [CHANGELOG.md](./CHANGELOG.md) | Release history |
-| [ML_INTERVIEW_PREP.md](./ML_INTERVIEW_PREP.md) | ML algorithms explained in depth |
 | [COMPONENTS.md](./COMPONENTS.md) | Every Vue component — props, events, and purpose |
